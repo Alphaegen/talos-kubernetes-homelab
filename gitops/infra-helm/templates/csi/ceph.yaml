@@ -1,5 +1,5 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/refs/heads/main/argoproj.io/application_v1alpha1.json
-{{- if and .Values.csi.ceph .Values.csi.ceph.enabled }}
+{{- if .Values.ceph.enabled }}
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -30,7 +30,7 @@ spec:
   source:
     repoURL: https://charts.rook.io/release
     chart: rook-ceph
-    targetRevision: {{ .Values.csi.ceph.version | quote }}
+    targetRevision: {{ .Values.ceph.version | quote }}
     helm:
       releaseName: rook-ceph
       values: |

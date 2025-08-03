@@ -1,0 +1,17 @@
+cluster_name: "home-cluster"
+endpoint: "https://192.168.3.100:6443"
+vip: 192.168.3.100
+
+nodes:
+  - hostname: rpi-cp-1
+    ip: 192.168.3.101
+    role: controlplane
+  - hostname: rpi-w-1
+    ip: 192.168.3.102
+    role: worker
+  - hostname: rpi-w-2
+    ip: 192.168.3.103
+    role: worker
+  - hostname: rpi-w-3
+    ip: 192.168.3.104
+    role: worker

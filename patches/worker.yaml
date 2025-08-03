@@ -1,0 +1,25 @@
+# worker patch
+machine:
+  # Should be set to load balancing IP in production
+  # certSANs:
+  # - <load_balancer_ip>
+  features:
+    kubePrism:
+      enabled: true
+      port: 7445
+
+cluster:
+  network:
+    podSubnets:
+      - 10.244.0.0/16
+    serviceSubnets:
+      - 10.96.0.0/12
+    cni:
+      name: none
+  proxy:
+    disabled: true
+  # apiServer:
+    # Should be set to load balancing IP in production
+    # certSANs:
+    # - <load_balancer_ip>
+

@@ -1,0 +1,34 @@
+cluster:
+  name: homelab.niekvlam
+  namespace: argocd
+
+sync: true
+
+ingressController:
+  enabled: true
+  class: nginx
+  version: 4.13.0
+
+metallb:
+  enabled: true
+  version: 0.15.2
+  endpoints:
+    - "192.168.3.110-192.168.3.129"
+
+certmanager:
+  enabled: true
+  version: v1.18.2
+  acme:
+    email: vlam4695+homelab@gmail.com
+    server: "https://acme-v02.api.letsencrypt.org/directory"
+
+sealedsecrets:
+  enabled: true
+  version: 2.17.3
+
+ceph:
+  enabled: true
+  version: 1.17.7
+
+raw:
+  version: 2.0.0

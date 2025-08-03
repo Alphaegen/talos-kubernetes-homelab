@@ -1,0 +1,45 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/refs/heads/main/argoproj.io/application_v1alpha1.json
+{{- if and .Values.csi.ceph .Values.csi.ceph.enabled }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ .Values.cluster.name }}-ceph
+  labels:
+    cluster: {{ .Values.cluster.name | quote }}
+    app: rook-ceph
+  namespace: {{ .Values.cluster.namespace | quote }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+    app.kubernetes.io/part-of: rook-ceph
+    {{- if .Values.notifications }}
+    {{ toYaml .Values.notifications | indent 4 }}
+    {{- end }}
+spec:
+  project: {{ .Values.cluster.name }}
+  destination:
+    server: {{ .Values.cluster.url | default "https://kubernetes.default.svc" | quote }}
+    namespace: rook-ceph
+  syncPolicy:
+    {{- if .Values.sync }}
+    automated:
+      prune: true
+      selfHeal: true
+    {{- end }}
+    syncOptions:
+      - CreateNamespace=true
+  source:
+    repoURL: https://charts.rook.io/release
+    chart: rook-ceph
+    targetRevision: {{ .Values.csi.ceph.version | quote }}
+    helm:
+      releaseName: rook-ceph
+      values: |
+        crds:
+          enabled: true
+        enableDiscoveryDaemon: false
+        csi:
+          enableRBD: true
+          enableCephFS: false
+        monitoring:
+          enabled: true
+{{- end }}

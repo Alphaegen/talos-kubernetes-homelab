@@ -1,16 +1,16 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/refs/heads/main/argoproj.io/application_v1alpha1.json
-{{- if .Values.ceph.enabled }}
+{{ if .Values.certmanager.enabled }}
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: {{ .Values.cluster.name }}-ceph-helm
+  name: {{ .Values.cluster.name }}-cert-manager-helm
   labels:
     cluster: {{ .Values.cluster.name | quote }}
-    app: rook-ceph-helm
+    app: cert-manager
   namespace: {{ .Values.cluster.namespace | quote }}
   annotations:
-    argocd.argoproj.io/sync-wave: "1"
-    app.kubernetes.io/part-of: rook-ceph-helm
+    argocd.argoproj.io/sync-wave: "0"
+    app.kubernetes.io/part-of: cert-manager
     {{- if .Values.notifications }}
     {{ toYaml .Values.notifications | indent 4 }}
     {{- end }}
@@ -18,28 +18,28 @@ spec:
   project: {{ .Values.cluster.name }}
   destination:
     server: {{ .Values.cluster.url | default "https://kubernetes.default.svc" | quote }}
-    namespace: rook-ceph
+    namespace: cert-manager
   syncPolicy:
     {{- if .Values.sync }}
     automated:
       prune: true
       selfHeal: true
+      allowEmpty: false
     {{- end }}
     syncOptions:
       - CreateNamespace=true
+    managedNamespaceMetadata:
+      labels:
+        pod-security.kubernetes.io/enforce: privileged
+        pod-security.kubernetes.io/audit: privileged
+        pod-security.kubernetes.io/warn: privileged
   source:
-    repoURL: https://charts.rook.io/release
-    chart: rook-ceph
-    targetRevision: {{ .Values.ceph.version | quote }}
+    repoURL: https://charts.jetstack.io
+    chart: cert-manager
+    targetRevision: {{ .Values.certmanager.version | default "HEAD" | quote }}
     helm:
-      releaseName: rook-ceph
+      version: v3
+      releaseName: cert-manager
       values: |
-        crds:
-          enabled: true
-        enableDiscoveryDaemon: false
-        csi:
-          enableRBD: true
-          enableCephFS: false
-        monitoring:
-          enabled: true
+        installCRDs: true
 {{- end }}

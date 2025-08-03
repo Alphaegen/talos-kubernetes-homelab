@@ -3,13 +3,13 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: {{ .Values.cluster.name }}-cert-manager
+  name: {{ .Values.cluster.name }}-cert-manager-custom
   labels:
     cluster: {{ .Values.cluster.name | quote }}
     app: cert-manager
   namespace: {{ .Values.cluster.namespace | quote }}
   annotations:
-    argocd.argoproj.io/sync-wave: "0"
+    argocd.argoproj.io/sync-wave: "1"
     app.kubernetes.io/part-of: cert-manager
     {{- if .Values.notifications }}
     {{ toYaml .Values.notifications | indent 4 }}
@@ -34,12 +34,7 @@ spec:
         pod-security.kubernetes.io/audit: privileged
         pod-security.kubernetes.io/warn: privileged
   source:
-    repoURL: https://charts.jetstack.io
-    chart: cert-manager
-    targetRevision: {{ .Values.certmanager.version | default "HEAD" | quote }}
-    helm:
-      version: v3
-      releaseName: cert-manager
-      values: |
-        installCRDs: true
-{{- end }}
+    repoURL: git@github.com:Alphaegen/talos-homelab.git
+    path: gitops/infra-custom/cert-manager
+    targetRevision: HEAD
+{{ end }}

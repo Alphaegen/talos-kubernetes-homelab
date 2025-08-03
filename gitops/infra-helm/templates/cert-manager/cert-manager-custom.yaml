@@ -37,4 +37,10 @@ spec:
     repoURL: git@github.com:Alphaegen/talos-homelab.git
     path: gitops/infra-custom/cert-manager
     targetRevision: HEAD
+    helm:
+      version: v3
+      releaseName: cert-manager-custom
+      values: |
+          email: {{ .Values.certmanager.acme.email }}
+          server: {{ .Values.certmanager.acme.server }}
 {{ end }}

@@ -13,14 +13,6 @@ server:
     annotations:
       nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
       nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
-      cert-manager.io/cluster-issuer: "letsencrypt-dns"
-    extraTls:
-      - hosts:
-          - argocd.homelab.niekvlam.nl
-        secretName: wildcard-tls
-    extraHosts:
-      - name: argocd.homelab.niekvlam.nl
-        path: /
 
 redis-ha:
   enabled: true

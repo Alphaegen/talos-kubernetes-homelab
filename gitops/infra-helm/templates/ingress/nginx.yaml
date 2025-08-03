@@ -9,7 +9,7 @@ metadata:
     app: nginx
   namespace: {{ .Values.cluster.namespace | quote }}
   annotations:
-    argocd.argoproj.io/sync-wave: "0"
+    argocd.argoproj.io/sync-wave: "1"
     app.kubernetes.io/part-of: ingress-nginx
     {{- if .Values.notifications }}
     {{ toYaml .Values.notifications | indent 4 }}

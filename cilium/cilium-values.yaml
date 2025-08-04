@@ -32,8 +32,18 @@ k8sServiceHost: localhost
 k8sServicePort: 7445
 
 hubble:
-  enable: true
-  relay:
-    enabled: true
   ui:
+    enabled: true
+    ingress:
+      enabled: true
+      className: nginx
+      hosts:
+        - hubble.homelab.niekvlam.nl
+      annotations:
+        cert-manager.io/cluster-issuer: letsencrypt-dns
+      tls:
+        - hosts:
+            - hubble.homelab.niekvlam.nl
+          secretName: hubble-tls
+  relay:
     enabled: true

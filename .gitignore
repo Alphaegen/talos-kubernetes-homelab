@@ -2,3 +2,5 @@ secrets.yaml
 **/charts/
 kubeconfig
 output
+bin/
+id_*

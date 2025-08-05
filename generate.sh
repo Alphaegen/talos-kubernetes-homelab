@@ -39,26 +39,31 @@ yq -o=json '.nodes[]' "$NODES_FILE" | jq -c '.' | while read -r node; do
   mkdir -p "$NODE_DIR"
   echo "🔧 Generating bootstrap config for $HOST ($ROLE) – $IP"
 
-  NETWORK_PATCH=$(yq -n "
-    .machine.network.hostname                     = \"$HOST\" |
-    .machine.network.interfaces[0].interface      = \"end0\"  |
-    .machine.network.interfaces[0].addresses      = [\"$IP/24\"] |
-    .machine.network.interfaces[0].dhcp           = false    |
-    .machine.network.interfaces[0].routes         = [{\"network\": \"0.0.0.0/0\", \"gateway\": \"192.168.3.1\"}]
-  " -o=json)
-
   if [[ $ROLE == "controlplane" ]]; then
-    VIP_PATCH=$(yq -n ".machine.network.interfaces[0].vip.ip = \"$VIP\"" -o=json)
-    EXTRA_PATCHES=(--config-patch "$VIP_PATCH")
+    NETWORK_PATCH=$(yq -n -o=json "
+    .machine.network.hostname = \"$HOST\" |
+    .machine.network.interfaces[0].interface = \"end0\" |
+    .machine.network.interfaces[0].addresses = [\"$IP/24\"] |
+    .machine.network.interfaces[0].dhcp = false |
+    .machine.network.interfaces[0].routes[0].network = \"0.0.0.0/0\" |
+    .machine.network.interfaces[0].routes[0].gateway = \"192.168.3.1\" |
+    .machine.network.interfaces[0].vip.ip = \"$VIP\"
+  ")
   else
-    EXTRA_PATCHES=() # workers: no VIP
+    NETWORK_PATCH=$(yq -n -o=json "
+    .machine.network.hostname = \"$HOST\" |
+    .machine.network.interfaces[0].interface = \"end0\" |
+    .machine.network.interfaces[0].addresses = [\"$IP/24\"] |
+    .machine.network.interfaces[0].dhcp = false |
+    .machine.network.interfaces[0].routes[0].network = \"0.0.0.0/0\" |
+    .machine.network.interfaces[0].routes[0].gateway = \"192.168.3.1\"
+  ")
   fi
 
   talosctl gen config "$CLUSTER_NAME" "$ENDPOINT" \
     --with-secrets "$SECRETS_FILE" \
     --config-patch "$(yq -o=json <patches/$ROLE.yaml)" \
     --config-patch "$NETWORK_PATCH" \
-    "${EXTRA_PATCHES[@]}" \
     --output-types "$ROLE" \
     --output-dir "$NODE_DIR" \
     --force

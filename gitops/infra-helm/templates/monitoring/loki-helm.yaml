@@ -64,7 +64,7 @@ spec:
 
         # main loki config block
         loki:
-{{ toYaml (omit .Values.monitoring.loki "version" "gateway" "singleBinary" "deploymentMode") | indent 10 }}
+{{ toYaml (omit .Values.monitoring.loki "version" "gateway" "singleBinary" "deploymentMode" "chunkCache", "resultsCache") | indent 10 }}
 
         {{- if .Values.monitoring.loki.gateway }}
         gateway:

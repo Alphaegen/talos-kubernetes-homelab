@@ -53,7 +53,7 @@ spec:
           port: 8080
         ingress:
           enabled: true
-          className: {{ .Values.ingress.className | default "nginx" | quote }}
+          className: {{ .Values.ingressController.class | default "nginx" | quote }}
           annotations:
             nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
             cert-manager.io/cluster-issuer: {{ .Values.certManager.clusterIssuer | quote }}
@@ -66,6 +66,7 @@ spec:
             - hosts:
                 - {{ .Values.homeassistant.host | quote }}
               secretName: home-assistant-tls
+
         persistence:
           enabled: true
           storageClass: {{ .Values.storageClass | default "longhorn" | quote }}
@@ -73,15 +74,17 @@ spec:
           size: {{ .Values.homeassistant.storage.size | default "10Gi" | quote }}
           # alternatively, bind an existing claim:
           # existingClaim: {{ .Values.homeassistant.persistence.existingClaim | default "" | quote }}
+
         # Enable ONLY if you rely on mDNS/UPnP discovery from the host network
         hostNetwork: {{ .Values.homeassistant.hostNetwork | default false }}
         dnsPolicy: {{ if .Values.homeassistant.hostNetwork | default false }}ClusterFirstWithHostNet{{ else }}ClusterFirst{{ end }}
-        # Optional Prometheus scraping (requires HA's Prometheus integration)
+
         serviceMonitor:
           enabled: {{ .Values.homeassistant.serviceMonitor.enabled | default true }}
           scrapeInterval: {{ .Values.homeassistant.serviceMonitor.scrapeInterval | default "30s" | quote }}
           labels:
             release: {{ .Values.homeassistant.serviceMonitor.release | default "prometheus" | quote }}
+
         # USB passthrough example (e.g., Zigbee stick). Requires privileged:
         # securityContext:
         #   privileged: true

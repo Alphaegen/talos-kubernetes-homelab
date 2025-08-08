@@ -46,6 +46,22 @@ spec:
 {{ toYaml .Values.monitoring.loki.singleBinary | indent 10 }}
         {{- end }}
 
+        simpleScalable:
+          replicas: 0
+          backend:
+            replicas: 0
+          read:
+            replicas: 0
+          write:
+            replicas: 0
+
+        backend:
+          replicas: 0
+        read:
+          replicas: 0
+        write:
+          replicas: 0
+
         # main loki config block
         loki:
 {{ toYaml (omit .Values.monitoring.loki "version" "gateway" "singleBinary" "deploymentMode") | indent 10 }}

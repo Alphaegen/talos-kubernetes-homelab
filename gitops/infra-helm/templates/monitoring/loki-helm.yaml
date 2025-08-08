@@ -38,13 +38,15 @@ spec:
     targetRevision: {{ .Values.monitoring.loki.version | quote }}
     helm:
       releaseName: loki
-      values: |
+      values: |-
+        # top-level chart keys
         deploymentMode: {{ .Values.monitoring.loki.deploymentMode | default "SingleBinary" | quote }}
-        {{- if .Values.monitoring.loki.singleBinary }}
+{{- with .Values.monitoring.loki.singleBinary }}
         singleBinary:
-        {{ toYaml .Values.monitoring.loki.singleBinary | indent 2 }}
-        {{- end }}
+{{ toYaml . | indent 10 }}
+{{- end }}
 
+        # make sure scalable modes are OFF
         simpleScalable:
           replicas: 0
           backend:
@@ -59,28 +61,28 @@ spec:
           replicas: 0
         write:
           replicas: 0
-
-        {{- if .Values.monitoring.loki.chunksCache }}
+{{- with .Values.monitoring.loki.chunksCache }}
         chunksCache:
-      {{ toYaml .Values.monitoring.loki.chunksCache | indent 2 }}
-      {{- end }}
-      {{- if .Values.monitoring.loki.resultsCache }}
-      resultsCache:
-      {{ toYaml .Values.monitoring.loki.resultsCache | indent 2 }}
-      {{- end }}
-      {{- if .Values.monitoring.loki.canary }}
-      canary:
-      {{ toYaml .Values.monitoring.loki.canary | indent 2 }}
-      {{- end }}
-
-      loki:
-      {{ toYaml (omit .Values.monitoring.loki
-                  "version" "gateway" "singleBinary" "deploymentMode"
-                  "chunksCache" "resultsCache" "canary") | indent 2 }}
-
-      {{- if .Values.monitoring.loki.gateway }}
-      gateway:
-      {{ toYaml .Values.monitoring.loki.gateway | indent 2 }}
-      {{- end }}
+{{ toYaml . | indent 10 }}
+{{- end }}
+{{- with .Values.monitoring.loki.resultsCache }}
+        resultsCache:
+{{ toYaml . | indent 10 }}
+{{- end }}
+{{- with .Values.monitoring.loki.canary }}
+        canary:
+{{ toYaml . | indent 10 }}
 {{- end }}
 
+        # main Loki config block
+        loki:
+{{ toYaml (omit .Values.monitoring.loki
+            "version" "gateway" "singleBinary" "deploymentMode"
+            "chunksCache" "resultsCache" "canary") | indent 10 }}
+
+{{- with .Values.monitoring.loki.gateway }}
+        # gateway is a sibling of 'loki:'
+        gateway:
+{{ toYaml . | indent 10 }}
+{{- end }}
+{{- end }}

@@ -37,6 +37,7 @@ ceph:
 monitoring:
   enabled: true
   grafana:
+    version: 9.3.1
     ingress:
       enabled: true
       ingressClassName: nginx
@@ -61,6 +62,7 @@ monitoring:
             url: http://loki-gateway.monitoring.svc:80
 
   loki:
+    version: 6.35.1
     auth_enabled: false
     commonConfig:
       replication_factor: 1
@@ -79,6 +81,7 @@ monitoring:
         - cri: {}  # Talos/k8s-friendly parsing
 
   prometheus:
+    version: 76.1.0
     prometheusSpec:
       retention: 30d
       retentionSize: 20Gi

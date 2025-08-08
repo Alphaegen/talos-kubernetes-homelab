@@ -39,11 +39,10 @@ spec:
     helm:
       releaseName: loki
       values: |
-        # chart-level keys
         deploymentMode: {{ .Values.monitoring.loki.deploymentMode | default "SingleBinary" | quote }}
         {{- if .Values.monitoring.loki.singleBinary }}
         singleBinary:
-{{ toYaml .Values.monitoring.loki.singleBinary | indent 10 }}
+        {{ toYaml .Values.monitoring.loki.singleBinary | indent 2 }}
         {{- end }}
 
         simpleScalable:
@@ -54,7 +53,6 @@ spec:
             replicas: 0
           write:
             replicas: 0
-
         backend:
           replicas: 0
         read:
@@ -62,13 +60,27 @@ spec:
         write:
           replicas: 0
 
-        # main loki config block
-        loki:
-{{ toYaml (omit .Values.monitoring.loki "version" "gateway" "singleBinary" "deploymentMode" "chunkCache", "resultsCache") | indent 10 }}
+        {{- if .Values.monitoring.loki.chunksCache }}
+        chunksCache:
+      {{ toYaml .Values.monitoring.loki.chunksCache | indent 2 }}
+      {{- end }}
+      {{- if .Values.monitoring.loki.resultsCache }}
+      resultsCache:
+      {{ toYaml .Values.monitoring.loki.resultsCache | indent 2 }}
+      {{- end }}
+      {{- if .Values.monitoring.loki.canary }}
+      canary:
+      {{ toYaml .Values.monitoring.loki.canary | indent 2 }}
+      {{- end }}
 
-        {{- if .Values.monitoring.loki.gateway }}
-        gateway:
-{{ toYaml .Values.monitoring.loki.gateway | indent 10 }}
-        {{- end }}
+      loki:
+      {{ toYaml (omit .Values.monitoring.loki
+                  "version" "gateway" "singleBinary" "deploymentMode"
+                  "chunksCache" "resultsCache" "canary") | indent 2 }}
+
+      {{- if .Values.monitoring.loki.gateway }}
+      gateway:
+      {{ toYaml .Values.monitoring.loki.gateway | indent 2 }}
+      {{- end }}
 {{- end }}
 

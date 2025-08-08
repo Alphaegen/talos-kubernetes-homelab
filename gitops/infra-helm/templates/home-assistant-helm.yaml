@@ -64,7 +64,7 @@ spec:
                   pathType: Prefix
           tls:
             - hosts:
-                - {{ .Values.homeassistant.host | quote }}
+                - home-assistant.{{ .Values.cluster.name }}.nl
               secretName: home-assistant-tls
 
         persistence:

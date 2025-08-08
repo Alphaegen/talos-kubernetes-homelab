@@ -162,6 +162,9 @@ homeassistant:
   image:
     tag: ""
 
+  trusted_proxys:
+    - 10.244.0.0/16
+
   storage:
     storageClassName: longhorn
     size: "20Gi"

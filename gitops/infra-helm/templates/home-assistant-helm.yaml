@@ -56,7 +56,7 @@ spec:
           className: {{ .Values.ingressController.class | default "nginx" | quote }}
           annotations:
             nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
-            cert-manager.io/cluster-issuer: {{ .Values.certManager.clusterIssuer | quote }}
+            cert-manager.io/cluster-issuer: "letsencrypt-dns"
           hosts:
             - host: home-assistant.{{ .Values.cluster.name }}.nl
               paths:

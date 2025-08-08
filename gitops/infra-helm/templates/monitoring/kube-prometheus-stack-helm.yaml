@@ -1,0 +1,53 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/refs/heads/main/argoproj.io/application_v1alpha1.json
+{{- if .Values.monitoring.enabled }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ .Values.cluster.name }}-kube-prometheus-stack
+  labels:
+    cluster: {{ .Values.cluster.name | quote }}
+    app: kube-prometheus-stack
+  namespace: {{ .Values.cluster.namespace | quote }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+    app.kubernetes.io/part-of: monitoring
+    {{- if .Values.notifications }}
+    {{ toYaml .Values.notifications | indent 4 }}
+    {{- end }}
+spec:
+  project: {{ .Values.cluster.name }}
+  destination:
+    server: {{ .Values.cluster.url | default "https://kubernetes.default.svc" | quote }}
+    namespace: monitoring
+  syncPolicy:
+    {{- if .Values.sync }}
+    automated:
+      prune: true
+      selfHeal: true
+    {{- end }}
+    syncOptions:
+      - CreateNamespace=true
+  source:
+    repoURL: https://prometheus-community.github.io/helm-charts
+    chart: kube-prometheus-stack
+    targetRevision: {{ .Values.monitoring.kubePrometheusStack.version | quote }}
+    helm:
+      releaseName: kube-prometheus-stack
+      values: |
+        grafana:
+          enabled: false
+        prometheus:
+          prometheusSpec:
+            retention: {{ .Values.monitoring.prometheus.prometheusSpec.retention | quote }}
+            retentionSize: {{ .Values.monitoring.prometheus.prometheusSpec.retentionSize | quote }}
+            walCompression: {{ .Values.monitoring.prometheus.prometheusSpec.walCompression }}
+            scrapeInterval: {{ .Values.monitoring.prometheus.prometheusSpec.scrapeInterval | quote }}
+            enableAdminAPI: {{ .Values.monitoring.prometheus.prometheusSpec.enableAdminAPI }}
+        alertmanager:
+          enabled: {{ .Values.monitoring.alertmanager.enabled }}
+        kubeStateMetrics:
+          enabled: {{ .Values.monitoring.kubeStateMetrics.enabled }}
+        nodeExporter:
+          enabled: {{ .Values.monitoring.nodeExporter.enabled }}
+{{- end }}
+

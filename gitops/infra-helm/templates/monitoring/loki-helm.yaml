@@ -1,0 +1,47 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/refs/heads/main/argoproj.io/application_v1alpha1.json
+{{- if .Values.monitoring.enabled }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ .Values.cluster.name }}-loki
+  labels:
+    cluster: {{ .Values.cluster.name | quote }}
+    app: loki
+  namespace: {{ .Values.cluster.namespace | quote }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+    app.kubernetes.io/part-of: monitoring
+    {{- if .Values.notifications }}
+    {{ toYaml .Values.notifications | indent 4 }}
+    {{- end }}
+spec:
+  project: {{ .Values.cluster.name }}
+  destination:
+    server: {{ .Values.cluster.url | default "https://kubernetes.default.svc" | quote }}
+    namespace: monitoring
+  syncPolicy:
+    {{- if .Values.sync }}
+    automated:
+      prune: true
+      selfHeal: true
+    {{- end }}
+    syncOptions:
+      - CreateNamespace=true
+  source:
+    repoURL: https://grafana.github.io/helm-charts
+    chart: loki
+    targetRevision: {{ .Values.monitoring.loki.version | quote }}
+    helm:
+      releaseName: loki
+      values: |
+        auth_enabled: {{ .Values.monitoring.loki.auth_enabled }}
+        commonConfig:
+          replication_factor: {{ .Values.monitoring.loki.commonConfig.replication_factor }}
+        storage:
+          type: {{ .Values.monitoring.loki.storage.type }}
+        limits_config:
+          retention_period: {{ .Values.monitoring.loki.limits_config.retention_period | quote }}
+        gateway:
+          enabled: {{ .Values.monitoring.loki.gateway.enabled }}
+{{- end }}
+

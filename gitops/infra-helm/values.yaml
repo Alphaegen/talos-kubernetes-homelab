@@ -34,5 +34,64 @@ ceph:
   enabled: true
   version: 1.17.7
 
+monitoring:
+  grafana:
+    ingress:
+      enabled: true
+      ingressClassName: nginx
+      annotations:
+        nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+        cert-manager.io/cluster-issuer: letsencrypt-dns
+      hosts: [ "grafana.homelab.niekvlam.nl" ]
+      tls:
+        - secretName: grafana-tls
+          hosts: [ "grafana.homelab.niekvlam.nl" ]
+    datasources:
+      datasources.yaml:
+        apiVersion: 1
+        datasources:
+          - name: Prometheus
+            type: prometheus
+            url: http://kube-prometheus-stack-prometheus.monitoring.svc:9090
+            access: proxy
+            isDefault: true
+          - name: Loki
+            type: loki
+            url: http://loki-gateway.monitoring.svc:80
+
+  loki:
+    auth_enabled: false
+    commonConfig:
+      replication_factor: 1
+    storage:
+      type: filesystem
+    limits_config:
+      retention_period: 168h  # 7d
+    gateway:
+      enabled: true
+
+  promtail:
+    clients:
+      - url: http://loki-gateway.monitoring.svc:80/loki/api/v1/push
+    snippets:
+      pipelineStages:
+        - cri: {}  # Talos/k8s-friendly parsing
+
+  prometheus:
+    prometheusSpec:
+      retention: 30d
+      retentionSize: 20Gi
+      walCompression: true
+      scrapeInterval: 30s
+      enableAdminAPI: false
+
+  alertmanager:
+    enabled: true
+
+  kubeStateMetrics:
+    enabled: true
+  nodeExporter:
+    enabled: true
+
 raw:
   version: 2.0.0

@@ -39,14 +39,14 @@ spec:
           metrics:
             enabled: true
 
-        # Create a ServiceMonitor that matches kube-prometheus-stack's selector
+        downloadDashboards: true
+
         serviceMonitor:
           enabled: true
           labels:
             release: kube-prometheus-stack
           interval: 30s
 
-        # Required for dashboards import (providers file)
         dashboardsProvider:
           enabled: true
           foldersFromFilesStructure: true

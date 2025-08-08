@@ -33,12 +33,35 @@ spec:
     targetRevision: {{ .Values.monitoring.grafana.version | quote }}
     helm:
       releaseName: grafana
-      values: |
+      values: |-
+        # Expose Grafana metrics so Prometheus can scrape them
+        grafana.ini:
+          metrics:
+            enabled: true
+
+        # Create a ServiceMonitor that matches kube-prometheus-stack's selector
         serviceMonitor:
           enabled: true
           labels:
             release: kube-prometheus-stack
           interval: 30s
+
+        # Required for dashboards import (providers file)
+        dashboardsProvider:
+          enabled: true
+          foldersFromFilesStructure: true
+
+        # Sidecars to load dashboards & datasources into Grafana
+        sidecar:
+          dashboards:
+            enabled: true
+            # Watch all namespaces for ConfigMaps/Secrets labeled grafana_dashboard
+            searchNamespace: ALL
+            label: grafana_dashboard
+          datasources:
+            enabled: true
+
+        # Your existing settings
         ingress:
 {{ toYaml .Values.monitoring.grafana.ingress | indent 10 }}
         datasources:

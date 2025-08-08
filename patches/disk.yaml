@@ -1,0 +1,12 @@
+---
+apiVersion: v1alpha1
+kind: UserVolumeConfig
+name: longhorn
+provisioning:
+  diskSelector:
+    match: disk.transport == "nvme" && !system_disk
+  minSize: 470GiB     # optional
+  # maxSize: 512GiB         # omit to use remaining free space
+filesystem:
+  type: xfs            # default is xfs; ext4 also works
+

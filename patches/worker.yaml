@@ -1,15 +1,25 @@
 # worker patch
 machine:
-  # Should be set to load balancing IP in production
+  sysctls:
+    vm.nr_hugepages: "1024"
+  kernel:
+    modules:
+      - name: nvme_tcp
+      - name: vfio_pci
+
   # certSANs:
   # - <load_balancer_ip>
-  # features:
-  #   kubePrism:
-  #     enabled: true
-  #     port: 7445
   kubelet:
+    extraMounts:
+      - destination: /var/lib/longhorn
+        type: bind
+        source: /var/lib/longhorn
+        options:
+          - bind
+          - rshared
+          - rw
     extraArgs:
-        rotate-server-certificates: true
+      rotate-server-certificates: true
 
 cluster:
   network:

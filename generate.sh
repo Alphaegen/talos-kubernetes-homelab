@@ -64,6 +64,7 @@ yq -o=json '.nodes[]' "$NODES_FILE" | jq -c '.' | while read -r node; do
     --with-secrets "$SECRETS_FILE" \
     --config-patch "$(yq -o=json <patches/$ROLE.yaml)" \
     --config-patch "$NETWORK_PATCH" \
+    --config-patch @patches/disk.yaml \
     --output-types "$ROLE" \
     --output-dir "$NODE_DIR" \
     --force

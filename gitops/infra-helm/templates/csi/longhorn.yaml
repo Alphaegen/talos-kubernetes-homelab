@@ -1,0 +1,61 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/refs/heads/main/argoproj.io/application_v1alpha1.json
+{{- if .Values.longhorn.enabled }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ .Values.cluster.name }}-longhorn
+  labels:
+    cluster: {{ .Values.cluster.name | quote }}
+    app: longhorn
+  namespace: {{ .Values.cluster.namespace | quote }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+    app.kubernetes.io/part-of: longhorn
+    {{- if .Values.notifications }}
+    {{ toYaml .Values.notifications | indent 4 }}
+    {{- end }}
+spec:
+  project: {{ .Values.cluster.name }}
+  destination:
+    server: {{ .Values.cluster.url | default "https://kubernetes.default.svc" | quote }}
+    namespace: longhorn-system
+  syncPolicy:
+    {{- if .Values.sync }}
+    automated:
+      prune: true
+      selfHeal: true
+    {{- end }}
+    syncOptions:
+      - CreateNamespace=true
+    managedNamespaceMetadata:
+      labels:
+        pod-security.kubernetes.io/enforce: privileged
+        pod-security.kubernetes.io/warn: privileged
+        pod-security.kubernetes.io/audit: privileged
+  source:
+    repoURL: https://charts.longhorn.io
+    chart: longhorn
+    targetRevision: {{ .Values.longhorn.version | quote }}
+    helm:
+      releaseName: longhorn
+      values: |
+        defaultSettings:
+          defaultDataPath: /var/mnt/longhorn
+          defaultReplicaCount: {{ .Values.longhorn.defaultReplicaCount | default 2 }}
+
+        service:
+          ui:
+            type: ClusterIP
+
+        ingress:
+          enabled: true
+          ingressClassName: nginx
+          host: longhorn.{{ .Values.cluster.name }}.nl
+          tls: true
+          tlsSecret: longhorn-tls-secret  # cert-manager will write into this
+          annotations:
+            cert-manager.io/cluster-issuer: "letsencrypt-dns"
+            nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+            # leave backend-protocol unset; UI service is HTTP (secureBackends=false)
+{{- end }}
+

@@ -84,7 +84,6 @@ monitoring:
         cert-manager:
           gnetId: 11001
           revision: 1
-          datasource: Prometheus
 
   loki:
     version: 6.35.1

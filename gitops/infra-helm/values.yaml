@@ -115,7 +115,7 @@ monitoring:
     version: 76.1.0
     prometheusSpec:
       retention: 30d
-      retentionSize: 20Gi
+      retentionSize: 20GiB
       walCompression: true
       scrapeInterval: 30s
       enableAdminAPI: false

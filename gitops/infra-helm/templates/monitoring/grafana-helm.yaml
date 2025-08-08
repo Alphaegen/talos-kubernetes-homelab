@@ -34,9 +34,16 @@ spec:
     helm:
       releaseName: grafana
       values: |
+        serviceMonitor:
+          enabled: true
+          labels:
+            release: kube-prometheus-stack
+          interval: 30s
         ingress:
 {{ toYaml .Values.monitoring.grafana.ingress | indent 10 }}
         datasources:
 {{ toYaml .Values.monitoring.grafana.datasources | indent 10 }}
+        dashboards:
+{{ toYaml .Values.monitoring.grafana.dashboards | indent 10 }}
 {{- end }}
 

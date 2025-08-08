@@ -69,11 +69,11 @@ spec:
 
         persistence:
           enabled: true
-          storageClass: {{ .Values.storageClass | default "longhorn" | quote }}
+          storageClass: {{ .Values.homeassistant.storage.storageClassName | default "longhorn" | quote }}
           accessMode: ReadWriteOnce
           size: {{ .Values.homeassistant.storage.size | default "10Gi" | quote }}
           # alternatively, bind an existing claim:
-          # existingClaim: {{ .Values.homeassistant.persistence.existingClaim | default "" | quote }}
+          # existingClaim: {{ .Values.homeassistant.storage.existingClaim | default "" | quote }}
 
         # Enable ONLY if you rely on mDNS/UPnP discovery from the host network
         hostNetwork: {{ .Values.homeassistant.hostNetwork | default false }}

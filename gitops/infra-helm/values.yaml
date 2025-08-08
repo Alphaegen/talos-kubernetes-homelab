@@ -163,7 +163,9 @@ homeassistant:
     tag: ""
 
   storage:
+    storageClassName: longhorn
     size: "20Gi"
+    existingClaim: ""
 
   # Use host networking only if you NEED local discovery via mDNS/UPnP
   hostNetwork: false

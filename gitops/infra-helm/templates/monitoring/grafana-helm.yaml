@@ -63,7 +63,7 @@ spec:
         sidecar:
           dashboards:
             enabled: true
-            # Watch all namespaces for ConfigMaps/Secrets labeled grafana_dashboard
+            labelValue: "1"
             searchNamespace: ALL
             label: grafana_dashboard
           datasources:

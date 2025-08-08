@@ -35,6 +35,7 @@ ceph:
   version: 1.17.7
 
 monitoring:
+  enabled: true
   grafana:
     ingress:
       enabled: true

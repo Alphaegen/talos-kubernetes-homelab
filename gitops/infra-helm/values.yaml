@@ -15,6 +15,10 @@ metallb:
   endpoints:
     - "192.168.3.110-192.168.3.129"
 
+longhorn:
+  enabled: true
+  version: 1.9.1
+
 certmanager:
   enabled: true
   version: v1.18.2

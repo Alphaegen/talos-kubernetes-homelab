@@ -155,5 +155,24 @@ monitoring:
   nodeExporter:
     enabled: true
 
+homeassistant:
+  enabled: true
+  namespace: home-assistant
+  version: "0.3.14"
+  image:
+    tag: ""
+
+  storage:
+    size: "20Gi"
+
+  # Use host networking only if you NEED local discovery via mDNS/UPnP
+  hostNetwork: false
+
+  serviceMonitor:
+    enabled: true
+    scrapeInterval: "30s"
+    release: "kube-prometheus-stack"
+
+
 raw:
   version: 2.0.0

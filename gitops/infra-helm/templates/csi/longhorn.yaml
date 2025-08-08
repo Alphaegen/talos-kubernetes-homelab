@@ -52,10 +52,9 @@ spec:
           ingressClassName: nginx
           host: longhorn.{{ .Values.cluster.name }}.nl
           tls: true
-          tlsSecret: longhorn-tls-secret  # cert-manager will write into this
+          tlsSecret: longhorn-tls-secret
           annotations:
             cert-manager.io/cluster-issuer: "letsencrypt-dns"
             nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
-            # leave backend-protocol unset; UI service is HTTP (secureBackends=false)
 {{- end }}
 

@@ -1,0 +1,97 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/refs/heads/main/argoproj.io/application_v1alpha1.json
+{{- if .Values.homeassistant.enabled }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ .Values.cluster.name }}-home-assistant
+  namespace: {{ .Values.cluster.namespace | quote }}
+  labels:
+    cluster: {{ .Values.cluster.name | quote }}
+    app: home-assistant
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+    app.kubernetes.io/part-of: smarthome
+    {{- if .Values.notifications }}
+    {{ toYaml .Values.notifications | indent 4 }}
+    {{- end }}
+spec:
+  project: {{ .Values.cluster.name }}
+  destination:
+    server: {{ .Values.cluster.url | default "https://kubernetes.default.svc" | quote }}
+    namespace: {{ .Values.homeassistant.namespace | default "home-assistant" | quote }}
+  syncPolicy:
+    {{- if .Values.sync }}
+    automated:
+      prune: true
+      selfHeal: true
+    {{- end }}
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+    managedNamespaceMetadata:
+      labels:
+        # Only needed if you plan to mount USB devices and run privileged
+        pod-security.kubernetes.io/enforce: privileged
+        pod-security.kubernetes.io/warn: privileged
+        pod-security.kubernetes.io/audit: privileged
+  source:
+    repoURL: http://pajikos.github.io/home-assistant-helm-chart/
+    chart: home-assistant
+    targetRevision: {{ .Values.homeassistant.version | quote }}
+    helm:
+      releaseName: home-assistant
+      values: |
+        controller:
+          type: StatefulSet
+        image:
+          tag: {{ .Values.homeassistant.image.tag | default "" | quote }}
+        env:
+          - name: TZ
+            value: {{ .Values.timezone | default "Europe/Amsterdam" | quote }}
+        service:
+          type: ClusterIP
+          port: 8080
+        ingress:
+          enabled: true
+          className: {{ .Values.ingress.className | default "nginx" | quote }}
+          annotations:
+            nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+            cert-manager.io/cluster-issuer: {{ .Values.certManager.clusterIssuer | quote }}
+          hosts:
+            - host: home-assistant.{{ .Values.cluster.name }}.nl
+              paths:
+                - path: /
+                  pathType: Prefix
+          tls:
+            - hosts:
+                - {{ .Values.homeassistant.host | quote }}
+              secretName: home-assistant-tls
+        persistence:
+          enabled: true
+          storageClass: {{ .Values.storageClass | default "longhorn" | quote }}
+          accessMode: ReadWriteOnce
+          size: {{ .Values.homeassistant.storage.size | default "10Gi" | quote }}
+          # alternatively, bind an existing claim:
+          # existingClaim: {{ .Values.homeassistant.persistence.existingClaim | default "" | quote }}
+        # Enable ONLY if you rely on mDNS/UPnP discovery from the host network
+        hostNetwork: {{ .Values.homeassistant.hostNetwork | default false }}
+        dnsPolicy: {{ if .Values.homeassistant.hostNetwork | default false }}ClusterFirstWithHostNet{{ else }}ClusterFirst{{ end }}
+        # Optional Prometheus scraping (requires HA's Prometheus integration)
+        serviceMonitor:
+          enabled: {{ .Values.homeassistant.serviceMonitor.enabled | default true }}
+          scrapeInterval: {{ .Values.homeassistant.serviceMonitor.scrapeInterval | default "30s" | quote }}
+          labels:
+            release: {{ .Values.homeassistant.serviceMonitor.release | default "prometheus" | quote }}
+        # USB passthrough example (e.g., Zigbee stick). Requires privileged:
+        # securityContext:
+        #   privileged: true
+        # additionalVolumes:
+        #   - hostPath:
+        #       path: /dev/serial/by-id/<your-usb-device>
+        #       type: CharDevice
+        #     name: usb
+        # additionalMounts:
+        #   - mountPath: /dev/ttyACM0
+        #     name: usb
+{{- end }}
+

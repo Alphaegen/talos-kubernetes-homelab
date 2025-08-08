@@ -3,10 +3,10 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: {{ .Values.cluster.name }}-loki
+  name: {{ .Values.cluster.name }}-promtail
   labels:
     cluster: {{ .Values.cluster.name | quote }}
-    app: loki
+    app: promtail
   namespace: {{ .Values.cluster.namespace | quote }}
   annotations:
     argocd.argoproj.io/sync-wave: "1"
@@ -34,20 +34,12 @@ spec:
         pod-security.kubernetes.io/audit: privileged
   source:
     repoURL: https://grafana.github.io/helm-charts
-    chart: loki
-    targetRevision: {{ .Values.monitoring.loki.version | quote }}
+    chart: promtail
+    targetRevision: {{ .Values.monitoring.promtail.version | default "6.15.5" | quote }}
     helm:
-      releaseName: loki
+      releaseName: promtail
       values: |
-        loki:
-          auth_enabled: {{ .Values.monitoring.loki.auth_enabled }}
-          commonConfig:
-            replication_factor: {{ .Values.monitoring.loki.commonConfig.replication_factor }}
-          storage:
-            type: {{ .Values.monitoring.loki.storage.type }}
-          limits_config:
-            retention_period: {{ .Values.monitoring.loki.limits_config.retention_period | quote }}
-          gateway:
-            enabled: {{ .Values.monitoring.loki.gateway.enabled }}
+        config:
+{{ toYaml .Values.monitoring.promtail | indent 10 }}
 {{- end }}
 

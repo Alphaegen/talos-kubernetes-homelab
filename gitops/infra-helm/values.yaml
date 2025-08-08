@@ -75,8 +75,8 @@ monitoring:
           revision: 6
           datasource: Loki
         k8s:
-          gnetId: 15661
-          revision: 2
+          gnetId: 315
+          revision: 3
           datasource: Prometheus
         argocd:
           gnetId: 14584

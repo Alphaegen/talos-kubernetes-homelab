@@ -39,7 +39,6 @@ spec:
     helm:
       releaseName: promtail
       values: |
-        config:
-{{ toYaml .Values.monitoring.promtail | indent 10 }}
+{{ toYaml .Values.monitoring.promtail | indent 8 }}
 {{- end }}
 

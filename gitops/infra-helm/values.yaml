@@ -63,6 +63,14 @@ monitoring:
 
   loki:
     version: 6.35.1
+    deploymentMode: SingleBinary
+    singleBinary:
+      replicas: 1
+      persistence:
+        enabled: true
+        size: 20Gi
+        storageClassName: longhorn
+
     auth_enabled: false
     commonConfig:
       replication_factor: 1
@@ -70,15 +78,38 @@ monitoring:
       type: filesystem
     limits_config:
       retention_period: 168h  # 7d
+    schemaConfig:
+      configs:
+        - from: 2020-10-24
+          store: boltdb-shipper
+          object_store: filesystem
+          schema: v13
+          index:
+            prefix: loki_index_
+            period: 24h
+
     gateway:
       enabled: true
 
   promtail:
-    clients:
-      - url: http://loki-gateway.monitoring.svc:80/loki/api/v1/push
-    snippets:
-      pipelineStages:
-        - cri: {}  # Talos/k8s-friendly parsing
+    version: 6.17.0
+    extraVolumes:
+      - name: positions
+        hostPath:
+          path: /var/lib/promtail
+          type: DirectoryOrCreate
+    extraVolumeMounts:
+      - name: positions
+        mountPath: /run/promtail
+        readOnly: false
+    config:
+      positions:
+        filename: /run/promtail/positions.yaml
+      clients:
+        - url: http://loki-gateway.monitoring.svc:80/loki/api/v1/push
+      snippets:
+        pipelineStages:
+          - cri: {}
 
   prometheus:
     version: 76.1.0

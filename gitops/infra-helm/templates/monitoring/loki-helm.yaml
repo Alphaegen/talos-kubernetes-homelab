@@ -39,15 +39,19 @@ spec:
     helm:
       releaseName: loki
       values: |
+        # chart-level keys
+        deploymentMode: {{ .Values.monitoring.loki.deploymentMode | default "SingleBinary" | quote }}
+        {{- if .Values.monitoring.loki.singleBinary }}
+        singleBinary:
+{{ toYaml .Values.monitoring.loki.singleBinary | indent 10 }}
+        {{- end }}
+
+        # main loki config block
         loki:
-          auth_enabled: {{ .Values.monitoring.loki.auth_enabled }}
-          commonConfig:
-            replication_factor: {{ .Values.monitoring.loki.commonConfig.replication_factor }}
-          storage:
-            type: {{ .Values.monitoring.loki.storage.type }}
-          limits_config:
-            retention_period: {{ .Values.monitoring.loki.limits_config.retention_period | quote }}
-          gateway:
-            enabled: {{ .Values.monitoring.loki.gateway.enabled }}
+{{ toYaml (omit .Values.monitoring.loki "version" "gateway" "singleBinary" "deploymentMode") | indent 10 }}
+
+        # gateway is a sibling, not inside 'loki:'
+        gateway:
+{{ toYaml .Values.monitoring.loki.gateway | indent 10 }}
 {{- end }}
 

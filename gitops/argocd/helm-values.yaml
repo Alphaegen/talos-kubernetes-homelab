@@ -1,6 +1,9 @@
 global:
   domain: argocd.homelab.niekvlam.nl
 
+redis-ha:
+  enabled: true
+
 server:
   replicas: 2
   ingress:
@@ -12,18 +15,51 @@ server:
       cert-manager.io/cluster-issuer: "letsencrypt-dns"
     tls: true
     extraTls:
-      - hosts:
-          - argocd.homelab.niekvlam.nl
+      - hosts: [ "argocd.homelab.niekvlam.nl" ]
         secretName: argocd-tls
-
-redis-ha:
-  enabled: true
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+      interval: 30s
+      additionalLabels:
+        release: kube-prometheus-stack
 
 controller:
   replicas: 1
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+      interval: 30s
+      additionalLabels:
+        release: kube-prometheus-stack
 
 repoServer:
   replicas: 2
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+      interval: 30s
+      additionalLabels:
+        release: kube-prometheus-stack
 
 applicationSet:
   replicas: 2
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+      interval: 30s
+      additionalLabels:
+        release: kube-prometheus-stack
+
+notifications:
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+      interval: 30s
+      additionalLabels:
+        release: kube-prometheus-stack

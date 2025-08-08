@@ -41,5 +41,14 @@ spec:
       version: v3
       releaseName: cert-manager
       values: |
-        installCRDs: true
+        installCRDs: true  # or crds.enabled: true on newer charts
+        prometheus:
+          enabled: true
+          podmonitor:
+            enabled: true
+            # Make these labels match your kube-prometheus-stack selectors:
+            labels:
+              release: kube-prometheus-stack
+            # If your Prometheus looks in a different namespace for PodMonitors, set it:
+            # namespace: monitoring
 {{- end }}

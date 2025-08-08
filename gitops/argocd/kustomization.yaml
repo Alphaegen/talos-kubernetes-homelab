@@ -10,6 +10,8 @@ helmCharts:
     releaseName: argocd
     namespace: argocd
     valuesFile: helm-values.yaml
+    apiVersions:                # <-- make Capabilities.Has(...) true
+      - monitoring.coreos.com/v1
 
 resources:
   - ./namespace.yaml

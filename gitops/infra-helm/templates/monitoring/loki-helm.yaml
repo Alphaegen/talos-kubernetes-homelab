@@ -66,8 +66,9 @@ spec:
         loki:
 {{ toYaml (omit .Values.monitoring.loki "version" "gateway" "singleBinary" "deploymentMode") | indent 10 }}
 
-        # gateway is a sibling, not inside 'loki:'
+        {{- if .Values.monitoring.loki.gateway }}
         gateway:
 {{ toYaml .Values.monitoring.loki.gateway | indent 10 }}
+        {{- end }}
 {{- end }}
 

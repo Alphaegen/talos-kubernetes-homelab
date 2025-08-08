@@ -45,9 +45,19 @@ spec:
             release: kube-prometheus-stack
           interval: 30s
 
-        dashboardsProvider:
-          enabled: true
-          foldersFromFilesStructure: true
+        dashboardProviders:
+          dashboardproviders.yaml:
+            apiVersion: 1
+            providers:
+              - name: 'default'
+                orgId: 1
+                folder: ''
+                type: file
+                disableDeletion: false
+                allowUiUpdates: true
+                editable: true
+                options:
+                  path: /var/lib/grafana/dashboards/default
 
         # Sidecars to load dashboards & datasources into Grafana
         sidecar:

@@ -39,8 +39,6 @@ spec:
           metrics:
             enabled: true
 
-        downloadDashboards: true
-
         serviceMonitor:
           enabled: true
           labels:

@@ -162,7 +162,7 @@ homeassistant:
   image:
     tag: ""
 
-  trusted_proxys:
+  trusted_proxies:
     - 10.244.0.0/16
 
   storage:

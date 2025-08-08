@@ -27,7 +27,6 @@ spec:
     {{- end }}
     syncOptions:
       - CreateNamespace=true
-      - ServerSideApply=true
     managedNamespaceMetadata:
       labels:
         pod-security.kubernetes.io/enforce: privileged
@@ -43,6 +42,7 @@ spec:
         grafana:
           enabled: false
         prometheus:
+          enabled: true
           prometheusSpec:
             retention: {{ .Values.monitoring.prometheus.prometheusSpec.retention | quote }}
             retentionSize: {{ .Values.monitoring.prometheus.prometheusSpec.retentionSize | quote }}

@@ -20,7 +20,7 @@ spec:
     automated: { prune: true, selfHeal: true }
     {{- end }}
   source:
-    repoURL: {{ .Values.cluster.repoURL | default .Values.global.repoURL | quote }}
+    repoURL: {{ .Values.cluster.repoURL | quote }}
     targetRevision: {{ .Values.cluster.revision | default "main" | quote }}
     path: gitops/infra-custom/kyverno
     helm:

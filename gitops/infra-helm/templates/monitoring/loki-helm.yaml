@@ -9,7 +9,7 @@ metadata:
     app: loki
   namespace: {{ .Values.cluster.namespace | quote }}
   annotations:
-    argocd.argoproj.io/sync-wave: "1"
+    argocd.argoproj.io/sync-wave: "2"
     app.kubernetes.io/part-of: monitoring
     {{- if .Values.notifications }}
     {{ toYaml .Values.notifications | indent 4 }}

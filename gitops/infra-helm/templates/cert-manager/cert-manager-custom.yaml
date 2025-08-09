@@ -34,7 +34,7 @@ spec:
         pod-security.kubernetes.io/audit: privileged
         pod-security.kubernetes.io/warn: privileged
   source:
-    repoURL: git@github.com:Alphaegen/talos-homelab.git
+    repoURL: {{ .Values.cluster.repoURL | default .Values.global.repoURL | quote }}
     path: gitops/infra-custom/cert-manager
     targetRevision: HEAD
     helm:

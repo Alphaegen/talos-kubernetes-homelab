@@ -1,0 +1,40 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/refs/heads/main/argoproj.io/application_v1alpha1.json
+{{- if .Values.security.enabled }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ .Values.cluster.name }}-kyverno
+  labels:
+    cluster: {{ .Values.cluster.name | quote }}
+    app: kyverno
+  namespace: {{ .Values.cluster.namespace | quote }}
+  annotations:
+    # Install the admission controller early, before policies & scanners.
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  project: {{ .Values.cluster.name }}
+  destination:
+    server: {{ .Values.cluster.url | default "https://kubernetes.default.svc" | quote }}
+    namespace: kyverno
+  syncPolicy:
+    {{- if .Values.sync }}
+    automated:
+      prune: true
+      selfHeal: true
+    {{- end }}
+    syncOptions: [CreateNamespace=true]
+  source:
+    repoURL: https://kyverno.github.io/kyverno
+    chart: kyverno
+    targetRevision: {{ .Values.security.kyverno.version | quote }}
+    helm:
+      releaseName: kyverno
+      values: |
+        admissionController:
+          replicas: 2
+        backgroundController:
+          replicas: 1
+        reportsController:
+          replicas: 1
+{{- end }}
+

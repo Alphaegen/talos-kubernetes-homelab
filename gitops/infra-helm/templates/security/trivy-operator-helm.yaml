@@ -1,0 +1,45 @@
+{{- if .Values.security.enabled }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ .Values.cluster.name }}-trivy-operator
+  labels:
+    cluster: {{ .Values.cluster.name | quote }}
+    app: trivy-operator
+  namespace: {{ .Values.cluster.namespace | quote }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+spec:
+  project: {{ .Values.cluster.name }}
+  destination:
+    server: {{ .Values.cluster.url | default "https://kubernetes.default.svc" | quote }}
+    namespace: trivy-system
+  syncPolicy:
+    {{- if .Values.sync }}
+    automated:
+      prune: true
+      selfHeal: true
+    {{- end }}
+    syncOptions: [CreateNamespace=true]
+  source:
+    repoURL: https://aquasecurity.github.io/helm-charts
+    chart: trivy-operator
+    targetRevision: {{ .Values.security.trivy.version | quote }}
+    helm:
+      releaseName: trivy-operator
+      values: |
+        operator:
+          scanJobsConcurrentLimit: 2
+          vulnerabilityScannerScanOnlyCurrentRevisions: true
+          metricsVulnIdEnabled: true
+        trivy:
+          ignoreUnfixed: true
+          severity: "HIGH,CRITICAL"
+          timeout: 5m
+        serviceMonitor:
+          enabled: true
+          labels:
+            release: {{ .Values.security.trivy.serviceMonitorLabel }}
+          interval: 30s
+{{- end }}
+

@@ -1,6 +1,8 @@
 cluster:
   name: homelab.niekvlam
   namespace: argocd
+  repoURL: "git@github.com:Alphaegen/talos-homelab.git"
+  revision: "main"
 
 sync: true
 
@@ -177,6 +179,26 @@ homeassistant:
     enabled: true
     scrapeInterval: "30s"
     release: "kube-prometheus-stack"
+
+# Security
+security:
+  enabled: true
+
+  kyverno:
+    version: 3.2.6
+    # Start in audit to avoid surprise breakages; flip to "enforce" later.
+    mode: audit # audit | enforce
+    excludeNamespaces:
+      - kube-system
+      - metallb-system
+      - longhorn-system
+      - monitoring
+      - ingress-nginx
+      - argocd
+
+  trivy:
+    version: 0.22.1
+    serviceMonitorLabel: kube-prometheus-stack
 
 
 raw:

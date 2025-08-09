@@ -1,0 +1,33 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/refs/heads/main/argoproj.io/application_v1alpha1.json
+{{- if and .Values.security.enabled .Values.security.kyverno }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ .Values.cluster.name }}-kyverno-policies
+  labels:
+    cluster: {{ .Values.cluster.name | quote }}
+    app: kyverno-policies
+  namespace: {{ .Values.cluster.namespace | quote }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  project: {{ .Values.cluster.name }}
+  destination:
+    server: {{ .Values.cluster.url | default "https://kubernetes.default.svc" | quote }}
+    namespace: kyverno
+  syncPolicy:
+    {{- if .Values.sync }}
+    automated: { prune: true, selfHeal: true }
+    {{- end }}
+  source:
+    repoURL: {{ .Values.cluster.repoURL | default .Values.global.repoURL | quote }}
+    targetRevision: {{ .Values.cluster.revision | default "main" | quote }}
+    path: gitops/infra-custom/kyverno
+    helm:
+      values: |-
+        mode: {{ .Values.security.kyverno.mode | default "audit" }}
+        excludeNamespaces:
+        {{- range $ns := .Values.security.kyverno.excludeNamespaces }}
+          - {{ $ns }}
+        {{- end }}
+{{- end }}

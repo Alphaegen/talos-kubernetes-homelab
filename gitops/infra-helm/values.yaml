@@ -29,7 +29,7 @@ certmanager:
     server: "https://acme-v02.api.letsencrypt.org/directory"
 
 sealedsecrets:
-  enabled: true
+  enabled: false
   version: 2.17.3
 
 ceph:
@@ -183,6 +183,16 @@ homeassistant:
 # Security
 security:
   enabled: true
+
+  vault:
+    version: 0.30.1
+    host: vault.homelab.niekvlam.nl
+    storageSize: 10Gi
+
+  eso:
+    version: 0.19.1
+    serviceMonitorLabel: kube-prometheus-stack
+    bootstrap: false
 
   kyverno:
     version: 3.5.0

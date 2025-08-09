@@ -52,6 +52,15 @@ spec:
           type: ClusterIP
           port: 8080
 
+        initContainers:
+          - name: init-hacs
+            image: bash
+            command: ["bash", "-c", "cd /config && wget -O - https://get.hacs.xyz | bash -"]
+            volumeMounts:
+              - mountPath: /config
+                name: home-assistant
+
+
         configuration:
           # Enable or disable the configuration setup for Home Assistant
           enabled: true

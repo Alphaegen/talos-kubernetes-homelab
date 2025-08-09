@@ -56,9 +56,6 @@ spec:
               nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
             hosts:
               - host: {{ .Values.security.vault.host }}
-                paths:
-                  - path: /
-                    pathType: Prefix
             tls:
               - secretName: vault-tls
                 hosts:

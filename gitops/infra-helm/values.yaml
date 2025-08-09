@@ -192,7 +192,7 @@ security:
   eso:
     version: 0.19.1
     serviceMonitorLabel: kube-prometheus-stack
-    bootstrap: false
+    bootstrap: true
 
   kyverno:
     version: 3.5.0

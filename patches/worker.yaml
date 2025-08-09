@@ -20,6 +20,11 @@ machine:
           - rw
     extraArgs:
       rotate-server-certificates: true
+  features:
+    hostDNS:
+      enabled: false
+      forwardKubeDNSToHost: false
+
 
 cluster:
   network:

@@ -185,7 +185,7 @@ security:
   enabled: true
 
   kyverno:
-    version: 3.2.6
+    version: 3.5.0
     # Start in audit to avoid surprise breakages; flip to "enforce" later.
     mode: audit # audit | enforce
     excludeNamespaces:
@@ -197,7 +197,7 @@ security:
       - argocd
 
   trivy:
-    version: 0.22.1
+    version: 0.30.0
     serviceMonitorLabel: kube-prometheus-stack
 
 

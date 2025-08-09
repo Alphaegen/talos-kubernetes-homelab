@@ -42,5 +42,17 @@ spec:
           labels:
             release: {{ .Values.security.trivy.serviceMonitorLabel }}
           interval: 30s
+
+          admissionController:
+            enabled: false
+
+          configAuditScanner:
+            # explicitly disable any external Rego sources
+            external:
+              policies:
+                configMaps: []
+                git:
+                  repositories: []
+
 {{- end }}
 

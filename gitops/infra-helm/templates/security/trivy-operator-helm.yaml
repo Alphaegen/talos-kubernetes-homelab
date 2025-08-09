@@ -33,16 +33,6 @@ spec:
           scanJobsConcurrentLimit: 2
           vulnerabilityScannerScanOnlyCurrentRevisions: true
           metricsVulnIdEnabled: true
-        trivy:
-          ignoreUnfixed: true
-          severity: "HIGH,CRITICAL"
-          timeout: 5m
-        serviceMonitor:
-          enabled: true
-          labels:
-            release: {{ .Values.security.trivy.serviceMonitorLabel }}
-          interval: 30s
-
           admissionController:
             enabled: false
 
@@ -54,5 +44,14 @@ spec:
                 git:
                   repositories: []
 
+        trivy:
+          ignoreUnfixed: true
+          severity: "HIGH,CRITICAL"
+          timeout: 5m
+        serviceMonitor:
+          enabled: true
+          labels:
+            release: {{ .Values.security.trivy.serviceMonitorLabel }}
+          interval: 30s
 {{- end }}
 

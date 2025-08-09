@@ -20,7 +20,8 @@ spec:
       prune: true
       selfHeal: true
     {{- end }}
-    syncOptions: [CreateNamespace=true]
+    syncOptions:
+      - CreateNamespace=true
   source:
     repoURL: https://aquasecurity.github.io/helm-charts
     chart: trivy-operator

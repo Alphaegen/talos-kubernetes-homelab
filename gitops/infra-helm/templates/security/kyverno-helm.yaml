@@ -22,7 +22,9 @@ spec:
       prune: true
       selfHeal: true
     {{- end }}
-    syncOptions: [CreateNamespace=true]
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
   source:
     repoURL: https://kyverno.github.io/kyverno
     chart: kyverno

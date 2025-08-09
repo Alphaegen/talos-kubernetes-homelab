@@ -17,7 +17,9 @@ spec:
     namespace: kyverno
   syncPolicy:
     {{- if .Values.sync }}
-    automated: { prune: true, selfHeal: true }
+    automated:
+      prune: true
+      selfHeal: true
     {{- end }}
   source:
     repoURL: {{ .Values.cluster.repoURL | quote }}

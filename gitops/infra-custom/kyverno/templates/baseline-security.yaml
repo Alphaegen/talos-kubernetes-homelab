@@ -3,7 +3,7 @@ kind: ClusterPolicy
 metadata:
   name: baseline-security
 spec:
-  validationFailureAction: {{- if eq .Values.mode "enforce" -}}Enforce{{- else -}}Audit{{- end }}
+  validationFailureAction: {{ ternary "Enforce" "Audit" (eq .Values.mode "enforce") }}
   background: true
   rules:
     - name: disallow-latest
@@ -13,9 +13,9 @@ spec:
               kinds: ["Pod","Deployment","StatefulSet","DaemonSet","Job","CronJob"]
               namespaces:
                 - "!kube-system"
-                {{- range .Values.excludeNamespaces }}
-                - "!{{ . }}"
-                {{- end }}
+{{- range $ns := .Values.excludeNamespaces }}
+                - "!{{ $ns }}"
+{{- end }}
       validate:
         message: "Images must not use the :latest tag"
         pattern:
@@ -30,9 +30,9 @@ spec:
               kinds: ["Deployment","StatefulSet"]
               namespaces:
                 - "!kube-system"
-                {{- range .Values.excludeNamespaces }}
-                - "!{{ . }}"
-                {{- end }}
+{{- range $ns := .Values.excludeNamespaces }}
+                - "!{{ $ns }}"
+{{- end }}
       validate:
         message: "Containers must define liveness and readiness probes"
         pattern:
@@ -50,9 +50,9 @@ spec:
               kinds: ["Pod"]
               namespaces:
                 - "!kube-system"
-                {{- range .Values.excludeNamespaces }}
-                - "!{{ . }}"
-                {{- end }}
+{{- range $ns := .Values.excludeNamespaces }}
+                - "!{{ $ns }}"
+{{- end }}
       validate:
         message: "Privileged/host features are restricted by default"
         pattern:
@@ -65,4 +65,3 @@ spec:
                   readOnlyRootFilesystem: true
             securityContext:
               runAsNonRoot: true
-

@@ -11,10 +11,13 @@ spec:
         any:
           - resources:
               kinds: ["Pod","Deployment","StatefulSet","DaemonSet","Job","CronJob"]
+              namespaces: ["*"]          # match everywhere
+      exclude:
+        any:
+          - resources:
               namespaces:
-                - "!kube-system"
 {{- range $ns := .Values.excludeNamespaces }}
-                - "!{{ $ns }}"
+                - "{{ $ns }}"
 {{- end }}
       validate:
         message: "Images must not use the :latest tag"
@@ -28,10 +31,13 @@ spec:
         any:
           - resources:
               kinds: ["Deployment","StatefulSet"]
+              namespaces: ["*"]          # match everywhere
+      exclude:
+        any:
+          - resources:
               namespaces:
-                - "!kube-system"
 {{- range $ns := .Values.excludeNamespaces }}
-                - "!{{ $ns }}"
+                - "{{ $ns }}"
 {{- end }}
       validate:
         message: "Containers must define liveness and readiness probes"
@@ -48,10 +54,13 @@ spec:
         any:
           - resources:
               kinds: ["Pod"]
+              namespaces: ["*"]          # match everywhere
+      exclude:
+        any:
+          - resources:
               namespaces:
-                - "!kube-system"
 {{- range $ns := .Values.excludeNamespaces }}
-                - "!{{ $ns }}"
+                - "{{ $ns }}"
 {{- end }}
       validate:
         message: "Privileged/host features are restricted by default"

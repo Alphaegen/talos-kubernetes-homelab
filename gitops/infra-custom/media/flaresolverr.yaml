@@ -52,28 +52,28 @@ spec:
     - { name: http, port: 8191, targetPort: http }
 ---
 # Optional but recommended if you use NetworkPolicies
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: flaresolverr-allow-media-apps
-  namespace: media
-spec:
-  podSelector:
-    matchLabels: { app: flaresolverr }
-  policyTypes: [Ingress, Egress]
-  ingress:
-    - from:
-        - podSelector:
-            matchExpressions:
-              - key: app
-                operator: In
-                values: ["prowlarr","sonarr","radarr"]
-      ports:
-        - { port: 8191, protocol: TCP }
-  egress:
-    - to:
-        - ipBlock: { cidr: 0.0.0.0/0 }
-      ports:
-        - { protocol: TCP, port: 80 }
-        - { protocol: TCP, port: 443 }
-
+# apiVersion: networking.k8s.io/v1
+# kind: NetworkPolicy
+# metadata:
+#   name: flaresolverr-allow-media-apps
+#   namespace: media
+# spec:
+#   podSelector:
+#     matchLabels: { app: flaresolverr }
+#   policyTypes: [Ingress, Egress]
+#   ingress:
+#     - from:
+#         - podSelector:
+#             matchExpressions:
+#               - key: app
+#                 operator: In
+#                 values: ["prowlarr","sonarr","radarr"]
+#       ports:
+#         - { port: 8191, protocol: TCP }
+#   egress:
+#     - to:
+#         - ipBlock: { cidr: 0.0.0.0/0 }
+#       ports:
+#         - { protocol: TCP, port: 80 }
+#         - { protocol: TCP, port: 443 }
+#

@@ -184,6 +184,9 @@ homeassistant:
 security:
   enabled: true
 
+  keycloak:
+    enabled: false
+
   vault:
     version: 0.30.1
     host: vault.homelab.niekvlam.nl

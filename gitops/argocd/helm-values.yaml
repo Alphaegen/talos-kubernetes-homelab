@@ -8,16 +8,28 @@ server:
   replicas: 2
   ingress:
     enabled: true
+    insecure: true
     ingressClassName: nginx
     annotations:
       nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
-      nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+      nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
       cert-manager.io/cluster-issuer: "letsencrypt-dns"
-      nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+      nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"          # keep SSE open
       nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
-      nginx.ingress.kubernetes.io/proxy-buffering: "off"
+      nginx.ingress.kubernetes.io/proxy-buffering: "off"              # do NOT buffer SSE
       nginx.ingress.kubernetes.io/proxy-request-buffering: "off"
+      nginx.ingress.kubernetes.io/proxy-max-temp-file-size: "0"       # avoid disk buffering
+      nginx.ingress.kubernetes.io/proxy-http-version: "1.1"           # explicit for upstream
       nginx.ingress.kubernetes.io/keepalive: "64"
+      nginx.ingress.kubernetes.io/server-snippet: |
+        gzip off;
+
+      nginx.ingress.kubernetes.io/location-snippet: |
+        if ($request_uri ~* "^/api/v1/stream/") {
+          proxy_buffering off;
+          add_header X-Accel-Buffering no;
+        }
+
     tls: true
     extraTls:
       - hosts: [ "argocd.homelab.niekvlam.nl" ]

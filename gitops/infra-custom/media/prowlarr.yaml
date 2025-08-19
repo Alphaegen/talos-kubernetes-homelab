@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prowlarr
+  namespace: media
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: prowlarr } }
+  template:
+    metadata: { labels: { app: prowlarr } }
+    spec:
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+      containers:
+        - name: prowlarr
+          image: ghcr.io/linuxserver/prowlarr:latest
+          ports: [ { name: http, containerPort: 9696 } ]
+          env:
+            - { name: PUID,  value: "1000" }
+            - { name: PGID,  value: "1000" }
+            - { name: UMASK, value: "002" }
+          volumeMounts:
+            - { name: config, mountPath: /config }
+      volumes:
+        - { name: config, persistentVolumeClaim: { claimName: prowlarr-config } }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: prowlarr
+  namespace: media
+spec:
+  selector: { app: prowlarr }
+  ports:
+    - { name: http, port: 9696, targetPort: http }
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: prowlarr
+  namespace: media
+  annotations:
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-dns"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts: [ "prowlarr.homelab.niekvlam.nl" ]
+      secretName: prowlarr-tls
+  rules:
+    - host: prowlarr.homelab.niekvlam.nl
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service: { name: prowlarr, port: { number: 9696 } }
+

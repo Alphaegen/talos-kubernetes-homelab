@@ -11,9 +11,9 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "0"
     app.kubernetes.io/part-of: smarthome
-    nginx.ingress.kubernetes.io/auth-url: "http://{{ .Values.oauth2Proxy.serviceName }}.{{ .Values.oauth2Proxy.namespace }}.svc.cluster.local:4180/oauth2/auth"
-    nginx.ingress.kubernetes.io/auth-signin: "https://{{ printf "%s.%s.%s" .Values.oauth2Proxy.hostHA .Values.cluster.name .Values.cluster.domainSuffix }}/oauth2/start"
-    nginx.ingress.kubernetes.io/auth-response-headers: "Authorization, X-Auth-Request-Email, X-Auth-Request-User, X-Auth-Request-Groups"
+    # nginx.ingress.kubernetes.io/auth-url: "http://{{ .Values.oauth2Proxy.serviceName }}.{{ .Values.oauth2Proxy.namespace }}.svc.cluster.local:4180/oauth2/auth"
+    # nginx.ingress.kubernetes.io/auth-signin: "https://{{ printf "%s.%s.%s" .Values.oauth2Proxy.hostHA .Values.cluster.name .Values.cluster.domainSuffix }}/oauth2/start"
+    # nginx.ingress.kubernetes.io/auth-response-headers: "Authorization, X-Auth-Request-Email, X-Auth-Request-User, X-Auth-Request-Groups"
     {{- if .Values.notifications }}
     {{ toYaml .Values.notifications | indent 4 }}
     {{- end }}

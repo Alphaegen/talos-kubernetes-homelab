@@ -21,14 +21,6 @@ server:
       nginx.ingress.kubernetes.io/proxy-max-temp-file-size: "0"       # avoid disk buffering
       nginx.ingress.kubernetes.io/proxy-http-version: "1.1"           # explicit for upstream
       nginx.ingress.kubernetes.io/keepalive: "64"
-      nginx.ingress.kubernetes.io/server-snippet: |
-        gzip off;
-
-      nginx.ingress.kubernetes.io/location-snippet: |
-        if ($request_uri ~* "^/api/v1/stream/") {
-          proxy_buffering off;
-          add_header X-Accel-Buffering no;
-        }
 
     tls: true
     extraTls:

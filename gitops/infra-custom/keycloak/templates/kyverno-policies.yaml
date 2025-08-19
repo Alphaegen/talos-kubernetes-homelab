@@ -1,0 +1,26 @@
+{{- if .Values.features.kyvernoPolicies }}
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-grafana-oidc-secret
+spec:
+  validationFailureAction: enforce
+  rules:
+    - name: require-oidc-secret
+      match:
+        any:
+          - resources:
+              kinds: ["Deployment"]
+              namespaces: ["monitoring"]
+              names: ["grafana"]
+      validate:
+        message: "Grafana must mount OIDC secret."
+        pattern:
+          spec:
+            template:
+              spec:
+                volumes:
+                  - secret:
+                      secretName: grafana-oidc-secret
+{{- end }}
+

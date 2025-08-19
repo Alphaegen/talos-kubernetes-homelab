@@ -193,11 +193,13 @@ security:
     storageSize: 10Gi
 
   eso:
+    enabled: false
     version: 0.19.1
     serviceMonitorLabel: kube-prometheus-stack
     bootstrap: true
 
   kyverno:
+    enabled: false
     version: 3.5.0
     # Start in audit to avoid surprise breakages; flip to "enforce" later.
     mode: audit # audit | enforce
@@ -210,6 +212,7 @@ security:
       - argocd
 
   trivy:
+    enabled: false
     version: 0.30.0
     serviceMonitorLabel: kube-prometheus-stack
 

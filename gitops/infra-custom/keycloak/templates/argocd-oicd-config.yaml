@@ -1,0 +1,31 @@
+{{- if .Values.features.argocd }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-cm
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: argocd-cm
+data:
+  url: https://{{ printf "argocd.%s.%s" .Values.cluster.name .Values.cluster.domainSuffix }}
+  oidc.config: |
+    name: Keycloak
+    issuer: https://{{ printf "%s.%s.%s" .Values.keycloak.host .Values.cluster.name .Values.cluster.domainSuffix }}/realms/{{ .Values.keycloak.realm }}
+    clientID: $oidc.keycloak.clientID
+    clientSecret: $oidc.keycloak.clientSecret
+    requestedScopes: ["openid", "profile", "email", "groups"]
+    requestedIDTokenClaims:
+      groups:
+        essential: true
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: argocd-secret
+  namespace: argocd
+type: Opaque
+stringData:
+  oidc.keycloak.clientID: placeholder
+  oidc.keycloak.clientSecret: placeholder
+{{- end }}
+

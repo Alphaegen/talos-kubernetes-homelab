@@ -1,0 +1,38 @@
+cluster:
+  name: homelab.niekvlam
+  domainSuffix: nl
+
+vault:
+  clusterStoreName: vault-clusterstore
+  # Where client secrets live in Vault (KVv2)
+  paths:
+    bootstrap: secret/data/keycloak/bootstrap
+    clients:
+      grafana: secret/data/keycloak/clients/grafana
+      argocd: secret/data/keycloak/clients/argocd
+      homeassistant: secret/data/keycloak/clients/homeassistant
+      vault: secret/data/keycloak/clients/vault
+  # Optional: a secret with VAULT_ADDR/TOKEN to run the Job
+  automationSecretName: ""   # e.g. vault-admin-creds (created by ExternalSecrets elsewhere)
+
+features:
+  grafana: true
+  argocd: true
+  homeassistant: true
+  vaultOIDCJob: false         # set true to configure Vault via a Job
+  kyvernoPolicies: true
+  realmExportCron: true
+
+oauth2Proxy:
+  image: quay.io/oauth2-proxy/oauth2-proxy:v7.6.0
+  namespace: home-assistant
+  serviceName: oauth2-proxy
+  hostHA: ha # results in ha.<cluster.name>.nl
+  cookieSecretKey: cookie-secret  # key in the ExternalSecret data
+
+keycloak:
+  realm: homelab
+  host: keycloak # results in keycloak.<cluster.name>.nl
+
+longhorn:
+  storageClass: longhorn

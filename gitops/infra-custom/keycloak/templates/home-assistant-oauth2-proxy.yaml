@@ -1,0 +1,57 @@
+{{- if .Values.features.homeassistant }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.oauth2Proxy.serviceName }}
+  namespace: {{ .Values.oauth2Proxy.namespace }}
+spec:
+  selector:
+    matchLabels: { app: {{ .Values.oauth2Proxy.serviceName }} }
+  template:
+    metadata:
+      labels: { app: {{ .Values.oauth2Proxy.serviceName }} }
+    spec:
+      volumes:
+        - name: oidc
+          secret:
+            secretName: oauth2-proxy-keycloak
+      containers:
+        - name: oauth2-proxy
+          image: {{ .Values.oauth2Proxy.image }}
+          args:
+            - --provider=oidc
+            - --oidc-issuer-url=https://{{ printf "%s.%s.%s" .Values.keycloak.host .Values.cluster.name .Values.cluster.domainSuffix }}/realms/{{ .Values.keycloak.realm }}
+            - --scope=openid profile email groups
+            - --email-domain=*
+            - --cookie-secure=true
+            - --http-address=0.0.0.0:4180
+            - --upstream=file:///dev/null
+            - --redirect-url=https://{{ printf "%s.%s.%s" .Values.oauth2Proxy.hostHA .Values.cluster.name .Values.cluster.domainSuffix }}/oauth2/callback
+            - --client-id=$(CLIENT_ID)
+            - --client-secret=$(CLIENT_SECRET)
+            - --cookie-secret=$(COOKIE_SECRET)
+          env:
+            - name: CLIENT_ID
+              valueFrom:
+                secretKeyRef: { name: oauth2-proxy-keycloak, key: client-id }
+            - name: CLIENT_SECRET
+              valueFrom:
+                secretKeyRef: { name: oauth2-proxy-keycloak, key: client-secret }
+            - name: COOKIE_SECRET
+              valueFrom:
+                secretKeyRef: { name: oauth2-proxy-keycloak, key: {{ .Values.oauth2Proxy.cookieSecretKey }} }
+          ports:
+            - containerPort: 4180
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.oauth2Proxy.serviceName }}
+  namespace: {{ .Values.oauth2Proxy.namespace }}
+spec:
+  selector: { app: {{ .Values.oauth2Proxy.serviceName }} }
+  ports:
+    - port: 4180
+      targetPort: 4180
+{{- end }}
+

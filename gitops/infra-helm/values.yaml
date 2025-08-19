@@ -33,7 +33,7 @@ sealedsecrets:
   version: 2.17.3
 
 ceph:
-  enabled: true
+  enabled: false
   version: 1.17.7
 
 monitoring:

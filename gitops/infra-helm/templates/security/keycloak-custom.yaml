@@ -1,0 +1,28 @@
+{{- if and .Values.security.enabled .Values.security.keycloak.enabled }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ .Values.cluster.name }}-keycloak-custom
+  labels:
+    cluster: {{ .Values.cluster.name | quote }}
+    app: keycloak-custom
+  namespace: {{ .Values.cluster.namespace | quote }}
+  annotations:
+    # Apply after Keycloak is up
+    argocd.argoproj.io/sync-wave: "11"
+spec:
+  project: {{ .Values.cluster.name }}
+  destination:
+    server: {{ .Values.cluster.url | default "https://kubernetes.default.svc" | quote }}
+    namespace: security
+  syncPolicy:
+    {{- if .Values.sync }}
+    automated:
+      prune: true
+      selfHeal: true
+    {{- end }}
+  source:
+    repoURL: {{ .Values.cluster.repoURL | quote }}
+    targetRevision: {{ .Values.cluster.revision | default "main" | quote }}
+    path: gitops/infra-custom/keycloak
+{{- end }}

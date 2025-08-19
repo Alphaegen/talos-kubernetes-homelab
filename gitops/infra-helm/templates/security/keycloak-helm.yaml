@@ -1,0 +1,61 @@
+{{- if and .Values.security.enabled .Values.security.keycloak.enabled }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ .Values.cluster.name }}-keycloak
+  labels:
+    cluster: {{ .Values.cluster.name | quote }}
+    app: keycloak
+  namespace: {{ .Values.cluster.namespace | quote }}
+  annotations:
+    # Deploy the base service first
+    argocd.argoproj.io/sync-wave: "10"
+spec:
+  project: {{ .Values.cluster.name }}
+  destination:
+    server: {{ .Values.cluster.url | default "https://kubernetes.default.svc" | quote }}
+    namespace: security
+  syncPolicy:
+    {{- if .Values.sync }}
+    automated:
+      prune: true
+      selfHeal: true
+    {{- end }}
+  source:
+    repoURL: https://charts.bitnami.com/bitnami
+    chart: keycloak
+    targetRevision: 22.x.x
+    helm:
+      values: |
+        production: true
+        proxy: edge
+        httpRelativePath: "/"
+        replicaCount: 2
+
+        auth:
+          adminUser: admin
+          existingSecret: keycloak-admin-secret
+          passwordSecretKey: admin-password
+
+        persistence:
+          enabled: true
+          size: 10Gi
+          storageClass: longhorn
+
+        postgresql:
+          enabled: true
+          primary:
+            persistence:
+              enabled: true
+              size: 10Gi
+              storageClass: longhorn
+
+        ingress:
+          enabled: true
+          ingressClassName: nginx
+          hostname: {{ printf "keycloak.%s.nl" .Values.cluster.name }}
+          tls: true
+          annotations:
+            nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+            cert-manager.io/cluster-issuer: "letsencrypt-dns"
+{{- end }}

@@ -36,6 +36,8 @@ cluster:
   proxy:
     disabled: true
   # apiServer:
+  #   extraArgs:
+  #     profiling: "true"
     # Should be set to load balancing IP in production
     # certSANs:
     # - <load_balancer_ip>

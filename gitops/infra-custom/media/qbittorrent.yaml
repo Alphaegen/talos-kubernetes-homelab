@@ -1,0 +1,89 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: qbittorrent
+  namespace: media
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: qbittorrent } }
+  template:
+    metadata:
+      labels: { app: qbittorrent }
+    spec:
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+      containers:
+        - name: qb
+          image: ghcr.io/linuxserver/qbittorrent:latest
+          ports:
+            - { name: http,   containerPort: 8080 }
+            - { name: bt-tcp, containerPort: 50413, protocol: TCP }
+            - { name: bt-udp, containerPort: 50413, protocol: UDP }
+          env:
+            - { name: PUID,  value: "1000" }
+            - { name: PGID,  value: "1000" }
+            - { name: UMASK, value: "002" }
+          volumeMounts:
+            - { name: data,   mountPath: /data }
+            - { name: config, mountPath: /config }
+      volumes:
+        - name: data
+          persistentVolumeClaim: { claimName: media-shared }
+        - name: config
+          persistentVolumeClaim: { claimName: qbittorrent-config }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: qbittorrent
+  namespace: media
+spec:
+  selector: { app: qbittorrent }
+  ports:
+    - { name: http, port: 8080, targetPort: http }
+---
+# Optional: open torrent port (forward this NodePort on your router to a worker)
+apiVersion: v1
+kind: Service
+metadata:
+  name: qbittorrent-bittorrent
+  namespace: media
+spec:
+  type: NodePort
+  selector: { app: qbittorrent }
+  ports:
+    - name: tcp
+      protocol: TCP
+      port: 50413
+      targetPort: bt-tcp
+      nodePort: 32013
+    - name: udp
+      protocol: UDP
+      port: 50413
+      targetPort: bt-udp
+      nodePort: 32013
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: qbittorrent
+  namespace: media
+  annotations:
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+    cert-manager.io/cluster-issuer: "letsencrypt-dns"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts: [ "qbittorrent.homelab.niekvlam.nl" ]
+      secretName: qbittorrent-tls
+  rules:
+    - host: qbittorrent.homelab.niekvlam.nl
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service: { name: qbittorrent, port: { number: 8080 } }
+

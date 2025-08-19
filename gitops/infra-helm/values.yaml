@@ -180,6 +180,13 @@ homeassistant:
     scrapeInterval: "30s"
     release: "kube-prometheus-stack"
 
+media:
+  enabled: true
+  nfs:
+    server: nas.niekvlam.nl
+    path: /volume1/PlexMediaServer
+    storageClass: media-nfs
+
 # Security
 security:
   enabled: true

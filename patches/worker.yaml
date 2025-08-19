@@ -25,7 +25,6 @@ machine:
       enabled: false
       forwardKubeDNSToHost: false
 
-
 cluster:
   network:
     podSubnets:

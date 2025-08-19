@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: radarr
+  namespace: media
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: radarr } }
+  template:
+    metadata:
+      labels: { app: radarr }
+    spec:
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+      containers:
+        - name: radarr
+          image: ghcr.io/linuxserver/radarr:latest
+          ports: [ { name: http, containerPort: 7878 } ]
+          env:
+            - { name: PUID,  value: "1000" }
+            - { name: PGID,  value: "1000" }
+            - { name: UMASK, value: "002" }
+          volumeMounts:
+            - { name: data,   mountPath: /data }
+            - { name: config, mountPath: /config }
+      volumes:
+        - { name: data,   persistentVolumeClaim: { claimName: media-shared } }
+        - { name: config, persistentVolumeClaim: { claimName: radarr-config } }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: radarr
+  namespace: media
+spec:
+  selector: { app: radarr }
+  ports:
+    - { name: http, port: 7878, targetPort: http }
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: radarr
+  namespace: media
+  annotations:
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+    cert-manager.io/cluster-issuer: "letsencrypt-dns"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts: [ "radarr.homelab.niekvlam.nl" ]
+      secretName: radarr-tls
+  rules:
+    - host: radarr.homelab.niekvlam.nl
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service: { name: radarr, port: { number: 7878 } }
+

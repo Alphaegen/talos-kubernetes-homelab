@@ -1,0 +1,50 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/refs/heads/main/argoproj.io/application_v1alpha1.json
+{{- if .Values.media.enabled }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ .Values.cluster.name }}-nfs-provisioner
+  namespace: {{ .Values.cluster.namespace | quote }}
+  labels:
+    cluster: {{ .Values.cluster.name | quote }}
+    app: nfs-provisioner
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  project: {{ .Values.cluster.name }}
+  destination:
+    server: {{ .Values.cluster.url | default "https://kubernetes.default.svc" | quote }}
+    namespace: nfs-provisioner
+  syncPolicy:
+    {{- if .Values.sync }}
+    automated:
+      prune: true
+      selfHeal: true
+    {{- end }}
+    syncOptions:
+      - CreateNamespace=true
+  source:
+    repoURL: https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner/
+    chart: nfs-subdir-external-provisioner
+    targetRevision: {{ .Values.media.nfs.version | default "4.0.18" | quote }}
+    helm:
+      releaseName: nfs-provisioner
+      values: |
+        nfs:
+          server: {{ .Values.media.nfs.server | default "nas.niekvlam.nl" | quote }}
+          path: {{ .Values.media.nfs.path | default "/volume1/PlexMediaServer" | quote }}
+          mountOptions:
+            - nfsvers=4.1
+            - rsize=1048576
+            - wsize=1048576
+            - hard
+            - timeo=600
+            - retrans=2
+        storageClass:
+          name: {{ .Values.media.nfs.storageClass | default "media-nfs" | quote }}
+          defaultClass: false
+          reclaimPolicy: Retain
+          allowVolumeExpansion: true
+          onDelete: retain
+{{- end }}
+

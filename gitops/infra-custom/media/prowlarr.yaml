@@ -20,6 +20,8 @@ spec:
             - { name: PUID,  value: "1000" }
             - { name: PGID,  value: "1000" }
             - { name: UMASK, value: "002" }
+            - name: DOTNET_SYSTEM_NET_DISABLEIPV6
+              value: "1"
           volumeMounts:
             - { name: config, mountPath: /config }
       volumes:

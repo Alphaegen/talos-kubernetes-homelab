@@ -5,6 +5,8 @@ metadata:
   namespace: media
 spec:
   replicas: 1
+  strategy:
+    type: Recreate
   selector: { matchLabels: { app: flaresolverr } }
   template:
     metadata: { labels: { app: flaresolverr } }
@@ -22,11 +24,11 @@ spec:
             - { name: LOG_LEVEL, value: info }
             - { name: TZ, value: Europe/Amsterdam }
             - name: LOG_LEVEL
-              value: debug                # more detail while tuning
+              value: debug # more detail while tuning
             - name: BROWSER_TIMEOUT
-              value: "180000"             # 180s for heavy challenges
+              value: "180000" # 180s for heavy challenges
             - name: REQUEST_TIMEOUT
-              value: "60000"              # 60s per navigation
+              value: "60000" # 60s per navigation
             - name: MAX_CONCURRENT_REQUESTS
               value: "1"
             # Optional: CAPTCHA_SOLVER, BROWSER_TIMEOUT, etc.
@@ -34,7 +36,7 @@ spec:
             - { name: http, containerPort: 8191 }
           resources:
             requests: { cpu: 100m, memory: 512Mi }
-            limits:   { memory: 1Gi }
+            limits: { memory: 1Gi }
           readinessProbe:
             httpGet: { path: "/", port: http }
             initialDelaySeconds: 30

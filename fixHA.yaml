@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: ha-bootstrap
+  namespace: home-assistant
+spec:
+  restartPolicy: Never
+  containers:
+  - name: sh
+    image: alpine:3
+    command: ["/bin/sh","-lc"]
+    args:
+      - |
+        mkdir -p /config/.storage
+        [ -f /config/configuration.yaml ] || cat > /config/configuration.yaml <<EOF
+        default_config:
+        # minimal bootstrap so HACS init can find config dir
+        EOF
+        ls -la /config
+        sleep 2
+    volumeMounts:
+    - name: cfg
+      mountPath: /config
+  volumes:
+  - name: cfg
+    persistentVolumeClaim:
+      claimName: home-assistant-home-assistant-0
+

@@ -5,6 +5,8 @@ metadata:
   namespace: media
 spec:
   replicas: 1
+  strategy:
+    type: Recreate
   selector: { matchLabels: { app: sonarr } }
   template:
     metadata:
@@ -16,16 +18,16 @@ spec:
       containers:
         - name: sonarr
           image: ghcr.io/linuxserver/sonarr:latest
-          ports: [ { name: http, containerPort: 8989 } ]
+          ports: [{ name: http, containerPort: 8989 }]
           env:
-            - { name: PUID,  value: "1000" }
-            - { name: PGID,  value: "1000" }
+            - { name: PUID, value: "1000" }
+            - { name: PGID, value: "1000" }
             - { name: UMASK, value: "002" }
           volumeMounts:
-            - { name: data,   mountPath: /data }
+            - { name: data, mountPath: /data }
             - { name: config, mountPath: /config }
       volumes:
-        - { name: data,   persistentVolumeClaim: { claimName: media-shared } }
+        - { name: data, persistentVolumeClaim: { claimName: media-shared } }
         - { name: config, persistentVolumeClaim: { claimName: sonarr-config } }
 ---
 apiVersion: v1
@@ -50,7 +52,7 @@ metadata:
 spec:
   ingressClassName: nginx
   tls:
-    - hosts: [ "sonarr.homelab.niekvlam.nl" ]
+    - hosts: ["sonarr.homelab.niekvlam.nl"]
       secretName: sonarr-tls
   rules:
     - host: sonarr.homelab.niekvlam.nl
@@ -60,4 +62,3 @@ spec:
             pathType: Prefix
             backend:
               service: { name: sonarr, port: { number: 8989 } }
-

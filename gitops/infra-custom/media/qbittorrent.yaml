@@ -5,6 +5,8 @@ metadata:
   namespace: media
 spec:
   replicas: 1
+  strategy:
+    type: Recreate
   selector: { matchLabels: { app: qbittorrent } }
   template:
     metadata:
@@ -17,15 +19,15 @@ spec:
         - name: qb
           image: ghcr.io/linuxserver/qbittorrent:latest
           ports:
-            - { name: http,   containerPort: 8080 }
+            - { name: http, containerPort: 8080 }
             - { name: bt-tcp, containerPort: 50413, protocol: TCP }
             - { name: bt-udp, containerPort: 50413, protocol: UDP }
           env:
-            - { name: PUID,  value: "1000" }
-            - { name: PGID,  value: "1000" }
+            - { name: PUID, value: "1000" }
+            - { name: PGID, value: "1000" }
             - { name: UMASK, value: "002" }
           volumeMounts:
-            - { name: data,   mountPath: /data }
+            - { name: data, mountPath: /data }
             - { name: config, mountPath: /config }
       volumes:
         - name: data
@@ -76,7 +78,7 @@ metadata:
 spec:
   ingressClassName: nginx
   tls:
-    - hosts: [ "qbittorrent.homelab.niekvlam.nl" ]
+    - hosts: ["qbittorrent.homelab.niekvlam.nl"]
       secretName: qbittorrent-tls
   rules:
     - host: qbittorrent.homelab.niekvlam.nl
@@ -86,4 +88,3 @@ spec:
             pathType: Prefix
             backend:
               service: { name: qbittorrent, port: { number: 8080 } }
-

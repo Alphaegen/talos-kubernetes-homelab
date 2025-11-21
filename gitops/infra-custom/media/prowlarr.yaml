@@ -5,6 +5,8 @@ metadata:
   namespace: media
 spec:
   replicas: 1
+  strategy:
+    type: Recreate
   selector: { matchLabels: { app: prowlarr } }
   template:
     metadata: { labels: { app: prowlarr } }
@@ -15,17 +17,20 @@ spec:
       containers:
         - name: prowlarr
           image: ghcr.io/linuxserver/prowlarr:latest
-          ports: [ { name: http, containerPort: 9696 } ]
+          ports: [{ name: http, containerPort: 9696 }]
           env:
-            - { name: PUID,  value: "1000" }
-            - { name: PGID,  value: "1000" }
+            - { name: PUID, value: "1000" }
+            - { name: PGID, value: "1000" }
             - { name: UMASK, value: "002" }
             - name: DOTNET_SYSTEM_NET_DISABLEIPV6
               value: "1"
           volumeMounts:
             - { name: config, mountPath: /config }
       volumes:
-        - { name: config, persistentVolumeClaim: { claimName: prowlarr-config } }
+        - {
+            name: config,
+            persistentVolumeClaim: { claimName: prowlarr-config },
+          }
 ---
 apiVersion: v1
 kind: Service
@@ -48,7 +53,7 @@ metadata:
 spec:
   ingressClassName: nginx
   tls:
-    - hosts: [ "prowlarr.homelab.niekvlam.nl" ]
+    - hosts: ["prowlarr.homelab.niekvlam.nl"]
       secretName: prowlarr-tls
   rules:
     - host: prowlarr.homelab.niekvlam.nl
@@ -58,4 +63,3 @@ spec:
             pathType: Prefix
             backend:
               service: { name: prowlarr, port: { number: 9696 } }
-

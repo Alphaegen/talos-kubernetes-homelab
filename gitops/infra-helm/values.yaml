@@ -224,7 +224,9 @@ security:
 n8n:
   enabled: true
   namespace: n8n
-  version: "1.16.10" # or whatever chart version you like
+  version: "1.16.10"
+  image:
+    tag: ""
 
   storage:
     storageClassName: longhorn

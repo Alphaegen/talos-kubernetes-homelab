@@ -237,10 +237,7 @@ n8n:
     size: 10Gi
     database: n8n
     username: n8n
-    existingSecret: n8n-postgresql-auth
-    secretKeys:
-      adminPasswordKey: postgres-password # postgres superuser
-      userPasswordKey: password
+    password: "REMOVED_POSTGRES_PASSWORD_1"
 
   encryptionKey: "" # leave this empty
   existingEncryptionKeySecret: n8n-encryption-key

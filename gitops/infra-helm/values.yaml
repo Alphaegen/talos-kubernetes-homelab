@@ -237,7 +237,7 @@ n8n:
     size: 10Gi
     database: n8n
     username: n8n
-    password: "REMOVED_POSTGRES_PASSWORD_1"
+    password: "REMOVED_POSTGRES_PASSWORD_2"
 
   encryptionKey: "" # leave this empty
   existingEncryptionKeySecret: n8n-encryption-key

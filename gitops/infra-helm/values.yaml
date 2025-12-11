@@ -221,5 +221,32 @@ security:
     version: 0.30.0
     serviceMonitorLabel: kube-prometheus-stack
 
+n8n:
+  enabled: true
+  namespace: n8n
+  version: "1.16.10" # or whatever chart version you like
+
+  storage:
+    storageClassName: longhorn
+    size: 8Gi
+
+  postgresql:
+    storageClassName: longhorn
+    size: 10Gi
+    database: n8n
+    username: n8n
+    existingSecret: n8n-postgresql-auth
+    secretKeys:
+      adminPasswordKey: postgres-password # postgres superuser
+      userPasswordKey: password
+
+  encryptionKey: "" # leave this empty
+  existingEncryptionKeySecret: n8n-encryption-key
+
+  serviceMonitor:
+    enabled: true
+    scrapeInterval: 30s
+    release: prometheus
+
 raw:
   version: 2.0.0

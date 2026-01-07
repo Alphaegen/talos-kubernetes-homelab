@@ -9,37 +9,37 @@ sync: true
 ingressController:
   enabled: true
   class: nginx
-  version: 4.13.0
+  version: ">=0.0.0"
 
 metallb:
   enabled: true
-  version: 0.15.2
+  version: ">=0.0.0"
   endpoints:
     - "192.168.3.110-192.168.3.129"
 
 longhorn:
   enabled: true
-  version: 1.9.1
+  version: ">=0.0.0"
 
 certmanager:
   enabled: true
-  version: v1.18.2
+  version: ">=0.0.0"
   acme:
     email: vlam4695+homelab@gmail.com
     server: "https://acme-v02.api.letsencrypt.org/directory"
 
 sealedsecrets:
   enabled: false
-  version: 2.17.3
+  version: ">=0.0.0"
 
 ceph:
   enabled: false
-  version: 1.17.7
+  version: ">=0.0.0"
 
 monitoring:
   enabled: true
   grafana:
-    version: 9.3.1
+    version: ">=0.0.0"
     ingress:
       enabled: true
       ingressClassName: nginx
@@ -84,7 +84,7 @@ monitoring:
           revision: 1
 
   loki:
-    version: 6.35.1
+    version: ">=0.0.0"
     deploymentMode: SingleBinary
     singleBinary:
       replicas: 1
@@ -119,7 +119,7 @@ monitoring:
       enabled: true
 
   promtail:
-    version: 6.17.0
+    version: ">=0.0.0"
     extraVolumes:
       - name: positions
         hostPath:
@@ -139,7 +139,7 @@ monitoring:
           - cri: {}
 
   prometheus:
-    version: 76.1.0
+    version: ">=0.0.0"
     prometheusSpec:
       retention: 30d
       retentionSize: 20GiB
@@ -158,7 +158,7 @@ monitoring:
 homeassistant:
   enabled: true
   namespace: home-assistant
-  version: "0.3.32"
+  version: ">=0.0.0"
   image:
     tag: ""
 
@@ -193,19 +193,19 @@ security:
     enabled: false
 
   vault:
-    version: 0.30.1
+    version: ">=0.0.0"
     host: vault.homelab.niekvlam.nl
     storageSize: 10Gi
 
   eso:
     enabled: false
-    version: 0.19.1
+    version: ">=0.0.0"
     serviceMonitorLabel: kube-prometheus-stack
     bootstrap: true
 
   kyverno:
     enabled: false
-    version: 3.5.0
+    version: ">=0.0.0"
     # Start in audit to avoid surprise breakages; flip to "enforce" later.
     mode: audit # audit | enforce
     excludeNamespaces:
@@ -218,13 +218,13 @@ security:
 
   trivy:
     enabled: false
-    version: 0.30.0
+    version: ">=0.0.0"
     serviceMonitorLabel: kube-prometheus-stack
 
 n8n:
   enabled: true
   namespace: n8n
-  version: "1.16.10"
+  version: ">=0.0.0"
   image:
     tag: ""
 
@@ -248,4 +248,4 @@ n8n:
     release: prometheus
 
 raw:
-  version: 2.0.0
+  version: ">=0.0.0"

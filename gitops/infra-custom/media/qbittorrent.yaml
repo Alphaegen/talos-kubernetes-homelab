@@ -45,26 +45,26 @@ spec:
   ports:
     - { name: http, port: 8080, targetPort: http }
 ---
-# Optional: open torrent port (forward this NodePort on your router to a worker)
 apiVersion: v1
 kind: Service
 metadata:
   name: qbittorrent-bittorrent
   namespace: media
+  annotations:
+    metallb.universe.tf/allow-shared-ip: media-ingress # optional, only if you want to share an IP with other Services
 spec:
-  type: NodePort
-  selector: { app: qbittorrent }
+  type: LoadBalancer
+  selector:
+    app: qbittorrent
   ports:
     - name: tcp
       protocol: TCP
       port: 50413
       targetPort: bt-tcp
-      nodePort: 32013
     - name: udp
       protocol: UDP
       port: 50413
       targetPort: bt-udp
-      nodePort: 32013
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress

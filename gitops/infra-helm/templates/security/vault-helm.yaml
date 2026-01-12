@@ -84,24 +84,37 @@ spec:
               args:
                 - |
                   echo "vault-unsealer: starting"
+                  echo "vault-unsealer: VAULT_ADDR=${VAULT_ADDR}"
+
+                  # wait until Vault is reachable (any HTTP code is fine; 000 means connection failure)
                   while true; do
-                    code="$(curl -s -o /dev/null -w "%{http_code}" "${VAULT_ADDR}/v1/sys/health?standbyok=true")" || true
-                    if [ "$code" = "200" ] || [ "$code" = "429" ]; then
-                      echo "vault-unsealer: already unsealed (HTTP $code)"
+                    code="$(curl -s -o /dev/null -w "%{http_code}" "${VAULT_ADDR}/v1/sys/health?standbyok=true" || true)"
+                    if [ "$code" != "000" ] && [ -n "$code" ]; then
+                      echo "vault-unsealer: Vault reachable (HTTP $code)"
                       break
                     fi
-                    # 503 means sealed; keep waiting until Vault is up enough to accept unseal calls
+                    echo "vault-unsealer: waiting for Vault listener..."
                     sleep 2
                   done
 
-                  code="$(curl -s -o /dev/null -w "%{http_code}" "${VAULT_ADDR}/v1/sys/health?standbyok=true")" || true
+                  # if sealed (503), unseal with key1
+                  code="$(curl -s -o /dev/null -w "%{http_code}" "${VAULT_ADDR}/v1/sys/health?standbyok=true" || true)"
                   if [ "$code" = "503" ]; then
-                    echo "vault-unsealer: sealed, unsealing with key1"
+                    echo "vault-unsealer: Vault is sealed, attempting unseal"
+                    if [ ! -f /unseal/key1 ]; then
+                      echo "vault-unsealer: ERROR /unseal/key1 not found"
+                      ls -la /unseal || true
+                      exit 1
+                    fi
+
                     key="$(cat /unseal/key1)"
                     curl -sS -X PUT "${VAULT_ADDR}/v1/sys/unseal" \
                       -H "Content-Type: application/json" \
                       -d "{\"key\":\"${key}\"}" >/dev/null
-                    echo "vault-unsealer: unseal attempt finished"
+
+                    echo "vault-unsealer: unseal request sent"
+                  else
+                    echo "vault-unsealer: Vault not sealed (HTTP $code), nothing to do"
                   fi
 
                   sleep infinity

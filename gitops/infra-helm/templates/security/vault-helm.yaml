@@ -60,6 +60,48 @@ spec:
               - secretName: vault-tls
                 hosts:
                   - {{ .Values.security.vault.host }}
+          
+          extraVolumes:
+            - name: unseal-keys
+              secret:
+                secretName: vault-unseal-keys
+          extraContainers:
+            - name: vault-unsealer
+              image: curlimages/curl:8.5.0
+              imagePullPolicy: IfNotPresent
+              env:
+                - name: VAULT_ADDR
+                  value: "http://127.0.0.1:8200"
+              volumeMounts:
+                - name: unseal-keys
+                  mountPath: /unseal
+                  readOnly: true
+              command: ["/bin/sh","-ec"]
+              args:
+                - |
+                  echo "vault-unsealer: starting"
+                  while true; do
+                    code="$(curl -s -o /dev/null -w "%{http_code}" "${VAULT_ADDR}/v1/sys/health?standbyok=true")" || true
+                    if [ "$code" = "200" ] || [ "$code" = "429" ]; then
+                      echo "vault-unsealer: already unsealed (HTTP $code)"
+                      break
+                    fi
+                    # 503 means sealed; keep waiting until Vault is up enough to accept unseal calls
+                    sleep 2
+                  done
+
+                  code="$(curl -s -o /dev/null -w "%{http_code}" "${VAULT_ADDR}/v1/sys/health?standbyok=true")" || true
+                  if [ "$code" = "503" ]; then
+                    echo "vault-unsealer: sealed, unsealing with key1"
+                    key="$(cat /unseal/key1)"
+                    curl -sS -X PUT "${VAULT_ADDR}/v1/sys/unseal" \
+                      -H "Content-Type: application/json" \
+                      -d "{\"key\":\"${key}\"}" >/dev/null
+                    echo "vault-unsealer: unseal attempt finished"
+                  fi
+
+                  sleep infinity
+
         ui:
           enabled: true
 {{- end }}

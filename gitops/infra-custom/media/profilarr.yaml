@@ -15,9 +15,6 @@ spec:
       labels:
         app: profilarr
     spec:
-      securityContext:
-        fsGroup: 1000
-        fsGroupChangePolicy: OnRootMismatch
       containers:
         - name: profilarr
           image: santiagosayshey/profilarr:latest
@@ -27,11 +24,6 @@ spec:
           env:
             - name: TZ
               value: Europe/Amsterdam
-          securityContext:
-            runAsNonRoot: true
-            runAsUser: 1000
-            runAsGroup: 1000
-            allowPrivilegeEscalation: false
           volumeMounts:
             - name: config
               mountPath: /config

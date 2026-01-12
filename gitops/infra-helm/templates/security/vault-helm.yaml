@@ -61,10 +61,14 @@ spec:
                 hosts:
                   - {{ .Values.security.vault.host }}
           
-          extraVolumes:
+          volumes:
             - name: unseal-keys
               secret:
                 secretName: vault-unseal-keys
+          volumeMounts:
+            - name: unseal-keys
+              mountPath: /unseal
+              readOnly: true
           extraContainers:
             - name: vault-unsealer
               image: curlimages/curl:8.5.0

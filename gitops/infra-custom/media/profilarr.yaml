@@ -27,7 +27,6 @@ spec:
           env:
             - name: TZ
               value: Europe/Amsterdam
-          # Optional but usually nice for homelabs:
           securityContext:
             runAsNonRoot: true
             runAsUser: 1000
@@ -36,10 +35,14 @@ spec:
           volumeMounts:
             - name: config
               mountPath: /config
+            - name: appuser-home
+              mountPath: /home/appuser
       volumes:
         - name: config
           persistentVolumeClaim:
             claimName: profilarr-config
+        - name: appuser-home
+          emptyDir: {}
 ---
 apiVersion: v1
 kind: Service

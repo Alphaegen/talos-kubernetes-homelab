@@ -31,6 +31,9 @@ cgroup:
 k8sServiceHost: localhost
 k8sServicePort: 7445
 
+# k8sServiceHost: 192.168.3.100
+# k8sServicePort: 6443
+
 hubble:
   ui:
     enabled: true
@@ -47,3 +50,14 @@ hubble:
           secretName: hubble-tls
   relay:
     enabled: true
+
+ipv4:
+  enabled: true
+
+ipv6:
+  enabled: true
+
+# Usually needed so pods can reach the IPv6 internet (egress)
+enableIPv6Masquerade: true
+# (Optional, usually already on)
+enableIPv4Masquerade: true

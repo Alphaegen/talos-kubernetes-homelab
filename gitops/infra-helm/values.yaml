@@ -37,7 +37,7 @@ ceph:
   version: ">=0.0.0"
 
 monitoring:
-  enabled: false
+  enabled: true
   grafana:
     version: ">=0.0.0"
     ingress:

@@ -7,6 +7,8 @@ metadata:
     cluster: {{ .Values.cluster.name | quote }}
     app: keycloak
   namespace: {{ .Values.cluster.namespace | quote }}
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
   annotations:
     # Deploy the base service first
     argocd.argoproj.io/sync-wave: "10"

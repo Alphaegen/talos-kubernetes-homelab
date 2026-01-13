@@ -5,6 +5,8 @@ kind: Application
 metadata:
   name: {{ .Values.cluster.name }}-home-assistant
   namespace: {{ .Values.cluster.namespace | quote }}
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
   labels:
     cluster: {{ .Values.cluster.name | quote }}
     app: home-assistant

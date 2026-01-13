@@ -8,6 +8,8 @@ metadata:
     cluster: {{ .Values.cluster.name | quote }}
     app: kyverno
   namespace: {{ .Values.cluster.namespace | quote }}
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
   annotations:
     # Install the admission controller early, before policies & scanners.
     argocd.argoproj.io/sync-wave: "0"

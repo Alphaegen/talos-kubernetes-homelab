@@ -1,0 +1,31 @@
+stores:
+  vault:
+    enabled: true
+    name: vault
+    server: http://vault-active.security.svc:8200
+    path: kv
+    version: v2
+    auth:
+      mountPath: kubernetes
+      role: eso
+      serviceAccount:
+        name: eso-vault
+        namespace: external-secrets
+
+  onepassword:
+    enabled: true
+    name: onepassword
+    vault: "Homelab"
+    auth:
+      serviceAccountSecretRef:
+        name: onepassword-service-account-token
+        key: token
+        namespace: external-secrets
+    integrationInfo:
+      enabled: true
+      name: external-secrets
+      version: v1
+    cache:
+      enabled: false
+      ttl: 5m
+      maxSize: 100

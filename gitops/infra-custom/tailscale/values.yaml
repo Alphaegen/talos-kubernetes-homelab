@@ -1,0 +1,14 @@
+namespace: tailscale
+
+secretStoreRef:
+  kind: ClusterSecretStore
+  name: onepassword
+
+operatorOAuthSecret:
+  name: operator-oauth
+  refreshInterval: 1h
+  remoteRef:
+    clientIdKey: tailscale-operator/client_id
+    clientSecretKey: tailscale-operator/client_secret
+    clientIdProperty: ""
+    clientSecretProperty: ""

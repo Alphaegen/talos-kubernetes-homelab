@@ -198,7 +198,7 @@ security:
     storageSize: 10Gi
 
   eso:
-    enabled: false
+    enabled: true
     version: ">=0.0.0"
     serviceMonitorLabel: kube-prometheus-stack
     bootstrap: true
@@ -220,6 +220,24 @@ security:
     enabled: false
     version: ">=0.0.0"
     serviceMonitorLabel: kube-prometheus-stack
+
+  tailscale:
+    enabled: true
+    version: ">=0.0.0"
+    namespace: tailscale
+    repoURL: https://pkgs.tailscale.com/helmcharts
+    chart: tailscale-operator
+    externalSecret:
+      enabled: true
+      refreshInterval: 1h
+      secretStoreRef:
+        kind: ClusterSecretStore
+        name: onepassword
+      remoteRef:
+        clientIdKey: tailscale-operator/client_id
+        clientSecretKey: tailscale-operator/client_secret
+        clientIdProperty: ""
+        clientSecretProperty: ""
 
 n8n:
   enabled: true

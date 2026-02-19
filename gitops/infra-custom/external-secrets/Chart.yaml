@@ -1,6 +1,5 @@
 apiVersion: v2
 name: external-secrets
-description: External secrets bootstrap for Vault
+description: External secrets bootstrap for secret stores
 type: application
 version: 1.0.0
-

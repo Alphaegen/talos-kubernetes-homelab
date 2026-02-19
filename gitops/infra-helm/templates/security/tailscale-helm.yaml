@@ -1,0 +1,31 @@
+{{- if and .Values.security.enabled .Values.security.tailscale.enabled }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ .Values.cluster.name }}-tailscale
+  labels:
+    cluster: {{ .Values.cluster.name | quote }}
+    app: tailscale
+  namespace: {{ .Values.cluster.namespace | quote }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "14"
+spec:
+  project: {{ .Values.cluster.name }}
+  destination:
+    server: {{ .Values.cluster.url | default "https://kubernetes.default.svc" | quote }}
+    namespace: {{ .Values.security.tailscale.namespace | default "tailscale" | quote }}
+  syncPolicy:
+    {{- if .Values.sync }}
+    automated:
+      prune: true
+      selfHeal: true
+    {{- end }}
+    syncOptions:
+      - CreateNamespace=true
+  source:
+    repoURL: {{ .Values.security.tailscale.repoURL | default "https://pkgs.tailscale.com/helmcharts" | quote }}
+    chart: {{ .Values.security.tailscale.chart | default "tailscale-operator" | quote }}
+    targetRevision: {{ .Values.security.tailscale.version | quote }}
+    helm:
+      releaseName: tailscale-operator
+{{- end }}

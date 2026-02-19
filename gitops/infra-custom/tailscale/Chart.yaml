@@ -1,0 +1,5 @@
+apiVersion: v2
+name: tailscale-custom
+description: ExternalSecret resources for Tailscale operator
+type: application
+version: 1.0.0

@@ -1,0 +1,43 @@
+{{- if and .Values.security.enabled .Values.security.tailscale.enabled .Values.security.tailscale.externalSecret.enabled .Values.security.eso.enabled }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ .Values.cluster.name }}-tailscale-custom
+  labels:
+    cluster: {{ .Values.cluster.name | quote }}
+    app: tailscale-custom
+  namespace: {{ .Values.cluster.namespace | quote }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "13"
+spec:
+  project: {{ .Values.cluster.name }}
+  destination:
+    server: {{ .Values.cluster.url | default "https://kubernetes.default.svc" | quote }}
+    namespace: {{ .Values.security.tailscale.namespace | default "tailscale" | quote }}
+  syncPolicy:
+    {{- if .Values.sync }}
+    automated:
+      prune: true
+      selfHeal: true
+    {{- end }}
+    syncOptions:
+      - CreateNamespace=true
+  source:
+    repoURL: {{ .Values.cluster.repoURL | quote }}
+    targetRevision: {{ .Values.cluster.revision | default "main" | quote }}
+    path: gitops/infra-custom/tailscale
+    helm:
+      values: |
+        namespace: {{ .Values.security.tailscale.namespace | default "tailscale" | quote }}
+        secretStoreRef:
+          kind: {{ .Values.security.tailscale.externalSecret.secretStoreRef.kind | default "ClusterSecretStore" | quote }}
+          name: {{ .Values.security.tailscale.externalSecret.secretStoreRef.name | quote }}
+        operatorOAuthSecret:
+          name: operator-oauth
+          refreshInterval: {{ .Values.security.tailscale.externalSecret.refreshInterval | default "1h" | quote }}
+          remoteRef:
+            clientIdKey: {{ .Values.security.tailscale.externalSecret.remoteRef.clientIdKey | quote }}
+            clientSecretKey: {{ .Values.security.tailscale.externalSecret.remoteRef.clientSecretKey | quote }}
+            clientIdProperty: {{ .Values.security.tailscale.externalSecret.remoteRef.clientIdProperty | default "" | quote }}
+            clientSecretProperty: {{ .Values.security.tailscale.externalSecret.remoteRef.clientSecretProperty | default "" | quote }}
+{{- end }}

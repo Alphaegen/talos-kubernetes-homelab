@@ -1,4 +1,4 @@
-{{- if .Values.security.enabled }}
+{{- if and .Values.security.enabled (.Values.security.vault.enabled | default true) }}
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:

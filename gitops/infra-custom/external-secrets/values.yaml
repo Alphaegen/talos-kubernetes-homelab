@@ -1,6 +1,6 @@
 stores:
   vault:
-    enabled: true
+    enabled: false
     name: vault
     server: http://vault-active.security.svc:8200
     path: kv

@@ -193,6 +193,7 @@ security:
     enabled: false
 
   vault:
+    enabled: false
     version: ">=0.0.0"
     host: vault.homelab.niekvlam.nl
     storageSize: 10Gi

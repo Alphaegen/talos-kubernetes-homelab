@@ -21,6 +21,13 @@ spec:
   destination:
     server: {{ .Values.cluster.url | default "https://kubernetes.default.svc" | quote }}
     namespace: {{ .Values.homeassistant.namespace | default "home-assistant" | quote }}
+  ignoreDifferences:
+    - group: apps
+      kind: StatefulSet
+      name: home-assistant
+      jqPathExpressions:
+        - .spec.volumeClaimTemplates[]?.apiVersion
+        - .spec.volumeClaimTemplates[]?.kind
   syncPolicy:
     {{- if .Values.sync }}
     automated:
@@ -30,6 +37,7 @@ spec:
     syncOptions:
       - CreateNamespace=true
       - ServerSideApply=true
+      - RespectIgnoreDifferences=true
     managedNamespaceMetadata:
       labels:
         # Only needed if you plan to mount USB devices and run privileged
@@ -143,4 +151,3 @@ spec:
         #   - mountPath: /dev/ttyACM0
         #     name: usb
 {{- end }}
-

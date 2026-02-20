@@ -22,6 +22,12 @@ spec:
     {{- end }}
     syncOptions:
       - CreateNamespace=true
+    managedNamespaceMetadata:
+      labels:
+        # Connector proxies need privileged init/container settings for forwarding.
+        pod-security.kubernetes.io/enforce: privileged
+        pod-security.kubernetes.io/warn: privileged
+        pod-security.kubernetes.io/audit: privileged
   source:
     repoURL: {{ .Values.cluster.repoURL | quote }}
     targetRevision: {{ .Values.cluster.revision | default "main" | quote }}

@@ -251,31 +251,5 @@ security:
         clientIdProperty: ""
         clientSecretProperty: ""
 
-n8n:
-  enabled: true
-  namespace: n8n
-  version: ">=0.0.0"
-  image:
-    tag: ""
-
-  storage:
-    storageClassName: longhorn
-    size: 8Gi
-
-  postgresql:
-    storageClassName: longhorn
-    size: 10Gi
-    database: n8n
-    username: n8n
-    password: "REMOVED_POSTGRES_PASSWORD_2"
-
-  encryptionKey: "" # leave this empty
-  existingEncryptionKeySecret: n8n-encryption-key
-
-  serviceMonitor:
-    enabled: true
-    scrapeInterval: 30s
-    release: prometheus
-
 raw:
   version: ">=0.0.0"

@@ -227,6 +227,18 @@ security:
     namespace: tailscale
     repoURL: https://pkgs.tailscale.com/helmcharts
     chart: tailscale-operator
+    connector:
+      enabled: true
+      name: home-lan
+      hostnamePrefix: home-lan
+      replicas: 1
+      tags:
+        - tag:home-lan-router
+      subnetRouter:
+        advertiseRoutes:
+          - 192.168.3.0/24
+      exitNode:
+        enabled: true
     externalSecret:
       enabled: true
       refreshInterval: 1h

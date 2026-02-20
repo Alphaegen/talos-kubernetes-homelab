@@ -1,0 +1,27 @@
+{{- $routes := (.Values.connector.subnetRouter.advertiseRoutes | default (list)) -}}
+{{- if and .Values.connector.enabled (not .Values.connector.exitNode.enabled) (eq (len $routes) 0) -}}
+{{- fail "tailscale connector requires at least one subnet route or exitNode.enabled=true" -}}
+{{- end -}}
+{{- if .Values.connector.enabled }}
+apiVersion: tailscale.com/v1alpha1
+kind: Connector
+metadata:
+  name: {{ .Values.connector.name }}
+spec:
+  hostnamePrefix: {{ .Values.connector.hostnamePrefix | quote }}
+  replicas: {{ .Values.connector.replicas }}
+  {{- if .Values.connector.tags }}
+  tags:
+    {{- range .Values.connector.tags }}
+    - {{ . | quote }}
+    {{- end }}
+  {{- end }}
+  {{- if gt (len $routes) 0 }}
+  subnetRouter:
+    advertiseRoutes:
+      {{- range $routes }}
+      - {{ . | quote }}
+      {{- end }}
+  {{- end }}
+  exitNode: {{ .Values.connector.exitNode.enabled | default false }}
+{{- end }}

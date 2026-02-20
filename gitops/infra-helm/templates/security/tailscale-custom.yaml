@@ -1,4 +1,4 @@
-{{- if and .Values.security.enabled .Values.security.tailscale.enabled .Values.security.tailscale.externalSecret.enabled .Values.security.eso.enabled }}
+{{- if and .Values.security.enabled .Values.security.tailscale.enabled }}
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -29,10 +29,29 @@ spec:
     helm:
       values: |
         namespace: {{ .Values.security.tailscale.namespace | default "tailscale" | quote }}
+        connector:
+          enabled: {{ .Values.security.tailscale.connector.enabled | default false }}
+          name: {{ .Values.security.tailscale.connector.name | default "home-lan" | quote }}
+          hostnamePrefix: {{ .Values.security.tailscale.connector.hostnamePrefix | default "home-lan" | quote }}
+          replicas: {{ .Values.security.tailscale.connector.replicas | default 1 }}
+          {{- if .Values.security.tailscale.connector.tags }}
+          tags:
+          {{- range .Values.security.tailscale.connector.tags }}
+            - {{ . | quote }}
+          {{- end }}
+          {{- end }}
+          subnetRouter:
+            advertiseRoutes:
+            {{- range (.Values.security.tailscale.connector.subnetRouter.advertiseRoutes | default (list)) }}
+              - {{ . | quote }}
+            {{- end }}
+          exitNode:
+            enabled: {{ .Values.security.tailscale.connector.exitNode.enabled | default false }}
         secretStoreRef:
           kind: {{ .Values.security.tailscale.externalSecret.secretStoreRef.kind | default "ClusterSecretStore" | quote }}
           name: {{ .Values.security.tailscale.externalSecret.secretStoreRef.name | quote }}
         operatorOAuthSecret:
+          enabled: {{ and (.Values.security.tailscale.externalSecret.enabled | default false) (.Values.security.eso.enabled | default false) }}
           name: operator-oauth
           refreshInterval: {{ .Values.security.tailscale.externalSecret.refreshInterval | default "1h" | quote }}
           remoteRef:

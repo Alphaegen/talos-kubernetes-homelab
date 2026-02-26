@@ -156,7 +156,7 @@ monitoring:
     enabled: true
 
 homeassistant:
-  enabled: false
+  enabled: true
   namespace: home-assistant
   version: ">=0.0.0"
   image:
@@ -179,7 +179,7 @@ homeassistant:
     release: "kube-prometheus-stack"
 
 media:
-  enabled: false
+  enabled: true
   nfs:
     version: "4.0.18"
     server: nas.niekvlam.nl
@@ -224,7 +224,7 @@ security:
     serviceMonitorLabel: kube-prometheus-stack
 
   tailscale:
-    enabled: false
+    enabled: true
     version: ">=0.0.0"
     namespace: tailscale
     repoURL: https://pkgs.tailscale.com/helmcharts

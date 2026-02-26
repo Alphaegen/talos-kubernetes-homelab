@@ -29,3 +29,27 @@ stores:
       enabled: false
       ttl: 5m
       maxSize: 100
+
+argocd:
+  repoCredentials:
+    enabled: true
+    refreshInterval: 1h
+    secretStoreRef:
+      kind: ClusterSecretStore
+      name: onepassword
+    sshPrivateKeyRemoteRef:
+      # 1Password path format: <item>/<field>
+      key: argocd-repo/sshPrivateKey
+      property: ""
+    repos:
+      - secretName: repo-1798823262
+        namespace: argocd
+        repositoryName: homelab-repo
+        project: default
+        url: git@github.com:Alphaegen/talos-homelab.git
+        type: git
+      - secretName: repo-1485164468
+        namespace: argocd
+        project: homelab.niekvlam
+        url: git@github.com:Alphaegen/talos-homelab.git
+        type: git

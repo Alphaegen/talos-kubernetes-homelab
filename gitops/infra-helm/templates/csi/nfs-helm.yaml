@@ -30,6 +30,10 @@ spec:
     helm:
       releaseName: nfs-provisioner
       values: |
+        replicaCount: 1
+        strategyType: Recreate
+        leaderElection:
+          enabled: false
         nfs:
           server: {{ .Values.media.nfs.server | default "nas.niekvlam.nl" | quote }}
           path: {{ .Values.media.nfs.path | default "/volume1/PlexMediaServer" | quote }}
@@ -47,4 +51,3 @@ spec:
           allowVolumeExpansion: true
           onDelete: retain
 {{- end }}
-

@@ -39,9 +39,26 @@ spec:
     helm:
       releaseName: longhorn
       values: |
+        preUpgradeChecker:
+          jobEnabled: false
+          upgradeVersionCheck: false
+
+        image:
+          longhorn:
+            manager:
+              tag: v1.11.0-hotfix-1
+            instanceManager:
+              tag: v1.11.0-hotfix-1
+
         defaultSettings:
           defaultDataPath: /var/mnt/longhorn
           defaultReplicaCount: {{ .Values.longhorn.defaultReplicaCount | default 2 }}
+          upgradeChecker: false
+          autoDeletePodWhenVolumeDetachedUnexpectedly: false
+          concurrentReplicaRebuildPerNodeLimit: 1
+
+        persistence:
+          defaultClassReplicaCount: {{ .Values.longhorn.defaultReplicaCount | default 2 }}
 
         service:
           ui:
@@ -57,4 +74,3 @@ spec:
             cert-manager.io/cluster-issuer: "letsencrypt-dns"
             nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
 {{- end }}
-

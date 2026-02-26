@@ -28,6 +28,8 @@ spec:
       jqPathExpressions:
         - .spec.volumeClaimTemplates[]?.apiVersion
         - .spec.volumeClaimTemplates[]?.kind
+        - .spec.volumeClaimTemplates[]?.status
+        - .spec.volumeClaimTemplates[]?.spec.volumeMode
   syncPolicy:
     {{- if .Values.sync }}
     automated:

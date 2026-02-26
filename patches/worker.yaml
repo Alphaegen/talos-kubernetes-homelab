@@ -1,5 +1,7 @@
 # worker patch
 machine:
+  sysfs:
+    devices.system.cpu.cpu0.cpufreq.scaling_governor: performance
   sysctls:
     vm.nr_hugepages: "1024"
     net.ipv6.conf.all.forwarding: "1"
@@ -9,12 +11,19 @@ machine:
     net.ipv6.conf.end0.accept_ra: "2"
   kernel:
     modules:
+      # Longhorn-required modules on Talos workers.
+      # iSCSI transport is built into the kernel on this platform, so avoid
+      # loading iscsi_* modules explicitly.
+      - name: nbd
+      - name: configfs
       - name: nvme_tcp
       - name: vfio_pci
 
   # certSANs:
   # - <load_balancer_ip>
   kubelet:
+    # Talos slim kubelet image can miss iSCSI userland support; use fat image for storage workloads.
+    image: ghcr.io/siderolabs/kubelet:v1.34.4-fat
     nodeIP:
       validSubnets:
         - 192.168.3.0/24

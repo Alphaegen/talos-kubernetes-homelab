@@ -18,6 +18,11 @@ spec:
   destination:
     server: {{ .Values.cluster.url | default "https://kubernetes.default.svc" | quote }}
     namespace: media
+  ignoreDifferences:
+    - group: ""
+      kind: PersistentVolumeClaim
+      jqPathExpressions:
+        - .spec.volumeName
   syncPolicy:
     {{- if .Values.sync }}
     automated:
@@ -26,9 +31,9 @@ spec:
     {{- end }}
     syncOptions:
       - CreateNamespace=true
+      - RespectIgnoreDifferences=true
   source:
     repoURL: {{ .Values.cluster.repoURL | quote }}
     targetRevision: {{ .Values.cluster.revision | default "main" | quote }}
     path: gitops/infra-custom/media
 {{- end }}
-

@@ -23,7 +23,7 @@ server:
   metrics:
     enabled: true
     serviceMonitor:
-      enabled: true
+      enabled: false
       interval: 30s
       additionalLabels:
         release: kube-prometheus-stack
@@ -33,7 +33,7 @@ controller:
   metrics:
     enabled: true
     serviceMonitor:
-      enabled: true
+      enabled: false
       interval: 30s
       additionalLabels:
         release: kube-prometheus-stack
@@ -43,7 +43,7 @@ repoServer:
   metrics:
     enabled: true
     serviceMonitor:
-      enabled: true
+      enabled: false
       interval: 30s
       additionalLabels:
         release: kube-prometheus-stack
@@ -53,7 +53,7 @@ applicationSet:
   metrics:
     enabled: true
     serviceMonitor:
-      enabled: true
+      enabled: false
       interval: 30s
       additionalLabels:
         release: kube-prometheus-stack
@@ -62,7 +62,7 @@ notifications:
   metrics:
     enabled: true
     serviceMonitor:
-      enabled: true
+      enabled: false
       interval: 30s
       additionalLabels:
         release: kube-prometheus-stack

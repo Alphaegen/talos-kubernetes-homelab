@@ -4,5 +4,8 @@ kubeconfig
 output
 bin/
 id_*
-**.DS_Store
 .DS_Store
+**.DS_Store
+_diag
+_out*
+_rebuild_exports

@@ -1,12 +1,10 @@
----
 apiVersion: v1alpha1
 kind: UserVolumeConfig
 name: longhorn
 provisioning:
   diskSelector:
+    # Place Longhorn data on the non-system NVMe disk.
     match: disk.transport == "nvme" && !system_disk
-  minSize: 470GiB     # optional
-  # maxSize: 512GiB         # omit to use remaining free space
+  minSize: 250GiB
 filesystem:
-  type: xfs            # default is xfs; ext4 also works
-
+  type: xfs

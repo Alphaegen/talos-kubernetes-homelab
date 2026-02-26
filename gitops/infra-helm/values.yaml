@@ -9,21 +9,21 @@ sync: true
 ingressController:
   enabled: true
   class: nginx
-  version: ">=0.0.0"
+  version: "4.14.3"
 
 metallb:
   enabled: true
-  version: ">=0.0.0"
+  version: "0.15.3"
   endpoints:
     - "192.168.3.110-192.168.3.129"
 
 longhorn:
   enabled: true
-  version: ">=0.0.0"
+  version: "1.11.0"
 
 certmanager:
   enabled: true
-  version: ">=0.0.0"
+  version: "v1.19.3"
   acme:
     email: vlam4695+homelab@gmail.com
     server: "https://acme-v02.api.letsencrypt.org/directory"
@@ -156,7 +156,7 @@ monitoring:
     enabled: true
 
 homeassistant:
-  enabled: true
+  enabled: false
   namespace: home-assistant
   version: ">=0.0.0"
   image:
@@ -179,8 +179,9 @@ homeassistant:
     release: "kube-prometheus-stack"
 
 media:
-  enabled: true
+  enabled: false
   nfs:
+    version: "4.0.18"
     server: nas.niekvlam.nl
     path: /volume1/PlexMediaServer
     storageClass: media-nfs
@@ -200,7 +201,7 @@ security:
 
   eso:
     enabled: true
-    version: ">=0.0.0"
+    version: "2.0.1"
     serviceMonitorLabel: kube-prometheus-stack
     bootstrap: true
 
@@ -223,7 +224,7 @@ security:
     serviceMonitorLabel: kube-prometheus-stack
 
   tailscale:
-    enabled: true
+    enabled: false
     version: ">=0.0.0"
     namespace: tailscale
     repoURL: https://pkgs.tailscale.com/helmcharts
@@ -253,4 +254,4 @@ security:
         clientSecretProperty: ""
 
 raw:
-  version: ">=0.0.0"
+  version: "2.0.2"

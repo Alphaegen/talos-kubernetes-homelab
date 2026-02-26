@@ -127,7 +127,5 @@ spec:
             metadata:
               name: public
               namespace: metallb-system
-            spec:
-              ipAddressPools:
-              - public
+            spec: {}
 {{- end }}

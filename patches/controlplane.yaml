@@ -1,5 +1,7 @@
 # controlplane patch
 machine:
+  sysfs:
+    devices.system.cpu.cpu0.cpufreq.scaling_governor: performance
   sysctls:
     vm.nr_hugepages: "1024"
     net.ipv6.conf.all.forwarding: "1"
@@ -7,10 +9,6 @@ machine:
     net.ipv6.conf.all.accept_ra: "0"
     net.ipv6.conf.default.accept_ra: "0"
     net.ipv6.conf.end0.accept_ra: "2"
-  kernel:
-    modules:
-      - name: nvme_tcp
-      - name: vfio_pci
 
   # certSANs:
   # - <load_balancer_ip>
@@ -18,14 +16,6 @@ machine:
     nodeIP:
       validSubnets:
         - 192.168.3.0/24
-    extraMounts:
-      - destination: /var/lib/longhorn
-        type: bind
-        source: /var/lib/longhorn
-        options:
-          - bind
-          - rshared
-          - rw
     extraArgs:
       rotate-server-certificates: true
   features:
@@ -51,7 +41,3 @@ cluster:
   # Should be set to load balancing IP in production
   # certSANs:
   # - <load_balancer_ip>
-
-  extraManifests:
-    - https://raw.githubusercontent.com/alex1989hu/kubelet-serving-cert-approver/main/deploy/standalone-install.yaml
-    - https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml

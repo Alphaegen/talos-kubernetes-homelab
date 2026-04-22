@@ -231,7 +231,7 @@ homeAutomation:
       host: zigbee2mqtt.homelab.niekvlam.nl
       tlsSecretName: zigbee2mqtt-tls
       certIssuer: letsencrypt-dns
-      whitelistSourceRange: "192.168.0.0/16,100.64.0.0/10,2a02:a443:a348::/64"
+      whitelistSourceRange: "0.0.0.0/0"
       auth:
         enabled: false
         url: ""

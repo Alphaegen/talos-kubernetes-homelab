@@ -1,0 +1,63 @@
+namespace: home-automation
+createNamespace: true
+
+storageClassName: longhorn
+
+slzb:
+  ip: 192.168.3.232
+  port: 6638
+
+mqtt:
+  image: eclipse-mosquitto:2.0.22
+  persistence:
+    size: 2Gi
+  service:
+    name: mosquitto
+    port: 1883
+  credentialsSecret:
+    name: mqtt-credentials
+    usernameKey: username
+    passwordKey: password
+
+mqttExternalSecret:
+  enabled: true
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: onepassword
+  remoteRef:
+    usernameKey: mqtt-zigbee/username
+    passwordKey: mqtt-zigbee/password
+    usernameProperty: ""
+    passwordProperty: ""
+
+fallbackSecret:
+  enabled: false
+  username: ""
+  password: ""
+
+zigbee2mqtt:
+  image: ghcr.io/koenkk/zigbee2mqtt:latest
+  timezone: Europe/Amsterdam
+  persistence:
+    size: 5Gi
+  service:
+    name: zigbee2mqtt
+    port: 8080
+  config:
+    baseTopic: zigbee2mqtt
+    homeAssistantEnabled: true
+    frontendEnabled: true
+    permitJoin: false
+    logLevel: info
+  ingress:
+    enabled: true
+    className: nginx
+    host: zigbee2mqtt.homelab.niekvlam.nl
+    tlsSecretName: zigbee2mqtt-tls
+    certIssuer: letsencrypt-dns
+    whitelistSourceRange: 192.168.3.0/24
+    auth:
+      enabled: false
+      url: ""
+      signin: ""

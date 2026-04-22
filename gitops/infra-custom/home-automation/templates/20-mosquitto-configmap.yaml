@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mosquitto-config
+  namespace: {{ .Values.namespace }}
+data:
+  mosquitto.conf: |
+    persistence true
+    persistence_location /mosquitto/data/
+    log_dest stdout
+
+    listener {{ .Values.mqtt.service.port }} 0.0.0.0
+    allow_anonymous false
+    password_file /mosquitto/config/passwd

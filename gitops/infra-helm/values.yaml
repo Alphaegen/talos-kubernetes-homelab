@@ -178,6 +178,63 @@ homeassistant:
     scrapeInterval: "30s"
     release: "kube-prometheus-stack"
 
+homeAutomation:
+  enabled: true
+  namespace: home-automation
+  storageClassName: longhorn
+
+  slzb:
+    ip: 192.168.3.232
+    port: 6638
+
+  mqtt:
+    image: eclipse-mosquitto:2.0.22
+    persistence:
+      size: 2Gi
+    credentialsSecret:
+      name: mqtt-credentials
+      usernameKey: username
+      passwordKey: password
+
+  mqttExternalSecret:
+    enabled: true
+    refreshInterval: 1h
+    secretStoreRef:
+      kind: ClusterSecretStore
+      name: onepassword
+    remoteRef:
+      usernameKey: mqtt-zigbee/username
+      passwordKey: mqtt-zigbee/password
+      usernameProperty: ""
+      passwordProperty: ""
+
+  fallbackSecret:
+    enabled: false
+    username: ""
+    password: ""
+
+  zigbee2mqtt:
+    image: ghcr.io/koenkk/zigbee2mqtt:latest
+    persistence:
+      size: 5Gi
+    config:
+      baseTopic: zigbee2mqtt
+      logLevel: info
+      permitJoin: false
+      homeAssistantEnabled: true
+      frontendEnabled: true
+    ingress:
+      enabled: true
+      className: nginx
+      host: zigbee2mqtt.homelab.niekvlam.nl
+      tlsSecretName: zigbee2mqtt-tls
+      certIssuer: letsencrypt-dns
+      whitelistSourceRange: 192.168.3.0/24
+      auth:
+        enabled: false
+        url: ""
+        signin: ""
+
 media:
   enabled: true
   nfs:

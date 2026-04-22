@@ -1,0 +1,80 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mosquitto
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: mosquitto
+  template:
+    metadata:
+      labels:
+        app: mosquitto
+    spec:
+      initContainers:
+        - name: render-config
+          image: {{ .Values.mqtt.image | quote }}
+          command:
+            - /bin/sh
+            - -ec
+          args:
+            - |
+              set -eu
+              cp /config-src/mosquitto.conf /mosquitto/config/mosquitto.conf
+              mosquitto_passwd -b -c /mosquitto/config/passwd "${MQTT_USERNAME}" "${MQTT_PASSWORD}"
+              chmod 0600 /mosquitto/config/passwd
+          env:
+            - name: MQTT_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.mqtt.credentialsSecret.name }}
+                  key: {{ .Values.mqtt.credentialsSecret.usernameKey }}
+            - name: MQTT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.mqtt.credentialsSecret.name }}
+                  key: {{ .Values.mqtt.credentialsSecret.passwordKey }}
+          volumeMounts:
+            - name: mosquitto-config-src
+              mountPath: /config-src
+              readOnly: true
+            - name: mosquitto-config-runtime
+              mountPath: /mosquitto/config
+      containers:
+        - name: mosquitto
+          image: {{ .Values.mqtt.image | quote }}
+          args:
+            - -c
+            - /mosquitto/config/mosquitto.conf
+          ports:
+            - name: mqtt
+              containerPort: {{ .Values.mqtt.service.port }}
+              protocol: TCP
+          readinessProbe:
+            tcpSocket:
+              port: mqtt
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: mqtt
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          volumeMounts:
+            - name: mosquitto-data
+              mountPath: /mosquitto/data
+            - name: mosquitto-config-runtime
+              mountPath: /mosquitto/config
+      volumes:
+        - name: mosquitto-config-src
+          configMap:
+            name: mosquitto-config
+        - name: mosquitto-config-runtime
+          emptyDir: {}
+        - name: mosquitto-data
+          persistentVolumeClaim:
+            claimName: mosquitto-data

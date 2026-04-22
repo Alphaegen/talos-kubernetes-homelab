@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.zigbee2mqtt.service.name }}
+  namespace: {{ .Values.namespace }}
+spec:
+  type: ClusterIP
+  selector:
+    app: zigbee2mqtt
+  ports:
+    - name: http
+      protocol: TCP
+      port: {{ .Values.zigbee2mqtt.service.port }}
+      targetPort: http

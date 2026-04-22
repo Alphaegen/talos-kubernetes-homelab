@@ -1,0 +1,93 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/refs/heads/main/argoproj.io/application_v1alpha1.json
+{{- if .Values.homeAutomation.enabled }}
+{{- $mqttExternalSecretEnabled := and (.Values.homeAutomation.mqttExternalSecret.enabled | default true) (.Values.security.eso.enabled | default false) }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ .Values.cluster.name }}-home-automation
+  labels:
+    cluster: {{ .Values.cluster.name | quote }}
+    app: home-automation
+  namespace: {{ .Values.cluster.namespace | quote }}
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  annotations:
+    # Deploy after core infra (ingress/cert-manager/security bootstrap).
+    argocd.argoproj.io/sync-wave: "16"
+spec:
+  project: {{ .Values.cluster.name }}
+  destination:
+    server: {{ .Values.cluster.url | default "https://kubernetes.default.svc" | quote }}
+    namespace: {{ .Values.homeAutomation.namespace | default "home-automation" | quote }}
+  syncPolicy:
+    {{- if .Values.sync }}
+    automated:
+      prune: true
+      selfHeal: true
+    {{- end }}
+    syncOptions:
+      - CreateNamespace=true
+  source:
+    repoURL: {{ .Values.cluster.repoURL | quote }}
+    targetRevision: {{ .Values.cluster.revision | default "main" | quote }}
+    path: gitops/infra-custom/home-automation
+    helm:
+      values: |
+        namespace: {{ .Values.homeAutomation.namespace | default "home-automation" | quote }}
+        createNamespace: true
+
+        storageClassName: {{ .Values.homeAutomation.storageClassName | default "longhorn" | quote }}
+
+        slzb:
+          ip: {{ .Values.homeAutomation.slzb.ip | quote }}
+          port: {{ .Values.homeAutomation.slzb.port | default 6638 }}
+
+        mqtt:
+          image: {{ .Values.homeAutomation.mqtt.image | default "eclipse-mosquitto:2.0.22" | quote }}
+          persistence:
+            size: {{ .Values.homeAutomation.mqtt.persistence.size | default "2Gi" | quote }}
+          credentialsSecret:
+            name: {{ .Values.homeAutomation.mqtt.credentialsSecret.name | default "mqtt-credentials" | quote }}
+            usernameKey: {{ .Values.homeAutomation.mqtt.credentialsSecret.usernameKey | default "username" | quote }}
+            passwordKey: {{ .Values.homeAutomation.mqtt.credentialsSecret.passwordKey | default "password" | quote }}
+
+        mqttExternalSecret:
+          enabled: {{ $mqttExternalSecretEnabled }}
+          refreshInterval: {{ .Values.homeAutomation.mqttExternalSecret.refreshInterval | default "1h" | quote }}
+          secretStoreRef:
+            kind: {{ .Values.homeAutomation.mqttExternalSecret.secretStoreRef.kind | default "ClusterSecretStore" | quote }}
+            name: {{ .Values.homeAutomation.mqttExternalSecret.secretStoreRef.name | default "onepassword" | quote }}
+          remoteRef:
+            usernameKey: {{ .Values.homeAutomation.mqttExternalSecret.remoteRef.usernameKey | quote }}
+            passwordKey: {{ .Values.homeAutomation.mqttExternalSecret.remoteRef.passwordKey | quote }}
+            usernameProperty: {{ .Values.homeAutomation.mqttExternalSecret.remoteRef.usernameProperty | default "" | quote }}
+            passwordProperty: {{ .Values.homeAutomation.mqttExternalSecret.remoteRef.passwordProperty | default "" | quote }}
+
+        fallbackSecret:
+          enabled: {{ and (not $mqttExternalSecretEnabled) (.Values.homeAutomation.fallbackSecret.enabled | default false) }}
+          username: {{ .Values.homeAutomation.fallbackSecret.username | default "" | quote }}
+          password: {{ .Values.homeAutomation.fallbackSecret.password | default "" | quote }}
+
+        zigbee2mqtt:
+          image: {{ .Values.homeAutomation.zigbee2mqtt.image | default "ghcr.io/koenkk/zigbee2mqtt:latest" | quote }}
+          timezone: {{ .Values.timezone | default "Europe/Amsterdam" | quote }}
+          persistence:
+            size: {{ .Values.homeAutomation.zigbee2mqtt.persistence.size | default "5Gi" | quote }}
+          config:
+            baseTopic: {{ .Values.homeAutomation.zigbee2mqtt.config.baseTopic | default "zigbee2mqtt" | quote }}
+            logLevel: {{ .Values.homeAutomation.zigbee2mqtt.config.logLevel | default "info" | quote }}
+            permitJoin: {{ .Values.homeAutomation.zigbee2mqtt.config.permitJoin | default false }}
+            homeAssistantEnabled: {{ .Values.homeAutomation.zigbee2mqtt.config.homeAssistantEnabled | default true }}
+            frontendEnabled: {{ .Values.homeAutomation.zigbee2mqtt.config.frontendEnabled | default true }}
+          ingress:
+            enabled: {{ .Values.homeAutomation.zigbee2mqtt.ingress.enabled | default true }}
+            className: {{ .Values.homeAutomation.zigbee2mqtt.ingress.className | default "nginx" | quote }}
+            host: {{ .Values.homeAutomation.zigbee2mqtt.ingress.host | default (printf "zigbee2mqtt.%s.nl" .Values.cluster.name) | quote }}
+            tlsSecretName: {{ .Values.homeAutomation.zigbee2mqtt.ingress.tlsSecretName | default "zigbee2mqtt-tls" | quote }}
+            certIssuer: {{ .Values.homeAutomation.zigbee2mqtt.ingress.certIssuer | default "letsencrypt-dns" | quote }}
+            whitelistSourceRange: {{ .Values.homeAutomation.zigbee2mqtt.ingress.whitelistSourceRange | default "192.168.0.0/16" | quote }}
+            auth:
+              enabled: {{ .Values.homeAutomation.zigbee2mqtt.ingress.auth.enabled | default false }}
+              url: {{ .Values.homeAutomation.zigbee2mqtt.ingress.auth.url | default "" | quote }}
+              signin: {{ .Values.homeAutomation.zigbee2mqtt.ingress.auth.signin | default "" | quote }}
+{{- end }}

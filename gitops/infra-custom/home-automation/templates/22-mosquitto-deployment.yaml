@@ -26,7 +26,8 @@ spec:
               set -eu
               cp /config-src/mosquitto.conf /mosquitto/config/mosquitto.conf
               mosquitto_passwd -b -c /mosquitto/config/passwd "${MQTT_USERNAME}" "${MQTT_PASSWORD}"
-              chmod 0600 /mosquitto/config/passwd
+              chown 1883:1883 /mosquitto/config/mosquitto.conf /mosquitto/config/passwd
+              chmod 0640 /mosquitto/config/passwd
           env:
             - name: MQTT_USERNAME
               valueFrom:

@@ -47,6 +47,8 @@ spec:
       containers:
         - name: mosquitto
           image: {{ .Values.mqtt.image | quote }}
+          command:
+            - mosquitto
           args:
             - -c
             - /mosquitto/config/mosquitto.conf

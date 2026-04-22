@@ -1,4 +1,7 @@
 {{- if .Values.zigbee2mqtt.ingress.enabled }}
+{{- if and .Values.zigbee2mqtt.ingress.auth.enabled (or (not .Values.zigbee2mqtt.ingress.auth.url) (not .Values.zigbee2mqtt.ingress.auth.signin)) }}
+{{- fail "zigbee2mqtt.ingress.auth.enabled=true requires both zigbee2mqtt.ingress.auth.url and zigbee2mqtt.ingress.auth.signin" }}
+{{- end }}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -6,7 +9,9 @@ metadata:
   namespace: {{ .Values.namespace }}
   annotations:
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    {{- if .Values.zigbee2mqtt.ingress.whitelistSourceRange }}
     nginx.ingress.kubernetes.io/whitelist-source-range: {{ .Values.zigbee2mqtt.ingress.whitelistSourceRange | quote }}
+    {{- end }}
     cert-manager.io/cluster-issuer: {{ .Values.zigbee2mqtt.ingress.certIssuer | quote }}
     {{- if .Values.zigbee2mqtt.ingress.auth.enabled }}
     nginx.ingress.kubernetes.io/auth-url: {{ .Values.zigbee2mqtt.ingress.auth.url | quote }}

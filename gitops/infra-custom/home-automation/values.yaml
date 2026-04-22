@@ -58,8 +58,8 @@ zigbee2mqtt:
     host: zigbee2mqtt.homelab.niekvlam.nl
     tlsSecretName: zigbee2mqtt-tls
     certIssuer: letsencrypt-dns
-    whitelistSourceRange: 192.168.3.0/24
+    whitelistSourceRange: ""
     auth:
       enabled: false
-      url: ""
-      signin: ""
+      url: http://oauth2-proxy.home-assistant.svc.cluster.local:4180/oauth2/auth
+      signin: https://home-assistant.homelab.niekvlam.nl/oauth2/start?rd=$escaped_request_uri

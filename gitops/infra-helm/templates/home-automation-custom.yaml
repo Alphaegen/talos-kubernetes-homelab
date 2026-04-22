@@ -87,7 +87,7 @@ spec:
             host: {{ .Values.homeAutomation.zigbee2mqtt.ingress.host | default (printf "zigbee2mqtt.%s.nl" .Values.cluster.name) | quote }}
             tlsSecretName: {{ .Values.homeAutomation.zigbee2mqtt.ingress.tlsSecretName | default "zigbee2mqtt-tls" | quote }}
             certIssuer: {{ .Values.homeAutomation.zigbee2mqtt.ingress.certIssuer | default "letsencrypt-dns" | quote }}
-            whitelistSourceRange: {{ .Values.homeAutomation.zigbee2mqtt.ingress.whitelistSourceRange | default "192.168.0.0/16" | quote }}
+            whitelistSourceRange: {{ .Values.homeAutomation.zigbee2mqtt.ingress.whitelistSourceRange | default "" | quote }}
             auth:
               enabled: {{ .Values.homeAutomation.zigbee2mqtt.ingress.auth.enabled | default false }}
               url: {{ .Values.homeAutomation.zigbee2mqtt.ingress.auth.url | default "" | quote }}

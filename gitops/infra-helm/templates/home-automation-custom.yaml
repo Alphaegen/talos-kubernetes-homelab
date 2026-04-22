@@ -41,6 +41,8 @@ spec:
         slzb:
           ip: {{ .Values.homeAutomation.slzb.ip | quote }}
           port: {{ .Values.homeAutomation.slzb.port | default 6638 }}
+          adapter: {{ .Values.homeAutomation.slzb.adapter | default "zstack" | quote }}
+          baudrate: {{ .Values.homeAutomation.slzb.baudrate | default 115200 }}
 
         mqtt:
           image: {{ .Values.homeAutomation.mqtt.image | default "eclipse-mosquitto:2.0.22" | quote }}

@@ -186,6 +186,8 @@ homeAutomation:
   slzb:
     ip: 192.168.3.232
     port: 6638
+    adapter: zstack
+    baudrate: 115200
 
   mqtt:
     image: eclipse-mosquitto:2.0.22

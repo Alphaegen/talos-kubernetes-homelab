@@ -18,10 +18,11 @@ The rendered `configuration.yaml` is written into the writable PVC at startup an
 - `mqtt.user`
 - `mqtt.password`
 - `serial.port: tcp://<SLZB-IP>:6638`
+- `serial.adapter: zstack` (default for SLZB-06p10 / TI CC2674P10)
 - `homeassistant.enabled: true`
 - `frontend.enabled: true`
 
-The init container only seeds `configuration.yaml` when the file does not already exist, so Zigbee2MQTT-managed updates (for example generated network key) persist across restarts.
+The init container only seeds `configuration.yaml` when the file does not already exist, so Zigbee2MQTT-managed updates (for example generated network key) persist across restarts. It will patch an existing file when `serial.adapter` is missing to prevent startup failures after Zigbee2MQTT updates.
 
 Sample config file:
 
@@ -50,6 +51,7 @@ Sample config file:
 1. Confirm Zigbee2MQTT starts with coordinator and MQTT connected:
    - `kubectl -n home-automation logs deploy/zigbee2mqtt --tail=200`
    - Look for successful coordinator initialization and MQTT connection messages.
+   - If it still fails on adapter detection, verify SLZB is in Zigbee coordinator mode (not Thread) in the SLZB web UI.
 1. Confirm Home Assistant MQTT discovery:
    - In Home Assistant, configure MQTT integration to use:
      - Host: `mosquitto.home-automation.svc.cluster.local`

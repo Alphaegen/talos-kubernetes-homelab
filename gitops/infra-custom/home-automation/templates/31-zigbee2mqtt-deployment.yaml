@@ -41,7 +41,81 @@ spec:
               set -eu
 
               if [ -s /app/data/configuration.yaml ]; then
-                echo "Using existing /app/data/configuration.yaml from PVC."
+                if awk '
+                  /^serial:[[:space:]]*$/ { in_serial=1; next }
+                  in_serial && /^[^[:space:]]/ { in_serial=0 }
+                  in_serial && /^[[:space:]]+adapter:/ { found=1 }
+                  END { exit(found ? 0 : 1) }
+                ' /app/data/configuration.yaml; then
+                  echo "Using existing /app/data/configuration.yaml from PVC."
+                  exit 0
+                fi
+
+                echo "Patching existing /app/data/configuration.yaml with serial adapter settings."
+                tmp_file="$(mktemp)"
+                awk \
+                  -v serial_port="${SERIAL_PORT}" \
+                  -v serial_adapter="${SERIAL_ADAPTER}" \
+                  -v serial_baudrate="${SERIAL_BAUDRATE}" \
+                  '
+                  BEGIN {
+                    in_serial=0
+                    seen_serial=0
+                    has_port=0
+                    has_adapter=0
+                    has_baudrate=0
+                  }
+
+                  /^serial:[[:space:]]*$/ {
+                    seen_serial=1
+                    in_serial=1
+                    print
+                    next
+                  }
+
+                  in_serial && /^[^[:space:]]/ {
+                    if (!has_port) print "  port: \"" serial_port "\""
+                    if (!has_adapter) print "  adapter: \"" serial_adapter "\""
+                    if (!has_baudrate) print "  baudrate: " serial_baudrate
+                    in_serial=0
+                  }
+
+                  in_serial && /^[[:space:]]+port:/ {
+                    has_port=1
+                    print
+                    next
+                  }
+
+                  in_serial && /^[[:space:]]+adapter:/ {
+                    has_adapter=1
+                    print
+                    next
+                  }
+
+                  in_serial && /^[[:space:]]+baudrate:/ {
+                    has_baudrate=1
+                    print
+                    next
+                  }
+
+                  { print }
+
+                  END {
+                    if (in_serial) {
+                      if (!has_port) print "  port: \"" serial_port "\""
+                      if (!has_adapter) print "  adapter: \"" serial_adapter "\""
+                      if (!has_baudrate) print "  baudrate: " serial_baudrate
+                    } else if (!seen_serial) {
+                      print ""
+                      print "serial:"
+                      print "  port: \"" serial_port "\""
+                      print "  adapter: \"" serial_adapter "\""
+                      print "  baudrate: " serial_baudrate
+                    }
+                  }
+                ' /app/data/configuration.yaml > "${tmp_file}"
+                mv "${tmp_file}" /app/data/configuration.yaml
+                echo "Patched /app/data/configuration.yaml."
                 exit 0
               fi
 
@@ -49,6 +123,7 @@ spec:
               mqtt_username_escaped="$(printf '%s' "${MQTT_USERNAME}" | sed 's/\\/\\\\/g; s/"/\\"/g')"
               mqtt_password_escaped="$(printf '%s' "${MQTT_PASSWORD}" | sed 's/\\/\\\\/g; s/"/\\"/g')"
               serial_port_escaped="$(printf '%s' "${SERIAL_PORT}" | sed 's/\\/\\\\/g; s/"/\\"/g')"
+              serial_adapter_escaped="$(printf '%s' "${SERIAL_ADAPTER}" | sed 's/\\/\\\\/g; s/"/\\"/g')"
 
               cat > /app/data/configuration.yaml <<EOF
               homeassistant:
@@ -60,6 +135,8 @@ spec:
                 password: "${mqtt_password_escaped}"
               serial:
                 port: "${serial_port_escaped}"
+                adapter: "${serial_adapter_escaped}"
+                baudrate: ${SERIAL_BAUDRATE}
               frontend:
                 enabled: {{ .Values.zigbee2mqtt.config.frontendEnabled }}
                 port: {{ .Values.zigbee2mqtt.service.port }}
@@ -72,6 +149,10 @@ spec:
               value: {{ printf "mqtt://%s.%s.svc.cluster.local:%v" .Values.mqtt.service.name .Values.namespace .Values.mqtt.service.port | quote }}
             - name: SERIAL_PORT
               value: {{ printf "tcp://%s:%v" .Values.slzb.ip .Values.slzb.port | quote }}
+            - name: SERIAL_ADAPTER
+              value: {{ .Values.slzb.adapter | quote }}
+            - name: SERIAL_BAUDRATE
+              value: {{ printf "%v" .Values.slzb.baudrate | quote }}
             - name: MQTT_USERNAME
               valueFrom:
                 secretKeyRef:

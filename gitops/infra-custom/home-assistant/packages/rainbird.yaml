@@ -13,16 +13,23 @@ timer:
     duration: "00:10:00"
     restore: true
 
-input_select:
-  rainbird_active_zone:
-    name: RainBird Active Zone
-    options:
-      - Idle
-      - Zone 1
-      - Zone 2
-      - Zone 3
-      - Zone 4
-    initial: Idle
+template:
+  - sensor:
+      - name: RainBird Active Zone
+        unique_id: rainbird_active_zone
+        icon: mdi:sprinkler
+        state: >-
+          {% if is_state('switch.rain_bird_sprinkler_1', 'on') %}
+            Zone 1
+          {% elif is_state('switch.rain_bird_sprinkler_2', 'on') %}
+            Zone 2
+          {% elif is_state('switch.rain_bird_sprinkler_3', 'on') %}
+            Zone 3
+          {% elif is_state('switch.rain_bird_sprinkler_4', 'on') %}
+            Zone 4
+          {% else %}
+            Idle
+          {% endif %}
 
 script:
   rainbird_start_single_zone:
@@ -31,9 +38,6 @@ script:
     fields:
       zone_switch:
         name: Zone switch
-        required: true
-      zone_name:
-        name: Zone name
         required: true
     sequence:
       - variables:
@@ -44,12 +48,6 @@ script:
       - action: timer.cancel
         target:
           entity_id: timer.rainbird_time_left
-
-      - action: input_select.select_option
-        target:
-          entity_id: input_select.rainbird_active_zone
-        data:
-          option: Idle
 
       - action: switch.turn_off
         target:
@@ -73,12 +71,6 @@ script:
         data:
           duration: "{{ timer_duration }}"
 
-      - action: input_select.select_option
-        target:
-          entity_id: input_select.rainbird_active_zone
-        data:
-          option: "{{ zone_name }}"
-
   rainbird_stop_all_zones:
     alias: RainBird - Stop All Zones
     mode: restart
@@ -95,12 +87,6 @@ script:
       - action: timer.cancel
         target:
           entity_id: timer.rainbird_time_left
-
-      - action: input_select.select_option
-        target:
-          entity_id: input_select.rainbird_active_zone
-        data:
-          option: Idle
 
 automation:
   - alias: RainBird - Stop when shared timer finishes

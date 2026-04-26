@@ -11,18 +11,23 @@ This directory contains Kubernetes manifests that are applied into the
 
 - `input_number.rainbird_duration`
 - `timer.rainbird_time_left`
-- `input_select.rainbird_active_zone`
+- `sensor.rainbird_active_zone`
 - `script.rainbird_start_single_zone`
 - `script.rainbird_stop_all_zones`
 - `automation.rainbird_stop_when_shared_timer_finishes`
 
-Starting a zone first cancels the shared timer, sets the active zone to `Idle`,
-turns off all configured Rain Bird switches, waits two seconds, starts the
-selected zone with `rainbird.start_irrigation`, starts the shared timer, and
-sets the active zone name. This keeps only one irrigation zone active at a time.
+Starting a zone first cancels the shared timer, turns off all configured Rain
+Bird switches, waits two seconds, starts the selected zone with
+`rainbird.start_irrigation`, and starts the shared timer. This keeps only one
+irrigation zone active at a time.
 
-Stopping cancels the timer, turns off all configured zones, and sets the active
-zone back to `Idle`. The shared timer finishing also calls the stop script.
+Stopping cancels the timer and turns off all configured zones. The shared timer
+finishing also calls the stop script.
+
+The active-zone entity is a read-only template sensor derived from the real Rain
+Bird switch states. It cannot start zones from the UI, and it shows zones
+started from the Rain Bird app as long as the Home Assistant integration reports
+the switch as `on`.
 
 ## Entity IDs
 

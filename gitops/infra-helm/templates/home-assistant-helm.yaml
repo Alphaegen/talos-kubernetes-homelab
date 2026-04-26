@@ -46,110 +46,126 @@ spec:
         pod-security.kubernetes.io/enforce: privileged
         pod-security.kubernetes.io/warn: privileged
         pod-security.kubernetes.io/audit: privileged
-  source:
-    repoURL: http://pajikos.github.io/home-assistant-helm-chart/
-    chart: home-assistant
-    targetRevision: {{ .Values.homeassistant.version | quote }}
-    helm:
-      releaseName: home-assistant
-      values: |
-        controller:
-          type: StatefulSet
-        image:
-          tag: {{ .Values.homeassistant.image.tag | default "" | quote }}
-        env:
-          - name: TZ
-            value: {{ .Values.timezone | default "Europe/Amsterdam" | quote }}
-        service:
-          type: ClusterIP
-          port: 8080
+  sources:
+    - repoURL: http://pajikos.github.io/home-assistant-helm-chart/
+      chart: home-assistant
+      targetRevision: {{ .Values.homeassistant.version | quote }}
+      helm:
+        releaseName: home-assistant
+        values: |
+          controller:
+            type: StatefulSet
+          image:
+            tag: {{ .Values.homeassistant.image.tag | default "" | quote }}
+          env:
+            - name: TZ
+              value: {{ .Values.timezone | default "Europe/Amsterdam" | quote }}
+          service:
+            type: ClusterIP
+            port: 8080
 
-        initContainers:
-          - name: init-hacs
-            image: bash
-            command: ["bash", "-c", "cd /config && wget -O - https://get.hacs.xyz | bash -"]
-            volumeMounts:
-              - mountPath: /config
-                name: home-assistant
+          initContainers:
+            - name: init-hacs
+              image: bash
+              command: ["bash", "-c", "cd /config && wget -O - https://get.hacs.xyz | bash -"]
+              volumeMounts:
+                - mountPath: /config
+                  name: home-assistant
 
 
-        configuration:
-          # Enable or disable the configuration setup for Home Assistant
-          enabled: true
-          # Force init will merge the current configuration file with the default configuration on every start
-          # This is useful when you want to ensure that the configuration file is always up to date
-          forceInit: true
-          # List of trusted proxies in the format of CIDR notation in a case of using a reverse proxy
-          # Here is the list of the most common private IP ranges, use your list of possible trusted proxies, usually, it's the IP of the reverse proxy
-          trusted_proxies:
-            {{- range .Values.homeassistant.trusted_proxies }}
-            - {{ . }}
-            {{- end }}
-          # Editing templateConfig allows you to customize the configuration.yaml file
-          # You can use Go template functions to customize the configuration
-          templateConfig: |-
-            # Loads default set of integrations. Do not remove.
-            default_config:
+          configuration:
+            # Enable or disable the configuration setup for Home Assistant
+            enabled: true
+            # Force init will merge the current configuration file with the default configuration on every start
+            # This is useful when you want to ensure that the configuration file is always up to date
+            forceInit: true
+            # List of trusted proxies in the format of CIDR notation in a case of using a reverse proxy
+            # Here is the list of the most common private IP ranges, use your list of possible trusted proxies, usually, it's the IP of the reverse proxy
+            trusted_proxies:
+              {{- range .Values.homeassistant.trusted_proxies }}
+              - {{ . }}
+              {{- end }}
+            # Editing templateConfig allows you to customize the configuration.yaml file
+            # You can use Go template functions to customize the configuration
+            templateConfig: |-
+              # Loads default set of integrations. Do not remove.
+              default_config:
 
-            {{- if .Values.ingressController.enabled }}
-            http:
-              use_x_forwarded_for: true
-              trusted_proxies:
-                {{- range .Values.homeassistant.trusted_proxies }}
-                - {{ . }}
-                {{- end }}
-            {{- end}}
-            # Load frontend themes from the themes folder
-            frontend:
-              themes: !include_dir_merge_named themes
+              homeassistant:
+                packages: !include_dir_named packages
 
-            automation: !include automations.yaml
-            script: !include scripts.yaml
-            scene: !include scenes.yaml
+              {{- if .Values.ingressController.enabled }}
+              http:
+                use_x_forwarded_for: true
+                trusted_proxies:
+                  {{- range .Values.homeassistant.trusted_proxies }}
+                  - {{ . }}
+                  {{- end }}
+              {{- end}}
+              # Load frontend themes from the themes folder
+              frontend:
+                themes: !include_dir_merge_named themes
 
-        ingress:
-          enabled: true
-          className: {{ .Values.ingressController.class | default "nginx" | quote }}
-          annotations:
-            nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
-            cert-manager.io/cluster-issuer: "letsencrypt-dns"
-          hosts:
-            - host: home-assistant.{{ .Values.cluster.name }}.nl
-              paths:
-                - path: /
-                  pathType: Prefix
-          tls:
-            - hosts:
-                - home-assistant.{{ .Values.cluster.name }}.nl
-              secretName: home-assistant-tls
+              automation: !include automations.yaml
+              script: !include scripts.yaml
+              scene: !include scenes.yaml
 
-        persistence:
-          enabled: true
-          storageClass: {{ .Values.homeassistant.storage.storageClassName | default "longhorn" | quote }}
-          accessMode: ReadWriteOnce
-          size: {{ .Values.homeassistant.storage.size | default "10Gi" | quote }}
-          # alternatively, bind an existing claim:
-          # existingClaim: {{ .Values.homeassistant.storage.existingClaim | default "" | quote }}
+          ingress:
+            enabled: true
+            className: {{ .Values.ingressController.class | default "nginx" | quote }}
+            annotations:
+              nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+              cert-manager.io/cluster-issuer: "letsencrypt-dns"
+            hosts:
+              - host: home-assistant.{{ .Values.cluster.name }}.nl
+                paths:
+                  - path: /
+                    pathType: Prefix
+            tls:
+              - hosts:
+                  - home-assistant.{{ .Values.cluster.name }}.nl
+                secretName: home-assistant-tls
 
-        # Enable ONLY if you rely on mDNS/UPnP discovery from the host network
-        hostNetwork: {{ .Values.homeassistant.hostNetwork | default false }}
-        dnsPolicy: {{ if .Values.homeassistant.hostNetwork | default false }}ClusterFirstWithHostNet{{ else }}ClusterFirst{{ end }}
+          persistence:
+            enabled: true
+            storageClass: {{ .Values.homeassistant.storage.storageClassName | default "longhorn" | quote }}
+            accessMode: ReadWriteOnce
+            size: {{ .Values.homeassistant.storage.size | default "10Gi" | quote }}
+            # alternatively, bind an existing claim:
+            # existingClaim: {{ .Values.homeassistant.storage.existingClaim | default "" | quote }}
 
-        serviceMonitor:
-          enabled: {{ .Values.homeassistant.serviceMonitor.enabled | default true }}
-          scrapeInterval: {{ .Values.homeassistant.serviceMonitor.scrapeInterval | default "30s" | quote }}
-          labels:
-            release: {{ .Values.homeassistant.serviceMonitor.release | default "prometheus" | quote }}
+          # Enable ONLY if you rely on mDNS/UPnP discovery from the host network
+          hostNetwork: {{ .Values.homeassistant.hostNetwork | default false }}
+          dnsPolicy: {{ if .Values.homeassistant.hostNetwork | default false }}ClusterFirstWithHostNet{{ else }}ClusterFirst{{ end }}
 
-        # USB passthrough example (e.g., Zigbee stick). Requires privileged:
-        # securityContext:
-        #   privileged: true
-        # additionalVolumes:
-        #   - hostPath:
-        #       path: /dev/serial/by-id/<your-usb-device>
-        #       type: CharDevice
-        #     name: usb
-        # additionalMounts:
-        #   - mountPath: /dev/ttyACM0
-        #     name: usb
+          serviceMonitor:
+            enabled: {{ .Values.homeassistant.serviceMonitor.enabled | default true }}
+            scrapeInterval: {{ .Values.homeassistant.serviceMonitor.scrapeInterval | default "30s" | quote }}
+            labels:
+              release: {{ .Values.homeassistant.serviceMonitor.release | default "prometheus" | quote }}
+
+          additionalVolumes:
+            - name: rainbird-packages
+              configMap:
+                name: home-assistant-rainbird-package
+
+          additionalMounts:
+            - mountPath: /config/packages
+              name: rainbird-packages
+              readOnly: true
+
+          # USB passthrough example (e.g., Zigbee stick). Requires privileged:
+          # securityContext:
+          #   privileged: true
+          # additionalVolumes:
+          #   - hostPath:
+          #       path: /dev/serial/by-id/<your-usb-device>
+          #       type: CharDevice
+          #     name: usb
+          # additionalMounts:
+          #   - mountPath: /dev/ttyACM0
+          #     name: usb
+    - repoURL: {{ .Values.cluster.repoURL | quote }}
+      targetRevision: {{ .Values.cluster.revision | default "main" | quote }}
+      path: gitops/infra-custom/home-assistant
 {{- end }}

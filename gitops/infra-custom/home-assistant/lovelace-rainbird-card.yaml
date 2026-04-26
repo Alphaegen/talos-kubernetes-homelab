@@ -1,0 +1,63 @@
+type: entities
+title: RainBird Irrigation
+show_header_toggle: false
+entities:
+  - entity: input_number.rainbird_duration
+    name: Duration
+  - entity: timer.rainbird_time_left
+    name: Time left
+  - entity: input_select.rainbird_active_zone
+    name: Active zone
+
+  - type: section
+    label: Zones
+
+  - type: button
+    name: Start Zone 1
+    icon: mdi:sprinkler
+    tap_action:
+      action: call-service
+      service: script.rainbird_start_single_zone
+      data:
+        zone_switch: switch.rain_bird_sprinkler_1
+        zone_name: Zone 1
+
+  - type: button
+    name: Start Zone 2
+    icon: mdi:sprinkler
+    tap_action:
+      action: call-service
+      service: script.rainbird_start_single_zone
+      data:
+        zone_switch: switch.rain_bird_sprinkler_2
+        zone_name: Zone 2
+
+  - type: button
+    name: Start Zone 3
+    icon: mdi:sprinkler
+    tap_action:
+      action: call-service
+      service: script.rainbird_start_single_zone
+      data:
+        zone_switch: switch.rain_bird_sprinkler_3
+        zone_name: Zone 3
+
+  - type: button
+    name: Start Zone 4
+    icon: mdi:sprinkler
+    tap_action:
+      action: call-service
+      service: script.rainbird_start_single_zone
+      data:
+        zone_switch: switch.rain_bird_sprinkler_4
+        zone_name: Zone 4
+
+  - type: section
+    label: Control
+
+  - type: button
+    name: Stop / Cancel irrigation
+    icon: mdi:stop-circle-outline
+    tap_action:
+      action: call-service
+      service: script.rainbird_stop_all_zones

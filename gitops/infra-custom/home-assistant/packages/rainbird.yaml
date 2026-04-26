@@ -1,0 +1,115 @@
+input_number:
+  rainbird_duration:
+    name: RainBird Duration
+    min: 1
+    max: 60
+    step: 1
+    unit_of_measurement: min
+    icon: mdi:timer-outline
+
+timer:
+  rainbird_time_left:
+    name: RainBird Time Left
+    duration: "00:10:00"
+    restore: true
+
+input_select:
+  rainbird_active_zone:
+    name: RainBird Active Zone
+    options:
+      - Idle
+      - Zone 1
+      - Zone 2
+      - Zone 3
+      - Zone 4
+    initial: Idle
+
+script:
+  rainbird_start_single_zone:
+    alias: RainBird - Start Single Zone
+    mode: restart
+    fields:
+      zone_switch:
+        name: Zone switch
+        required: true
+      zone_name:
+        name: Zone name
+        required: true
+    sequence:
+      - variables:
+          duration_min: "{{ states('input_number.rainbird_duration') | int(10) }}"
+          timer_duration: >-
+            {{ '%02d:%02d:00' | format(duration_min // 60, duration_min % 60) }}
+
+      - action: timer.cancel
+        target:
+          entity_id: timer.rainbird_time_left
+
+      - action: input_select.select_option
+        target:
+          entity_id: input_select.rainbird_active_zone
+        data:
+          option: Idle
+
+      - action: switch.turn_off
+        target:
+          entity_id:
+            - switch.rain_bird_sprinkler_1
+            - switch.rain_bird_sprinkler_2
+            - switch.rain_bird_sprinkler_3
+            - switch.rain_bird_sprinkler_4
+        continue_on_error: true
+
+      - delay: "00:00:02"
+
+      - action: rainbird.start_irrigation
+        data:
+          entity_id: "{{ zone_switch }}"
+          duration: "{{ duration_min }}"
+
+      - action: timer.start
+        target:
+          entity_id: timer.rainbird_time_left
+        data:
+          duration: "{{ timer_duration }}"
+
+      - action: input_select.select_option
+        target:
+          entity_id: input_select.rainbird_active_zone
+        data:
+          option: "{{ zone_name }}"
+
+  rainbird_stop_all_zones:
+    alias: RainBird - Stop All Zones
+    mode: restart
+    sequence:
+      - action: switch.turn_off
+        target:
+          entity_id:
+            - switch.rain_bird_sprinkler_1
+            - switch.rain_bird_sprinkler_2
+            - switch.rain_bird_sprinkler_3
+            - switch.rain_bird_sprinkler_4
+        continue_on_error: true
+
+      - action: timer.cancel
+        target:
+          entity_id: timer.rainbird_time_left
+
+      - action: input_select.select_option
+        target:
+          entity_id: input_select.rainbird_active_zone
+        data:
+          option: Idle
+
+automation:
+  - alias: RainBird - Stop when shared timer finishes
+    id: rainbird_stop_when_shared_timer_finishes
+    mode: single
+    trigger:
+      - platform: event
+        event_type: timer.finished
+        event_data:
+          entity_id: timer.rainbird_time_left
+    action:
+      - action: script.rainbird_stop_all_zones

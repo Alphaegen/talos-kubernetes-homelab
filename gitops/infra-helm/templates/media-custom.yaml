@@ -3,7 +3,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: {{ .Values.cluster.name }}-media
+  name: {{ include "infra.appName" (dict "root" . "name" "media") }}
   namespace: {{ .Values.cluster.namespace | quote }}
   finalizers:
     - resources-finalizer.argocd.argoproj.io
@@ -14,7 +14,7 @@ metadata:
     # after provisioner is up
     argocd.argoproj.io/sync-wave: "15"
 spec:
-  project: {{ .Values.cluster.name }}
+  project: {{ include "infra.projectName" . }}
   destination:
     server: {{ .Values.cluster.url | default "https://kubernetes.default.svc" | quote }}
     namespace: media

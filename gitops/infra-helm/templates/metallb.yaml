@@ -3,7 +3,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: {{ .Values.cluster.name }}-metallb
+  name: {{ include "infra.appName" (dict "root" . "name" "metallb") }}
   labels:
     cluster: {{ .Values.cluster.name | quote }}
     app: metallb
@@ -15,7 +15,7 @@ metadata:
     {{ toYaml .Values.notifications | nindent 4 }}
     {{- end }}
 spec:
-  project: {{ .Values.cluster.name }}
+  project: {{ include "infra.projectName" . }}
   destination:
     server: {{ .Values.cluster.url | default "https://kubernetes.default.svc" | quote }}
     namespace: metallb-system
@@ -36,19 +36,27 @@ spec:
   source:
     repoURL: https://metallb.github.io/metallb
     chart: metallb
-    targetRevision: {{ .Values.metallb.version | default "HEAD" | quote }}
+    targetRevision: {{ .Values.metallb.version | quote }}
     helm:
       version: v3
       releaseName: metallb
+      values: |
+        prometheus:
+          serviceMonitor:
+            enabled: false
+        frr-k8s:
+          prometheus:
+            serviceMonitor:
+              enabled: false
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/refs/heads/main/argoproj.io/application_v1alpha1.json
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: {{ .Values.cluster.name }}-metallb-ip-pool
+  name: {{ include "infra.appName" (dict "root" . "name" "metallb-config") }}
   labels:
     cluster: {{ .Values.cluster.name | quote }}
-    app: metallb-ip-pool
+    app: metallb-config
   namespace: {{ .Values.cluster.namespace | quote }}
   annotations:
     argocd.argoproj.io/sync-wave: "1"
@@ -57,7 +65,7 @@ metadata:
     {{ toYaml .Values.notifications | indent 4 }}
     {{- end }}
 spec:
-  project: {{ .Values.cluster.name }}
+  project: {{ include "infra.projectName" . }}
   destination:
     server: {{ .Values.cluster.url | default "https://kubernetes.default.svc" | quote }}
     namespace: metallb-system
@@ -67,65 +75,23 @@ spec:
       prune: true
       selfHeal: true
     {{- end }}
+    syncOptions:
+      - CreateNamespace=true
   source:
-    repoURL: https://bedag.github.io/helm-charts/
-    chart: raw
-    targetRevision: {{ .Values.raw.version | quote }}
+    repoURL: {{ .Values.cluster.repoURL | quote }}
+    path: gitops/infra-custom/metallb
+    targetRevision: {{ .Values.cluster.revision | default "main" | quote }}
     helm:
-      version: v3
-      releaseName: metallb-ip-pool
+      releaseName: metallb-config
       values: |
-        resources:
-          - apiVersion: metallb.io/v1beta1
-            kind: IPAddressPool
-            metadata:
-              name: public
-              namespace: metallb-system
-            spec:
-              addresses:
-              {{- range .Values.metallb.endpoints }}
-                - {{ . }}
-              {{- end }}
----
-# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/refs/heads/main/argoproj.io/application_v1alpha1.json
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: {{ .Values.cluster.name }}-metallb-l2-advertisement
-  labels:
-    cluster: {{ .Values.cluster.name | quote }}
-    app: metallb-l2-advertisement
-  namespace: {{ .Values.cluster.namespace | quote }}
-  annotations:
-    argocd.argoproj.io/sync-wave: "1"
-    app.kubernetes.io/part-of: metallb
-    {{- if .Values.notifications }}
-    {{ toYaml .Values.notifications | indent 4 }}
-    {{- end }}
-spec:
-  project: {{ .Values.cluster.name }}
-  destination:
-    server: {{ .Values.cluster.url | default "https://kubernetes.default.svc" | quote }}
-    namespace: metallb-system
-  syncPolicy:
-    {{- if .Values.sync }}
-    automated:
-      prune: true
-      selfHeal: true
-    {{- end }}
-  source:
-    repoURL: https://bedag.github.io/helm-charts/
-    chart: raw
-    targetRevision: {{ .Values.raw.version | quote }}
-    helm:
-      version: v3
-      releaseName: metallb-l2-advertisement
-      values: |
-        resources:
-          - apiVersion: metallb.io/v1beta1
-            kind: L2Advertisement
-            metadata:
-              name: public
-              namespace: metallb-system
-            spec: {}
+        namespace: metallb-system
+        ipAddressPool:
+          name: public
+          addresses:
+          {{- range .Values.metallb.endpoints }}
+            - {{ . }}
+          {{- end }}
+        l2Advertisement:
+          name: public
+          enabled: true
 {{- end }}

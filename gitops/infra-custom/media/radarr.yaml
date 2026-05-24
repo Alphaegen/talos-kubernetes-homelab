@@ -17,7 +17,7 @@ spec:
         fsGroupChangePolicy: OnRootMismatch
       containers:
         - name: radarr
-          image: ghcr.io/linuxserver/radarr:latest
+          image: ghcr.io/linuxserver/radarr:v0.2.0.1504-ls84
           ports: [{ name: http, containerPort: 7878 }]
           env:
             - { name: PUID, value: "1000" }

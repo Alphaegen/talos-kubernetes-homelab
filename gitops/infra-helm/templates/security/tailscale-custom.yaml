@@ -2,7 +2,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: {{ .Values.cluster.name }}-tailscale-custom
+  name: {{ include "infra.appName" (dict "root" . "name" "tailscale-custom") }}
   labels:
     cluster: {{ .Values.cluster.name | quote }}
     app: tailscale-custom
@@ -10,7 +10,7 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "13"
 spec:
-  project: {{ .Values.cluster.name }}
+  project: {{ include "infra.projectName" . }}
   destination:
     server: {{ .Values.cluster.url | default "https://kubernetes.default.svc" | quote }}
     namespace: {{ .Values.security.tailscale.namespace | default "tailscale" | quote }}

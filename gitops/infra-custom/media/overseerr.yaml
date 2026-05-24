@@ -17,7 +17,7 @@ spec:
       containers:
         - name: overseerr
           # LinuxServer Overseerr image on GHCR
-          image: ghcr.io/linuxserver/overseerr:latest
+          image: ghcr.io/linuxserver/overseerr:v1.35.0-ls159
           ports:
             - { name: http, containerPort: 5055 }
           env:

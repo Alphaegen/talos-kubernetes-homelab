@@ -3,7 +3,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: {{ .Values.cluster.name }}-longhorn
+  name: {{ include "infra.appName" (dict "root" . "name" "longhorn") }}
   labels:
     cluster: {{ .Values.cluster.name | quote }}
     app: longhorn
@@ -15,7 +15,7 @@ metadata:
     {{ toYaml .Values.notifications | indent 4 }}
     {{- end }}
 spec:
-  project: {{ .Values.cluster.name }}
+  project: {{ include "infra.projectName" . }}
   destination:
     server: {{ .Values.cluster.url | default "https://kubernetes.default.svc" | quote }}
     namespace: longhorn-system
@@ -42,13 +42,6 @@ spec:
         preUpgradeChecker:
           jobEnabled: false
           upgradeVersionCheck: false
-
-        image:
-          longhorn:
-            manager:
-              tag: v1.11.0-hotfix-1
-            instanceManager:
-              tag: v1.11.0-hotfix-1
 
         defaultSettings:
           defaultDataPath: /var/mnt/longhorn

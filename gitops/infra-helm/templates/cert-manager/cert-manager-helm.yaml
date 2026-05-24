@@ -3,7 +3,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: {{ .Values.cluster.name }}-cert-manager-helm
+  name: {{ include "infra.appName" (dict "root" . "name" "cert-manager-helm") }}
   labels:
     cluster: {{ .Values.cluster.name | quote }}
     app: cert-manager
@@ -15,7 +15,7 @@ metadata:
     {{ toYaml .Values.notifications | indent 4 }}
     {{- end }}
 spec:
-  project: {{ .Values.cluster.name }}
+  project: {{ include "infra.projectName" . }}
   destination:
     server: {{ .Values.cluster.url | default "https://kubernetes.default.svc" | quote }}
     namespace: cert-manager
@@ -36,7 +36,7 @@ spec:
   source:
     repoURL: https://charts.jetstack.io
     chart: cert-manager
-    targetRevision: {{ .Values.certmanager.version | default "HEAD" | quote }}
+    targetRevision: {{ .Values.certmanager.version | quote }}
     helm:
       version: v3
       releaseName: cert-manager

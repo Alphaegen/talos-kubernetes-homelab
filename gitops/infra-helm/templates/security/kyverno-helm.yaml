@@ -3,7 +3,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: {{ .Values.cluster.name }}-kyverno
+  name: {{ include "infra.appName" (dict "root" . "name" "kyverno") }}
   labels:
     cluster: {{ .Values.cluster.name | quote }}
     app: kyverno
@@ -14,7 +14,7 @@ metadata:
     # Install the admission controller early, before policies & scanners.
     argocd.argoproj.io/sync-wave: "0"
 spec:
-  project: {{ .Values.cluster.name }}
+  project: {{ include "infra.projectName" . }}
   destination:
     server: {{ .Values.cluster.url | default "https://kubernetes.default.svc" | quote }}
     namespace: kyverno

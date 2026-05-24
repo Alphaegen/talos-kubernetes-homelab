@@ -4,7 +4,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: {{ .Values.cluster.name }}-home-automation
+  name: {{ include "infra.appName" (dict "root" . "name" "home-automation") }}
   labels:
     cluster: {{ .Values.cluster.name | quote }}
     app: home-automation
@@ -15,7 +15,7 @@ metadata:
     # Deploy after core infra (ingress/cert-manager/security bootstrap).
     argocd.argoproj.io/sync-wave: "16"
 spec:
-  project: {{ .Values.cluster.name }}
+  project: {{ include "infra.projectName" . }}
   destination:
     server: {{ .Values.cluster.url | default "https://kubernetes.default.svc" | quote }}
     namespace: {{ .Values.homeAutomation.namespace | default "home-automation" | quote }}
@@ -71,7 +71,7 @@ spec:
           password: {{ .Values.homeAutomation.fallbackSecret.password | default "" | quote }}
 
         zigbee2mqtt:
-          image: {{ .Values.homeAutomation.zigbee2mqtt.image | default "ghcr.io/koenkk/zigbee2mqtt:latest" | quote }}
+          image: {{ .Values.homeAutomation.zigbee2mqtt.image | default "ghcr.io/koenkk/zigbee2mqtt:2.10.1" | quote }}
           timezone: {{ .Values.timezone | default "Europe/Amsterdam" | quote }}
           persistence:
             size: {{ .Values.homeAutomation.zigbee2mqtt.persistence.size | default "5Gi" | quote }}

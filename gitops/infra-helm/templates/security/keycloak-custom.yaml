@@ -2,7 +2,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: {{ .Values.cluster.name }}-keycloak-custom
+  name: {{ include "infra.appName" (dict "root" . "name" "keycloak-custom") }}
   labels:
     cluster: {{ .Values.cluster.name | quote }}
     app: keycloak-custom
@@ -13,7 +13,7 @@ metadata:
     # Apply after Keycloak is up
     argocd.argoproj.io/sync-wave: "11"
 spec:
-  project: {{ .Values.cluster.name }}
+  project: {{ include "infra.projectName" . }}
   destination:
     server: {{ .Values.cluster.url | default "https://kubernetes.default.svc" | quote }}
     namespace: security

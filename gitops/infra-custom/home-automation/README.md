@@ -40,7 +40,7 @@ Sample config file:
    - `gitops/infra-helm/values.yaml` (`homeAutomation.*`)
 1. Commit and push the GitOps changes.
 1. Sync ArgoCD application:
-   - `homelab.niekvlam-home-automation`
+   - `homelab-home-automation` (or `<cluster.appNamePrefix>-home-automation`)
 1. Confirm resources:
    - `kubectl -n home-automation get deploy,po,svc,pvc,ingress,secret,externalsecret`
 

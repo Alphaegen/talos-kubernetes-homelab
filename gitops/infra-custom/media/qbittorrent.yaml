@@ -17,7 +17,7 @@ spec:
         fsGroupChangePolicy: OnRootMismatch
       containers:
         - name: qb
-          image: ghcr.io/linuxserver/qbittorrent:latest
+          image: ghcr.io/linuxserver/qbittorrent:14.3.9.99202110311443-7435-01519b5e7ubuntu20.04.1-ls166
           ports:
             - { name: http, containerPort: 8080 }
             - { name: bt-tcp, containerPort: 50413, protocol: TCP }

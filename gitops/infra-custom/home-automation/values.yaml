@@ -39,7 +39,7 @@ fallbackSecret:
   password: ""
 
 zigbee2mqtt:
-  image: ghcr.io/koenkk/zigbee2mqtt:latest
+  image: ghcr.io/koenkk/zigbee2mqtt:2.10.1
   timezone: Europe/Amsterdam
   persistence:
     size: 5Gi

@@ -1,5 +1,10 @@
 cluster:
+  # Used for hostnames and legacy references.
   name: homelab.niekvlam
+  # Used for ArgoCD project naming (defaults to cluster.name if omitted).
+  projectName: homelab.niekvlam
+  # Used for ArgoCD Application metadata.name.
+  appNamePrefix: homelab
   namespace: argocd
   repoURL: "git@github.com:Alphaegen/talos-homelab.git"
   revision: "main"
@@ -9,37 +14,44 @@ sync: true
 ingressController:
   enabled: true
   class: nginx
-  version: "4.14.3"
+  # renovate: datasource=helm depName=ingress-nginx/ingress-nginx versioning=helm
+  version: "4.15.1"
 
 metallb:
   enabled: true
-  version: "0.15.3"
+  # renovate: datasource=helm depName=metallb/metallb versioning=helm
+  version: "0.16.0"
   endpoints:
     - "192.168.3.110-192.168.3.129"
 
 longhorn:
   enabled: true
-  version: "1.11.0"
+  # renovate: datasource=helm depName=longhorn/longhorn versioning=helm
+  version: "1.11.2"
 
 certmanager:
   enabled: true
-  version: "v1.19.3"
+  # renovate: datasource=helm depName=jetstack/cert-manager versioning=helm
+  version: "v1.20.2"
   acme:
     email: vlam4695+homelab@gmail.com
     server: "https://acme-v02.api.letsencrypt.org/directory"
 
 sealedsecrets:
   enabled: false
-  version: ">=0.0.0"
+  # renovate: datasource=helm depName=sealed-secrets/sealed-secrets versioning=helm
+  version: "2.18.6"
 
 ceph:
   enabled: false
-  version: ">=0.0.0"
+  # renovate: datasource=helm depName=rook-release/rook-ceph versioning=helm
+  version: "v1.19.5"
 
 monitoring:
   enabled: false
   grafana:
-    version: ">=0.0.0"
+    # renovate: datasource=helm depName=grafana/grafana versioning=helm
+    version: "10.5.15"
     ingress:
       enabled: true
       ingressClassName: nginx
@@ -84,7 +96,8 @@ monitoring:
           revision: 1
 
   loki:
-    version: ">=0.0.0"
+    # renovate: datasource=helm depName=grafana/loki versioning=helm
+    version: "7.0.0"
     deploymentMode: SingleBinary
     singleBinary:
       replicas: 1
@@ -119,7 +132,8 @@ monitoring:
       enabled: true
 
   promtail:
-    version: ">=0.0.0"
+    # renovate: datasource=helm depName=grafana/promtail versioning=helm
+    version: "6.17.1"
     extraVolumes:
       - name: positions
         hostPath:
@@ -139,7 +153,8 @@ monitoring:
           - cri: {}
 
   prometheus:
-    version: ">=0.0.0"
+    # renovate: datasource=helm depName=prometheus-community/kube-prometheus-stack versioning=helm
+    version: "85.3.3"
     prometheusSpec:
       retention: 30d
       retentionSize: 20GiB
@@ -158,7 +173,8 @@ monitoring:
 homeassistant:
   enabled: true
   namespace: home-assistant
-  version: ">=0.0.0"
+  # renovate: datasource=helm depName=pajikos/home-assistant versioning=helm
+  version: "0.3.61"
   image:
     tag: ""
 
@@ -216,7 +232,7 @@ homeAutomation:
     password: ""
 
   zigbee2mqtt:
-    image: ghcr.io/koenkk/zigbee2mqtt:latest
+    image: ghcr.io/koenkk/zigbee2mqtt:2.10.1
     persistence:
       size: 5Gi
     config:
@@ -240,6 +256,7 @@ homeAutomation:
 media:
   enabled: true
   nfs:
+    # renovate: datasource=helm depName=nfs-subdir-external-provisioner/nfs-subdir-external-provisioner versioning=helm
     version: "4.0.18"
     server: nas.niekvlam.nl
     path: /volume1/PlexMediaServer
@@ -251,22 +268,27 @@ security:
 
   keycloak:
     enabled: false
+    # The Bitnami keycloak chart is kept configurable because upstream packaging has changed over time.
+    version: "22.x.x"
 
   vault:
     enabled: false
-    version: ">=0.0.0"
+    # renovate: datasource=helm depName=hashicorp/vault versioning=helm
+    version: "0.32.0"
     host: vault.homelab.niekvlam.nl
     storageSize: 10Gi
 
   eso:
     enabled: true
-    version: "2.0.1"
+    # renovate: datasource=helm depName=external-secrets/external-secrets versioning=helm
+    version: "2.5.0"
     serviceMonitorLabel: kube-prometheus-stack
     bootstrap: true
 
   kyverno:
     enabled: false
-    version: ">=0.0.0"
+    # renovate: datasource=helm depName=kyverno/kyverno versioning=helm
+    version: "3.8.1"
     # Start in audit to avoid surprise breakages; flip to "enforce" later.
     mode: audit # audit | enforce
     excludeNamespaces:
@@ -279,12 +301,14 @@ security:
 
   trivy:
     enabled: false
-    version: ">=0.0.0"
+    # renovate: datasource=helm depName=aquasecurity/trivy-operator versioning=helm
+    version: "0.32.1"
     serviceMonitorLabel: kube-prometheus-stack
 
   tailscale:
     enabled: true
-    version: ">=0.0.0"
+    # renovate: datasource=helm depName=tailscale/tailscale-operator versioning=helm
+    version: "1.98.3"
     namespace: tailscale
     repoURL: https://pkgs.tailscale.com/helmcharts
     chart: tailscale-operator
@@ -311,6 +335,3 @@ security:
         clientSecretKey: tailscale-operator/client_secret
         clientIdProperty: ""
         clientSecretProperty: ""
-
-raw:
-  version: "2.0.2"

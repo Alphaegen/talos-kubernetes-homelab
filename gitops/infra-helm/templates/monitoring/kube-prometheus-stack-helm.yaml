@@ -3,7 +3,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: {{ .Values.cluster.name }}-kube-prometheus-stack
+  name: {{ include "infra.appName" (dict "root" . "name" "kube-prometheus-stack") }}
   labels:
     cluster: {{ .Values.cluster.name | quote }}
     app: kube-prometheus-stack
@@ -17,7 +17,7 @@ metadata:
     {{ toYaml .Values.notifications | indent 4 }}
     {{- end }}
 spec:
-  project: {{ .Values.cluster.name }}
+  project: {{ include "infra.projectName" . }}
   destination:
     server: {{ .Values.cluster.url | default "https://kubernetes.default.svc" | quote }}
     namespace: monitoring

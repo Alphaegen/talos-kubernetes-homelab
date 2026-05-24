@@ -1,0 +1,9 @@
+namespace: metallb-system
+
+ipAddressPool:
+  name: public
+  addresses: []
+
+l2Advertisement:
+  enabled: true
+  name: public

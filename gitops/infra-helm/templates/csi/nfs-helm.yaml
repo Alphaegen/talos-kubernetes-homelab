@@ -3,7 +3,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: {{ .Values.cluster.name }}-nfs-provisioner
+  name: {{ include "infra.appName" (dict "root" . "name" "nfs-provisioner") }}
   namespace: {{ .Values.cluster.namespace | quote }}
   labels:
     cluster: {{ .Values.cluster.name | quote }}
@@ -11,7 +11,7 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "1"
 spec:
-  project: {{ .Values.cluster.name }}
+  project: {{ include "infra.projectName" . }}
   destination:
     server: {{ .Values.cluster.url | default "https://kubernetes.default.svc" | quote }}
     namespace: nfs-provisioner

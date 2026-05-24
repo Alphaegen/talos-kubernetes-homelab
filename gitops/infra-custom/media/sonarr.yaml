@@ -17,7 +17,7 @@ spec:
         fsGroupChangePolicy: OnRootMismatch
       containers:
         - name: sonarr
-          image: ghcr.io/linuxserver/sonarr:latest
+          image: ghcr.io/linuxserver/sonarr:v4-4.0.0.247-ls43
           ports: [{ name: http, containerPort: 8989 }]
           env:
             - { name: PUID, value: "1000" }

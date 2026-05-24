@@ -1,0 +1,50 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended"
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Update Helm chart versions annotated with '# renovate:' comments",
+      "managerFilePatterns": [
+        "/(^|/)gitops/.+\\.ya?ml$/"
+      ],
+      "matchStrings": [
+        "#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)(?:\\s+versioning=(?<versioning>\\S+))?\\s*\\n\\s*version:\\s*[\"']?(?<currentValue>[^\"'\\s]+)[\"']?"
+      ],
+      "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}"
+    }
+  ],
+  "helm-values": {
+    "managerFilePatterns": [
+      "/(^|/)gitops/infra-helm/values\\.ya?ml$/",
+      "/(^|/)gitops/infra-custom/.+/values\\.ya?ml$/"
+    ]
+  },
+  "kubernetes": {
+    "managerFilePatterns": [
+      "/(^|/)gitops/infra-custom/.+\\.ya?ml$/"
+    ]
+  },
+  "packageRules": [
+    {
+      "matchDatasources": [
+        "helm"
+      ],
+      "groupName": "helm chart updates"
+    },
+    {
+      "matchDatasources": [
+        "docker"
+      ],
+      "groupName": "container image updates"
+    }
+  ],
+  "rangeStrategy": "pin",
+  "labels": [
+    "dependencies",
+    "gitops"
+  ],
+  "prConcurrentLimit": 10
+}

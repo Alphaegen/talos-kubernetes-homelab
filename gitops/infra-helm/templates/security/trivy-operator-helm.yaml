@@ -2,7 +2,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: {{ .Values.cluster.name }}-trivy-operator
+  name: {{ include "infra.appName" (dict "root" . "name" "trivy-operator") }}
   labels:
     cluster: {{ .Values.cluster.name | quote }}
     app: trivy-operator
@@ -12,7 +12,7 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "3"
 spec:
-  project: {{ .Values.cluster.name }}
+  project: {{ include "infra.projectName" . }}
   destination:
     server: {{ .Values.cluster.url | default "https://kubernetes.default.svc" | quote }}
     namespace: trivy-system

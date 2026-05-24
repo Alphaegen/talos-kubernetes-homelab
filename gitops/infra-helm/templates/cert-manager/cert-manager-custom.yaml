@@ -3,7 +3,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: {{ .Values.cluster.name }}-cert-manager-custom
+  name: {{ include "infra.appName" (dict "root" . "name" "cert-manager-custom") }}
   labels:
     cluster: {{ .Values.cluster.name | quote }}
     app: cert-manager
@@ -15,7 +15,7 @@ metadata:
     {{ toYaml .Values.notifications | indent 4 }}
     {{- end }}
 spec:
-  project: {{ .Values.cluster.name }}
+  project: {{ include "infra.projectName" . }}
   destination:
     server: {{ .Values.cluster.url | default "https://kubernetes.default.svc" | quote }}
     namespace: cert-manager
@@ -36,7 +36,7 @@ spec:
   source:
     repoURL: {{ .Values.cluster.repoURL | quote }}
     path: gitops/infra-custom/cert-manager
-    targetRevision: HEAD
+    targetRevision: {{ .Values.cluster.revision | default "main" | quote }}
     helm:
       version: v3
       releaseName: cert-manager-custom

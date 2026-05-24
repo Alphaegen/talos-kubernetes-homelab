@@ -3,7 +3,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: {{ .Values.cluster.name }}-nginx
+  name: {{ include "infra.appName" (dict "root" . "name" "nginx") }}
   labels:
     cluster: {{ .Values.cluster.name | quote }}
     app: nginx
@@ -15,7 +15,7 @@ metadata:
     {{ toYaml .Values.notifications | indent 4 }}
     {{- end }}
 spec:
-  project: {{ .Values.cluster.name }}
+  project: {{ include "infra.projectName" . }}
   destination:
     server: {{ .Values.cluster.url | default "https://kubernetes.default.svc" | quote }}
     namespace: ingress-nginx
@@ -31,7 +31,7 @@ spec:
   source:
     repoURL: https://kubernetes.github.io/ingress-nginx
     chart: ingress-nginx
-    targetRevision: {{ .Values.ingressController.version | default "HEAD" | quote }}
+    targetRevision: {{ .Values.ingressController.version | quote }}
     helm:
       version: v3
       releaseName: nginx

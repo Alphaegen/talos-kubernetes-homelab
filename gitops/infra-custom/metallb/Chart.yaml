@@ -1,0 +1,6 @@
+apiVersion: v2
+name: metallb-config
+description: MetalLB custom resources (IPAddressPool and L2Advertisement)
+type: application
+version: 1.0.0
+appVersion: "1.0.0"

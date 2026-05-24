@@ -2,7 +2,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: {{ .Values.cluster.name }}-keycloak
+  name: {{ include "infra.appName" (dict "root" . "name" "keycloak") }}
   labels:
     cluster: {{ .Values.cluster.name | quote }}
     app: keycloak
@@ -13,7 +13,7 @@ metadata:
     # Deploy the base service first
     argocd.argoproj.io/sync-wave: "10"
 spec:
-  project: {{ .Values.cluster.name }}
+  project: {{ include "infra.projectName" . }}
   destination:
     server: {{ .Values.cluster.url | default "https://kubernetes.default.svc" | quote }}
     namespace: security
@@ -26,7 +26,7 @@ spec:
   source:
     repoURL: https://charts.bitnami.com/bitnami
     chart: keycloak
-    targetRevision: 22.x.x
+    targetRevision: {{ .Values.security.keycloak.version | default "22.x.x" | quote }}
     helm:
       values: |
         production: true

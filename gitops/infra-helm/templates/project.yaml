@@ -2,7 +2,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: AppProject
 metadata:
-  name: {{ .Values.cluster.name }}
+  name: {{ include "infra.projectName" . }}
   namespace: {{ .Values.cluster.namespace }}
 spec:
   sourceRepos:

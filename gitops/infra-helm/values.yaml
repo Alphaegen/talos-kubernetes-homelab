@@ -296,11 +296,11 @@ monitoring:
           type: DirectoryOrCreate
     extraVolumeMounts:
       - name: positions
-        mountPath: /run/promtail
+        mountPath: /var/lib/promtail
         readOnly: false
     config:
       positions:
-        filename: /run/promtail/positions.yaml
+        filename: /var/lib/promtail/positions.yaml
       clients:
         - url: http://loki-gateway.monitoring.svc:80/loki/api/v1/push
       snippets:

@@ -1,5 +1,7 @@
 global:
   domain: argocd.homelab.niekvlam.nl
+  image:
+    tag: v3.2.12
 
 redis-ha:
   enabled: true

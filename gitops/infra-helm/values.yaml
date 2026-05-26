@@ -48,7 +48,7 @@ ceph:
   version: "v1.19.5"
 
 monitoring:
-  enabled: false
+  enabled: true
   grafana:
     # renovate: datasource=helm depName=grafana/grafana versioning=helm
     version: "10.5.15"
@@ -68,11 +68,13 @@ monitoring:
         datasources:
           - name: Prometheus
             type: prometheus
+            uid: prometheus
             url: http://kube-prometheus-stack-prometheus.monitoring.svc:9090
             access: proxy
             isDefault: true
           - name: Loki
             type: loki
+            uid: loki
             url: http://loki-gateway.monitoring.svc:80
     dashboards:
       default:
@@ -94,6 +96,159 @@ monitoring:
         cert-manager:
           gnetId: 11001
           revision: 1
+        cp-link-watchdog-stability:
+          json: |
+            {
+              "annotations": {
+                "list": [
+                  {
+                    "builtIn": 1,
+                    "datasource": { "type": "grafana", "uid": "-- Grafana --" },
+                    "enable": true,
+                    "hide": true,
+                    "iconColor": "rgba(0, 211, 255, 1)",
+                    "name": "Annotations & Alerts",
+                    "type": "dashboard"
+                  }
+                ]
+              },
+              "editable": true,
+              "fiscalYearStartMonth": 0,
+              "graphTooltip": 0,
+              "id": null,
+              "links": [],
+              "panels": [
+                {
+                  "datasource": { "type": "loki", "uid": "loki" },
+                  "fieldConfig": {
+                    "defaults": {
+                      "color": { "mode": "palette-classic" },
+                      "custom": {
+                        "axisBorderShow": false,
+                        "axisCenteredZero": false,
+                        "axisColorMode": "text",
+                        "axisLabel": "",
+                        "axisPlacement": "auto",
+                        "barAlignment": 0,
+                        "drawStyle": "line",
+                        "fillOpacity": 10,
+                        "gradientMode": "none",
+                        "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+                        "insertNulls": false,
+                        "lineInterpolation": "linear",
+                        "lineWidth": 2,
+                        "pointSize": 4,
+                        "scaleDistribution": { "type": "linear" },
+                        "showPoints": "never",
+                        "spanNulls": false,
+                        "stacking": { "group": "A", "mode": "none" },
+                        "thresholdsStyle": { "mode": "off" }
+                      },
+                      "mappings": [],
+                      "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                          { "color": "green", "value": null },
+                          { "color": "red", "value": 1 }
+                        ]
+                      },
+                      "unit": "short"
+                    },
+                    "overrides": []
+                  },
+                  "gridPos": { "h": 8, "w": 24, "x": 0, "y": 0 },
+                  "id": 1,
+                  "options": {
+                    "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true },
+                    "tooltip": { "hideZeros": false, "mode": "single", "sort": "none" }
+                  },
+                  "targets": [
+                    {
+                      "editorMode": "code",
+                      "expr": "sum(count_over_time({app=\"cp-link-watchdog\",event=\"link_reset\"}[$__interval]))",
+                      "legendFormat": "total resets",
+                      "queryType": "range",
+                      "refId": "A"
+                    }
+                  ],
+                  "title": "Link Resets Over Time",
+                  "type": "timeseries"
+                },
+                {
+                  "datasource": { "type": "loki", "uid": "loki" },
+                  "fieldConfig": {
+                    "defaults": {
+                      "color": { "mode": "thresholds" },
+                      "mappings": [],
+                      "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                          { "color": "green", "value": null },
+                          { "color": "orange", "value": 1 },
+                          { "color": "red", "value": 5 }
+                        ]
+                      },
+                      "unit": "short"
+                    },
+                    "overrides": []
+                  },
+                  "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+                  "id": 2,
+                  "options": {
+                    "displayMode": "gradient",
+                    "orientation": "horizontal",
+                    "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+                    "showUnfilled": true
+                  },
+                  "targets": [
+                    {
+                      "editorMode": "code",
+                      "expr": "sum by (node) (count_over_time({app=\"cp-link-watchdog\",event=\"link_reset\"}[$__range]))",
+                      "legendFormat": "{{node}}",
+                      "queryType": "instant",
+                      "refId": "A"
+                    }
+                  ],
+                  "title": "Resets By Node (Selected Range)",
+                  "type": "bargauge"
+                },
+                {
+                  "datasource": { "type": "loki", "uid": "loki" },
+                  "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+                  "id": 3,
+                  "options": {
+                    "dedupStrategy": "none",
+                    "enableLogDetails": true,
+                    "prettifyLogMessage": false,
+                    "showCommonLabels": false,
+                    "showLabels": true,
+                    "sortOrder": "Descending",
+                    "wrapLogMessage": true
+                  },
+                  "targets": [
+                    {
+                      "editorMode": "code",
+                      "expr": "{app=\"cp-link-watchdog\",event=\"link_reset\"}",
+                      "queryType": "range",
+                      "refId": "A"
+                    }
+                  ],
+                  "title": "Recent Reset Events",
+                  "type": "logs"
+                }
+              ],
+              "refresh": "30s",
+              "schemaVersion": 40,
+              "tags": ["homelab", "network", "watchdog"],
+              "templating": { "list": [] },
+              "time": { "from": "now-24h", "to": "now" },
+              "timepicker": {},
+              "timezone": "",
+              "title": "CP Link Watchdog",
+              "uid": "cp-link-watchdog",
+              "version": 1,
+              "weekStart": ""
+            }
 
   loki:
     # renovate: datasource=helm depName=grafana/loki versioning=helm
@@ -151,6 +306,22 @@ monitoring:
       snippets:
         pipelineStages:
           - cri: {}
+          - match:
+              selector: '{app="cp-link-watchdog"}'
+              stages:
+                - logfmt:
+                    mapping:
+                      event:
+                      node:
+                      iface:
+                      gateway:
+                      fails:
+                      threshold:
+                - labels:
+                    event:
+                    node:
+                    iface:
+                    gateway:
 
   prometheus:
     # renovate: datasource=helm depName=prometheus-community/kube-prometheus-stack versioning=helm
@@ -169,6 +340,10 @@ monitoring:
     enabled: true
   nodeExporter:
     enabled: true
+
+networkWatchdog:
+  enabled: true
+  namespace: kube-system
 
 homeassistant:
   enabled: true

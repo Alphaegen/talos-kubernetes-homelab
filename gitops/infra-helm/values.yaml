@@ -14,24 +14,24 @@ sync: true
 ingressController:
   enabled: true
   class: nginx
-  # renovate: datasource=helm depName=ingress-nginx/ingress-nginx versioning=helm
+  # renovate: datasource=helm depName=ingress-nginx registryUrl=https://kubernetes.github.io/ingress-nginx versioning=helm
   version: "4.15.1"
 
 metallb:
   enabled: true
-  # renovate: datasource=helm depName=metallb/metallb versioning=helm
+  # renovate: datasource=helm depName=metallb registryUrl=https://metallb.github.io/metallb versioning=helm
   version: "0.16.0"
   endpoints:
     - "192.168.3.110-192.168.3.129"
 
 longhorn:
   enabled: true
-  # renovate: datasource=helm depName=longhorn/longhorn versioning=helm
+  # renovate: datasource=helm depName=longhorn registryUrl=https://charts.longhorn.io versioning=helm
   version: "1.11.2"
 
 certmanager:
   enabled: true
-  # renovate: datasource=helm depName=jetstack/cert-manager versioning=helm
+  # renovate: datasource=helm depName=cert-manager registryUrl=https://charts.jetstack.io versioning=helm
   version: "v1.20.2"
   acme:
     email: vlam4695+homelab@gmail.com
@@ -39,18 +39,18 @@ certmanager:
 
 sealedsecrets:
   enabled: false
-  # renovate: datasource=helm depName=sealed-secrets/sealed-secrets versioning=helm
+  # renovate: datasource=helm depName=sealed-secrets registryUrl=https://bitnami-labs.github.io/sealed-secrets versioning=helm
   version: "2.18.6"
 
 ceph:
   enabled: false
-  # renovate: datasource=helm depName=rook-release/rook-ceph versioning=helm
+  # renovate: datasource=helm depName=rook-ceph registryUrl=https://charts.rook.io/release versioning=helm
   version: "v1.19.5"
 
 monitoring:
   enabled: true
   grafana:
-    # renovate: datasource=helm depName=grafana/grafana versioning=helm
+    # renovate: datasource=helm depName=grafana registryUrl=https://grafana.github.io/helm-charts versioning=helm
     version: "10.5.15"
     ingress:
       enabled: true
@@ -251,7 +251,7 @@ monitoring:
             }
 
   loki:
-    # renovate: datasource=helm depName=grafana/loki versioning=helm
+    # renovate: datasource=helm depName=loki registryUrl=https://grafana.github.io/helm-charts versioning=helm
     version: "7.0.0"
     deploymentMode: SingleBinary
     singleBinary:
@@ -287,7 +287,7 @@ monitoring:
       enabled: true
 
   promtail:
-    # renovate: datasource=helm depName=grafana/promtail versioning=helm
+    # renovate: datasource=helm depName=promtail registryUrl=https://grafana.github.io/helm-charts versioning=helm
     version: "6.17.1"
     extraVolumes:
       - name: positions
@@ -324,7 +324,7 @@ monitoring:
                     gateway:
 
   prometheus:
-    # renovate: datasource=helm depName=prometheus-community/kube-prometheus-stack versioning=helm
+    # renovate: datasource=helm depName=kube-prometheus-stack registryUrl=https://prometheus-community.github.io/helm-charts versioning=helm
     version: "85.3.3"
     prometheusSpec:
       retention: 30d
@@ -348,7 +348,7 @@ networkWatchdog:
 homeassistant:
   enabled: true
   namespace: home-assistant
-  # renovate: datasource=helm depName=pajikos/home-assistant versioning=helm
+  # renovate: datasource=helm depName=home-assistant registryUrl=http://pajikos.github.io/home-assistant-helm-chart/ versioning=helm
   version: "0.3.61"
   image:
     tag: ""
@@ -431,7 +431,7 @@ homeAutomation:
 media:
   enabled: true
   nfs:
-    # renovate: datasource=helm depName=nfs-subdir-external-provisioner/nfs-subdir-external-provisioner versioning=helm
+    # renovate: datasource=helm depName=nfs-subdir-external-provisioner registryUrl=https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner/ versioning=helm
     version: "4.0.18"
     server: nas.niekvlam.nl
     path: /volume1/PlexMediaServer
@@ -448,21 +448,21 @@ security:
 
   vault:
     enabled: false
-    # renovate: datasource=helm depName=hashicorp/vault versioning=helm
+    # renovate: datasource=helm depName=vault registryUrl=https://helm.releases.hashicorp.com versioning=helm
     version: "0.32.0"
     host: vault.homelab.niekvlam.nl
     storageSize: 10Gi
 
   eso:
     enabled: true
-    # renovate: datasource=helm depName=external-secrets/external-secrets versioning=helm
+    # renovate: datasource=helm depName=external-secrets registryUrl=https://charts.external-secrets.io versioning=helm
     version: "2.5.0"
     serviceMonitorLabel: kube-prometheus-stack
     bootstrap: true
 
   kyverno:
     enabled: false
-    # renovate: datasource=helm depName=kyverno/kyverno versioning=helm
+    # renovate: datasource=helm depName=kyverno registryUrl=https://kyverno.github.io/kyverno/ versioning=helm
     version: "3.8.1"
     # Start in audit to avoid surprise breakages; flip to "enforce" later.
     mode: audit # audit | enforce
@@ -476,13 +476,13 @@ security:
 
   trivy:
     enabled: false
-    # renovate: datasource=helm depName=aquasecurity/trivy-operator versioning=helm
+    # renovate: datasource=helm depName=trivy-operator registryUrl=https://aquasecurity.github.io/helm-charts/ versioning=helm
     version: "0.32.1"
     serviceMonitorLabel: kube-prometheus-stack
 
   tailscale:
     enabled: true
-    # renovate: datasource=helm depName=tailscale/tailscale-operator versioning=helm
+    # renovate: datasource=helm depName=tailscale-operator registryUrl=https://pkgs.tailscale.com/helmcharts versioning=helm
     version: "1.98.3"
     namespace: tailscale
     repoURL: https://pkgs.tailscale.com/helmcharts

@@ -5,8 +5,8 @@ metadata:
   namespace: media
 spec:
   accessModes: [ReadWriteMany]
+  volumeName: pvc-e8505798-b6f4-48f8-a117-3635d360d07c
   storageClassName: media-nfs
   resources:
     requests:
       storage: 1Ti
-

@@ -5,6 +5,7 @@ metadata:
   namespace: media
 spec:
   accessModes: [ReadWriteOnce]
+  volumeName: restore-pvc-86dc6161-7a42-47f0-a581-11c356dec107
   resources:
     requests:
       storage: 5Gi
@@ -17,6 +18,7 @@ metadata:
   namespace: media
 spec:
   accessModes: [ReadWriteOnce]
+  volumeName: restore-pvc-d5537860-d6bc-4b27-a5fd-ce156b9d80de
   resources:
     requests:
       storage: 5Gi
@@ -29,6 +31,7 @@ metadata:
   namespace: media
 spec:
   accessModes: [ReadWriteOnce]
+  volumeName: restore-pvc-60b53626-aea8-45fd-87f3-8735db40f596
   resources:
     requests:
       storage: 5Gi
@@ -41,6 +44,7 @@ metadata:
   namespace: media
 spec:
   accessModes: [ReadWriteOnce]
+  volumeName: restore-pvc-e80f0fe1-28b6-44c8-a1fd-8c95da390bef
   resources: { requests: { storage: 2Gi } }
   storageClassName: longhorn
 ---
@@ -51,6 +55,7 @@ metadata:
   namespace: media
 spec:
   accessModes: [ReadWriteOnce]
+  volumeName: restore-pvc-8f2644c7-2a66-4976-a787-190404ed68da
   resources:
     requests:
       storage: 5Gi
@@ -63,6 +68,7 @@ metadata:
   namespace: media
 spec:
   accessModes: [ReadWriteOnce]
+  volumeName: restore-pvc-1e76493a-cd5f-4503-86b6-62b0a0b5b316
   resources:
     requests:
       storage: 5Gi

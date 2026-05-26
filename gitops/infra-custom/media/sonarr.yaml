@@ -17,12 +17,13 @@ spec:
         fsGroupChangePolicy: OnRootMismatch
       containers:
         - name: sonarr
-          image: ghcr.io/linuxserver/sonarr:v4-4.0.0.247-ls43
+          image: ghcr.io/linuxserver/sonarr:4.0.17.2952-ls312
           ports: [{ name: http, containerPort: 8989 }]
           env:
             - { name: PUID, value: "1000" }
             - { name: PGID, value: "1000" }
             - { name: UMASK, value: "002" }
+            - { name: TZ, value: "Europe/Amsterdam" }
           volumeMounts:
             - { name: data, mountPath: /data }
             - { name: config, mountPath: /config }

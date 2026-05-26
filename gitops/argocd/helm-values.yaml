@@ -40,6 +40,18 @@ controller:
 
 repoServer:
   replicas: 2
+  nodeSelector:
+    kubernetes.io/os: linux
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: kubernetes.io/hostname
+                operator: In
+                values:
+                  - rpi-w-2
+                  - rpi-w-3
   metrics:
     enabled: true
     serviceMonitor:

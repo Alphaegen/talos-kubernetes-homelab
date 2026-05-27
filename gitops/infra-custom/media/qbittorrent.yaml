@@ -12,12 +12,22 @@ spec:
     metadata:
       labels: { app: qbittorrent }
     spec:
+      terminationGracePeriodSeconds: 180
       securityContext:
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch
+      initContainers:
+        - name: init-config-permissions
+          image: sxyzy1016/qbittorrent-enhanced-edition:release-5.1.3.10
+          command: ["/bin/sh", "-c", "chown -R 1000:1000 /config"]
+          securityContext:
+            runAsUser: 0
+            runAsGroup: 0
+          volumeMounts:
+            - { name: config, mountPath: /config }
       containers:
         - name: qb
-          image: ghcr.io/linuxserver/qbittorrent:14.3.9.99202110311443-7435-01519b5e7ubuntu20.04.1-ls166
+          image: sxyzy1016/qbittorrent-enhanced-edition:release-5.1.3.10
           ports:
             - { name: http, containerPort: 8080 }
             - { name: bt-tcp, containerPort: 50413, protocol: TCP }
@@ -25,8 +35,11 @@ spec:
           env:
             - { name: PUID, value: "1000" }
             - { name: PGID, value: "1000" }
+            - { name: WEBUI_PORT, value: "8080" }
+            - { name: TORRENTING_PORT, value: "50413" }
             - { name: UMASK, value: "002" }
           volumeMounts:
+            - { name: data, mountPath: /downloads }
             - { name: data, mountPath: /data }
             - { name: config, mountPath: /config }
       volumes:

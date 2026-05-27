@@ -27,7 +27,7 @@
             "mode": "absolute",
             "steps": [
               { "color": "green", "value": null },
-              { "color": "red", "value": 1 }
+              { "color": "red", "value": 0.000001 }
             ]
           },
           "unit": "short"
@@ -37,6 +37,8 @@
       "gridPos": { "h": 6, "w": 6, "x": 0, "y": 0 },
       "id": 1,
       "options": {
+        "colorMode": "value",
+        "graphMode": "area",
         "orientation": "auto",
         "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }
       },
@@ -55,14 +57,17 @@
       "fieldConfig": {
         "defaults": {
           "color": { "mode": "thresholds" },
+          "max": 100,
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
               { "color": "red", "value": null },
-              { "color": "green", "value": 1 }
+              { "color": "yellow", "value": 99 },
+              { "color": "green", "value": 99.9 }
             ]
           },
-          "unit": "short"
+          "unit": "percent"
         },
         "overrides": []
       },
@@ -77,13 +82,13 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "max by (name) (homelab_smoke_target_up{namespace=\"homelab-platform\"})",
+          "expr": "100 * avg_over_time(homelab_smoke_target_up{namespace=\"homelab-platform\"}[$__range])",
           "legendFormat": "{{name}}",
           "queryType": "instant",
           "refId": "A"
         }
       ],
-      "title": "Target Health",
+      "title": "Target Uptime (%)",
       "type": "bargauge"
     },
     {
@@ -99,7 +104,7 @@
       "id": 3,
       "options": {
         "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
-        "tooltip": { "mode": "single", "sort": "none" }
+        "tooltip": { "mode": "multi", "sort": "none" }
       },
       "targets": [
         {
@@ -126,7 +131,7 @@
       "id": 4,
       "options": {
         "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
-        "tooltip": { "mode": "single", "sort": "none" }
+        "tooltip": { "mode": "multi", "sort": "none" }
       },
       "targets": [
         {

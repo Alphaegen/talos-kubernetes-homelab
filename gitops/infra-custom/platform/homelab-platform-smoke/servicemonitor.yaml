@@ -1,0 +1,21 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: homelab-platform-smoke
+  namespace: homelab-platform
+  labels:
+    app.kubernetes.io/name: homelab-platform-smoke
+    app.kubernetes.io/part-of: homelab-platform
+    release: kube-prometheus-stack
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: homelab-platform-smoke
+  namespaceSelector:
+    matchNames:
+      - homelab-platform
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 30s
+      scrapeTimeout: 10s

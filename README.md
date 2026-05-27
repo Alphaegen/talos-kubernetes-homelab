@@ -61,6 +61,8 @@ Helpful checks:
   - `helm template infra-apps gitops/infra-helm`
 - Render Argo CD install:
   - `kustomize build --enable-helm gitops/argocd`
+- Enable Cilium Gateway API and apply shared Gateway:
+  - `./cilium/enable-gateway-api.sh`
 
 ## Notes
 

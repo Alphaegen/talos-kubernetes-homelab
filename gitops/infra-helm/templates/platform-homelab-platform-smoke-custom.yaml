@@ -1,0 +1,37 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/refs/heads/main/argoproj.io/application_v1alpha1.json
+{{- if .Values.platformSmoke.enabled }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ include "infra.appName" (dict "root" . "name" "platform-smoke") }}
+  labels:
+    cluster: {{ .Values.cluster.name | quote }}
+    app: homelab-platform-smoke
+  namespace: {{ .Values.cluster.namespace | quote }}
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  annotations:
+    # Deploy after monitoring/home-automation so smoke targets mostly exist.
+    argocd.argoproj.io/sync-wave: "18"
+spec:
+  project: {{ include "infra.projectName" . }}
+  destination:
+    server: {{ .Values.cluster.url | default "https://kubernetes.default.svc" | quote }}
+    namespace: {{ .Values.platformSmoke.namespace | default "homelab-platform" | quote }}
+  syncPolicy:
+    {{- if .Values.sync }}
+    automated:
+      prune: true
+      selfHeal: true
+    {{- end }}
+    syncOptions:
+      - CreateNamespace=true
+  source:
+    repoURL: {{ .Values.cluster.repoURL | quote }}
+    targetRevision: {{ .Values.cluster.revision | default "main" | quote }}
+    {{- if .Values.platformSmoke.rollout.enabled }}
+    path: gitops/infra-custom/platform/homelab-platform-smoke-rollout
+    {{- else }}
+    path: gitops/infra-custom/platform/homelab-platform-smoke
+    {{- end }}
+{{- end }}

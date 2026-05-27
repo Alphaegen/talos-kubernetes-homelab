@@ -1,0 +1,88 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: homelab-platform-smoke
+  namespace: homelab-platform
+  labels:
+    app.kubernetes.io/name: homelab-platform-smoke
+    app.kubernetes.io/part-of: homelab-platform
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: homelab-platform-smoke
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: homelab-platform-smoke
+        app.kubernetes.io/part-of: homelab-platform
+    spec:
+      serviceAccountName: homelab-platform-smoke
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        fsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: app
+          # renovate: datasource=docker depName=ghcr.io/alphaegen/homelab-platform-smoke
+          image: ghcr.io/alphaegen/homelab-platform-smoke:v0.6
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            - name: ADDR
+              value: :8080
+            - name: CONFIG_PATH
+              value: /config/config.yaml
+            - name: LOG_LEVEL
+              value: info
+            - name: LOG_FORMAT
+              value: json
+            - name: DEFAULT_INTERVAL
+              value: 30s
+            - name: DEFAULT_TIMEOUT
+              value: 3s
+            - name: DEMO_ERROR_RATE
+              value: "0"
+            - name: DEMO_LATENCY_MS
+              value: "0"
+          volumeMounts:
+            - name: config
+              mountPath: /config
+              readOnly: true
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: http
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+      volumes:
+        - name: config
+          configMap:
+            name: homelab-platform-smoke-config

@@ -77,6 +77,11 @@ spec:
         datasources:
 {{ toYaml .Values.monitoring.grafana.datasources | indent 10 }}
         dashboards:
-{{ toYaml .Values.monitoring.grafana.dashboards | indent 10 }}
+{{- $dashboards := deepCopy (.Values.monitoring.grafana.dashboards | default dict) }}
+{{- $defaultDashboards := get $dashboards "default" | default dict }}
+{{- range .Values.monitoring.grafana.dashboardFiles }}
+{{- $_ := set $defaultDashboards .name (dict "json" ($.Files.Get .path)) }}
 {{- end }}
-
+{{- $_ := set $dashboards "default" $defaultDashboards }}
+{{ toYaml $dashboards | indent 10 }}
+{{- end }}

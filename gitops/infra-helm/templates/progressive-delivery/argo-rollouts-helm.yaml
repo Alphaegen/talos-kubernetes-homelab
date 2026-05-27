@@ -1,0 +1,46 @@
+{{- if and .Values.progressiveDelivery.enabled .Values.progressiveDelivery.argoRollouts.enabled }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ include "infra.appName" (dict "root" . "name" "argo-rollouts") }}
+  labels:
+    cluster: {{ .Values.cluster.name | quote }}
+    app: argo-rollouts
+  namespace: {{ .Values.cluster.namespace | quote }}
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  annotations:
+    argocd.argoproj.io/sync-wave: "4"
+spec:
+  project: {{ include "infra.projectName" . }}
+  destination:
+    server: {{ .Values.cluster.url | default "https://kubernetes.default.svc" | quote }}
+    namespace: {{ .Values.progressiveDelivery.argoRollouts.namespace | default "argo-rollouts" | quote }}
+  syncPolicy:
+    {{- if .Values.sync }}
+    automated:
+      prune: true
+      selfHeal: true
+    {{- end }}
+    syncOptions:
+      - CreateNamespace=true
+  source:
+    repoURL: https://argoproj.github.io/argo-helm
+    chart: argo-rollouts
+    targetRevision: {{ .Values.progressiveDelivery.argoRollouts.version | quote }}
+    helm:
+      releaseName: argo-rollouts
+      values: |
+        installCRDs: true
+
+        controller:
+          metrics:
+            enabled: true
+            serviceMonitor:
+              enabled: true
+              additionalLabels:
+                release: {{ .Values.progressiveDelivery.argoRollouts.serviceMonitorLabel | quote }}
+
+        dashboard:
+          enabled: false
+{{- end }}

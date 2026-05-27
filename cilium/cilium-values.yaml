@@ -3,6 +3,12 @@ ipam:
 
 kubeProxyReplacement: true
 
+gatewayAPI:
+  enabled: true
+  gatewayClass:
+    # Use explicit true so GatewayClass is created even when CRDs are installed after Cilium.
+    create: "true"
+
 securityContext:
   capabilities:
     ciliumAgent:

@@ -1,0 +1,51 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: homelab-platform-smoke-analysis
+  namespace: homelab-platform
+  labels:
+    app.kubernetes.io/name: homelab-platform-smoke
+    app.kubernetes.io/part-of: homelab-platform
+spec:
+  metrics:
+    - name: http-5xx-rate
+      interval: 30s
+      count: 4
+      failureLimit: 1
+      successCondition: result[0] < 0.01
+      provider:
+        prometheus:
+          address: http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090
+          query: |
+            (
+              sum(rate(http_requests_total{namespace="homelab-platform",service="homelab-platform-smoke",status=~"5.."}[2m]))
+              /
+              clamp_min(sum(rate(http_requests_total{namespace="homelab-platform",service="homelab-platform-smoke"}[2m])), 0.001)
+            ) or vector(0)
+
+    - name: http-p95-latency
+      interval: 30s
+      count: 4
+      failureLimit: 1
+      successCondition: result[0] < 0.5
+      provider:
+        prometheus:
+          address: http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090
+          query: |
+            histogram_quantile(
+              0.95,
+              sum by (le) (
+                rate(http_request_duration_seconds_bucket{namespace="homelab-platform",service="homelab-platform-smoke"}[2m])
+              )
+            ) or vector(0)
+
+    - name: config-loaded
+      interval: 30s
+      count: 2
+      failureLimit: 1
+      successCondition: result[0] >= 1
+      provider:
+        prometheus:
+          address: http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090
+          query: |
+            min_over_time(homelab_smoke_config_loaded{namespace="homelab-platform",service="homelab-platform-smoke"}[2m]) or vector(0)

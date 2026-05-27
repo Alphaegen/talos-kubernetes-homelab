@@ -82,7 +82,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "100 * avg_over_time(homelab_smoke_target_up{namespace=\"homelab-platform\"}[$__range])",
+          "expr": "100 * avg by (name) (avg_over_time(homelab_smoke_target_up{namespace=\"homelab-platform\"}[$__range]))",
           "legendFormat": "{{name}}",
           "queryType": "instant",
           "refId": "A"

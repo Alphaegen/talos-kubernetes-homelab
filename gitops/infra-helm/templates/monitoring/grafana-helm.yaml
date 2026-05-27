@@ -74,6 +74,10 @@ spec:
         # Your existing settings
         ingress:
 {{ toYaml .Values.monitoring.grafana.ingress | indent 10 }}
+{{- with .Values.monitoring.grafana.persistence }}
+        persistence:
+{{ toYaml . | indent 10 }}
+{{- end }}
         datasources:
 {{ toYaml .Values.monitoring.grafana.datasources | indent 10 }}
         dashboards:

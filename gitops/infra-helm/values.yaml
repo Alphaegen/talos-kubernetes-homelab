@@ -62,6 +62,12 @@ monitoring:
       tls:
         - secretName: grafana-tls
           hosts: ["grafana.homelab.niekvlam.nl"]
+    persistence:
+      enabled: true
+      type: pvc
+      storageClassName: longhorn
+      accessModes: ["ReadWriteOnce"]
+      size: 10Gi
     datasources:
       datasources.yaml:
         apiVersion: 1

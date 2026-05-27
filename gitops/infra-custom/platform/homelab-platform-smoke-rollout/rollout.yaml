@@ -19,6 +19,8 @@ spec:
         app.kubernetes.io/part-of: homelab-platform
     spec:
       serviceAccountName: homelab-platform-smoke
+      imagePullSecrets:
+        - name: ghcr-pull-secret
       securityContext:
         runAsNonRoot: true
         runAsUser: 65532

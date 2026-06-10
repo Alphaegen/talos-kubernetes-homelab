@@ -183,7 +183,7 @@ monitoring:
 
   prometheus:
     # renovate: datasource=helm depName=kube-prometheus-stack registryUrl=https://prometheus-community.github.io/helm-charts versioning=helm
-    version: "85.3.3"
+    version: "86.2.2"
     prometheusSpec:
       retention: 30d
       retentionSize: 20GiB

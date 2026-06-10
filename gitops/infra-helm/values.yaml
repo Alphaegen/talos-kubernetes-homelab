@@ -20,14 +20,14 @@ ingressController:
 metallb:
   enabled: true
   # renovate: datasource=helm depName=metallb registryUrl=https://metallb.github.io/metallb versioning=helm
-  version: "0.16.0"
+  version: "0.16.1"
   endpoints:
     - "192.168.3.110-192.168.3.129"
 
 longhorn:
   enabled: true
   # renovate: datasource=helm depName=longhorn registryUrl=https://charts.longhorn.io versioning=helm
-  version: "1.11.2"
+  version: "1.12.0"
 
 certmanager:
   enabled: true
@@ -45,7 +45,7 @@ sealedsecrets:
 ceph:
   enabled: false
   # renovate: datasource=helm depName=rook-ceph registryUrl=https://charts.rook.io/release versioning=helm
-  version: "v1.19.5"
+  version: "v1.20.0"
 
 monitoring:
   enabled: true
@@ -207,7 +207,7 @@ homeassistant:
   enabled: true
   namespace: home-assistant
   # renovate: datasource=helm depName=home-assistant registryUrl=http://pajikos.github.io/home-assistant-helm-chart/ versioning=helm
-  version: "0.3.61"
+  version: "0.3.63"
   image:
     tag: ""
 
@@ -298,7 +298,7 @@ progressiveDelivery:
     enabled: true
     namespace: argo-rollouts
     # renovate: datasource=helm depName=argo-rollouts registryUrl=https://argoproj.github.io/argo-helm versioning=helm
-    version: "2.40.9"
+    version: "2.41.0"
     serviceMonitorLabel: kube-prometheus-stack
 
 media:
@@ -322,14 +322,14 @@ security:
   vault:
     enabled: false
     # renovate: datasource=helm depName=vault registryUrl=https://helm.releases.hashicorp.com versioning=helm
-    version: "0.32.0"
+    version: "0.33.0"
     host: vault.homelab.niekvlam.nl
     storageSize: 10Gi
 
   eso:
     enabled: true
     # renovate: datasource=helm depName=external-secrets registryUrl=https://charts.external-secrets.io versioning=helm
-    version: "2.5.0"
+    version: "2.6.0"
     serviceMonitorLabel: kube-prometheus-stack
     bootstrap: true
 
@@ -350,13 +350,13 @@ security:
   trivy:
     enabled: false
     # renovate: datasource=helm depName=trivy-operator registryUrl=https://aquasecurity.github.io/helm-charts/ versioning=helm
-    version: "0.32.1"
+    version: "0.33.1"
     serviceMonitorLabel: kube-prometheus-stack
 
   tailscale:
     enabled: true
     # renovate: datasource=helm depName=tailscale-operator registryUrl=https://pkgs.tailscale.com/helmcharts versioning=helm
-    version: "1.98.3"
+    version: "1.98.4"
     namespace: tailscale
     repoURL: https://pkgs.tailscale.com/helmcharts
     chart: tailscale-operator

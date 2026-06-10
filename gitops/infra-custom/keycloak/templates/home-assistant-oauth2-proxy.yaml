@@ -5,6 +5,7 @@ metadata:
   name: {{ .Values.oauth2Proxy.serviceName }}
   namespace: {{ .Values.oauth2Proxy.namespace }}
 spec:
+  revisionHistoryLimit: 2
   selector:
     matchLabels: { app: {{ .Values.oauth2Proxy.serviceName }} }
   template:
@@ -54,4 +55,3 @@ spec:
     - port: 4180
       targetPort: 4180
 {{- end }}
-

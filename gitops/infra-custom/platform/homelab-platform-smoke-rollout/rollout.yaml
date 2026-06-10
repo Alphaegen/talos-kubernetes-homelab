@@ -8,7 +8,7 @@ metadata:
     app.kubernetes.io/part-of: homelab-platform
 spec:
   replicas: 2
-  revisionHistoryLimit: 3
+  revisionHistoryLimit: 2
   selector:
     matchLabels:
       app.kubernetes.io/name: homelab-platform-smoke

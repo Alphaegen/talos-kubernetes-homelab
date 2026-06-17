@@ -1,4 +1,5 @@
 secrets.yaml
+talosconfig
 **/charts/
 kubeconfig
 output

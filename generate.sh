@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SECRETS_FILE="secrets.yaml"
 NODES_FILE="nodes.yaml"
 OUTPUT_DIR="output"
 TALOSCTL_BIN="${TALOSCTL_BIN:-talosctl}"
+CLUSTER_CONTEXT="${TALOS_CLUSTER_CONTEXT:-homelab}"
+SECRETS_FILE="${TALOS_SECRETS_FILE:-$HOME/.talos/$CLUSTER_CONTEXT/secrets.yaml}"
 INSTALLER_IMAGE="${TALOS_INSTALLER_IMAGE:-factory.talos.dev/metal-installer/5199ca37666edc3419ae8e1cfe49bdd89f1b5b2995e0078abaa9d710871b6751:v1.12.8}"
 INSTALLER_IMAGE_CP="${TALOS_INSTALLER_IMAGE_CONTROLPLANE:-$INSTALLER_IMAGE}"
 INSTALLER_IMAGE_WORKER="${TALOS_INSTALLER_IMAGE_WORKER:-$INSTALLER_IMAGE}"
@@ -16,17 +17,22 @@ KUBERNETES_VERSION="${TALOS_KUBERNETES_VERSION:-1.34.4}"
 APPLY_DISK_PATCH_TO_CP="${TALOS_APPLY_DISK_PATCH_TO_CONTROLPLANE:-false}"
 ENABLE_VIP="${TALOS_ENABLE_VIP:-true}"
 CLUSTER_ENDPOINT_OVERRIDE="${TALOS_CLUSTER_ENDPOINT_OVERRIDE:-}"
+MERGE_KUBECONFIG="${TALOS_MERGE_KUBECONFIG:-false}"
+KUBECONFIG_CONTEXT="${KUBECONFIG_CONTEXT:-$CLUSTER_CONTEXT}"
 
 # 1. Secrets
-[[ -f $SECRETS_FILE ]] || {
+[[ -f "$SECRETS_FILE" ]] || {
   echo "🔐 Generating Talos secrets"
+  mkdir -p "$(dirname "$SECRETS_FILE")"
   "$TALOSCTL_BIN" gen secrets -o "$SECRETS_FILE"
 }
+chmod 600 "$SECRETS_FILE"
 
 # 2. Cluster facts
 CLUSTER_NAME=$(yq e '.cluster_name' "$NODES_FILE")
 VIP=$(yq e '.vip' "$NODES_FILE")
 CONTROLPLANE_IP=$(yq e '.nodes[] | select(.role == "controlplane") | .ip' "$NODES_FILE" | head -n 1)
+NODE_IPS=($(yq e '.nodes[].ip' "$NODES_FILE"))
 
 if [[ -n "$CLUSTER_ENDPOINT_OVERRIDE" ]]; then
   ENDPOINT="$CLUSTER_ENDPOINT_OVERRIDE"
@@ -47,10 +53,17 @@ export TALOSCONFIG="${OUTPUT_DIR}/talosconfig"
 
 if [[ "$ENABLE_VIP" == "true" ]]; then
   "$TALOSCTL_BIN" config endpoint "$VIP"
-  "$TALOSCTL_BIN" config node "$VIP"
+  "$TALOSCTL_BIN" config node "${NODE_IPS[@]}"
 else
   "$TALOSCTL_BIN" config endpoint "$CONTROLPLANE_IP"
-  "$TALOSCTL_BIN" config node "$CONTROLPLANE_IP"
+  "$TALOSCTL_BIN" config node "${NODE_IPS[@]}"
+fi
+
+if [[ "$MERGE_KUBECONFIG" == "true" ]]; then
+  "$TALOSCTL_BIN" kubeconfig \
+    --talosconfig "$TALOSCONFIG" \
+    --merge \
+    --force-context-name "$KUBECONFIG_CONTEXT"
 fi
 
 MIRROR_PATCH=""

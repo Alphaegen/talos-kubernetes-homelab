@@ -8,8 +8,8 @@ This repository contains:
 
 - Talos cluster bootstrap and node configuration
 - Argo CD installation and configuration
-- GitOps application definitions (`gitops/`)
-- Custom Helm charts/manifests for homelab services
+- GitOps application definitions under `gitops/`
+- Custom Helm charts and manifests for homelab services
 
 ## Core Platform
 
@@ -17,54 +17,75 @@ This repository contains:
 - GitOps controller: Argo CD
 - Ingress: ingress-nginx
 - Load balancing: MetalLB (L2)
-- Storage:
-  - Longhorn (primary persistent volumes)
-  - NFS subdir external provisioner (media storage class)
-- TLS and certificates: cert-manager (Let's Encrypt)
-- Secrets: External Secrets Operator (with 1Password and Vault integrations)
+- Storage: Longhorn and NFS subdir external provisioner
+- TLS and certificates: cert-manager
+- Secrets: External Secrets Operator with 1Password and Vault integrations
 - Remote network access: Tailscale operator
 
 ## Workloads
 
 - Home Assistant
-- Home automation support stack:
-  - Mosquitto
-  - Zigbee2MQTT
-- Media stack:
-  - Sonarr
-  - Radarr
-  - Prowlarr
-  - qBittorrent
-  - Overseerr
-  - Profilarr
-  - FlareSolverr
+- Home automation support stack: Mosquitto and Zigbee2MQTT
+- Media stack: Sonarr, Radarr, Prowlarr, qBittorrent, Overseerr, Profilarr, and FlareSolverr
 
 ## Repository Structure
 
-- `gitops/argocd`: Argo CD install (kustomize + Helm)
+- `gitops/argocd`: Argo CD install with Kustomize and Helm
 - `gitops/infra-helm`: parent app chart that defines Argo CD Applications
-- `gitops/infra-custom`: custom charts/manifests for workloads and integrations
+- `gitops/infra-custom`: custom charts and manifests for workloads and integrations
 - `patches/`: Talos machine configuration patches
 - `generate.sh`: Talos config generation workflow
+- `apply.sh`: applies generated machine configs with `talosctl`
 
 ## Operations
 
-Typical workflow:
+Typical GitOps workflow:
 
-1. Edit GitOps manifests/values.
+1. Edit manifests or values.
 2. Commit and push to `main`.
-3. Sync from Argo CD (or rely on automated child app sync where configured).
+3. Sync from Argo CD, or rely on automated child app sync where configured.
 
 Helpful checks:
 
-- Render infra chart:
-  - `helm template infra-apps gitops/infra-helm`
-- Render Argo CD install:
-  - `kustomize build --enable-helm gitops/argocd`
-- Enable Cilium Gateway API and apply shared Gateway:
-  - `./cilium/enable-gateway-api.sh`
+```bash
+helm template infra-apps gitops/infra-helm
+kustomize build --enable-helm gitops/argocd
+```
 
-## Notes
+Enable Cilium Gateway API and apply the shared Gateway:
 
-- Cluster-specific hostnames and routing are configured for `homelab.niekvlam.nl`.
-- Sensitive credentials are expected to come from external secret backends, not plaintext in Git.
+```bash
+./cilium/enable-gateway-api.sh
+```
+
+Cluster-specific hostnames and routing are configured for `homelab.niekvlam.nl`.
+
+## Local Access
+
+Talos, Kubernetes, SSH, and bootstrap credentials are managed outside this
+repository. Working credentials live in standard user-level locations, and
+recoverable copies live in the 1Password `Homelab` vault.
+
+Current local paths:
+
+- Talos config: `~/.talos/config`
+- Talos secrets bundle: `~/.talos/homelab/secrets.yaml`
+- Kubernetes config: `~/.kube/config`
+
+Day-to-day context switching:
+
+```bash
+talosctl config context home-cluster
+kubectl config use-context homelab
+```
+
+Useful access checks:
+
+```bash
+talosctl --context home-cluster get members
+kubectl --context homelab get nodes
+```
+
+`generate.sh` reads Talos secrets from `~/.talos/homelab/secrets.yaml` by
+default and writes generated machine configs to ignored `output/`. `apply.sh`
+uses `~/.talos/config` and the `home-cluster` Talos context by default.

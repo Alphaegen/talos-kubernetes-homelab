@@ -3,7 +3,9 @@ set -euo pipefail
 
 NODES_FILE="nodes.yaml"
 OUTPUT_DIR="output"
-TALOSCONFIG="${OUTPUT_DIR}/talosconfig"
+TALOSCONFIG="${TALOSCONFIG:-$HOME/.talos/config}"
+TALOS_CONTEXT="${TALOS_CONTEXT:-home-cluster}"
+TALOSCTL_BIN="${TALOSCTL_BIN:-talosctl}"
 
 # Ensure talosconfig exists
 if [[ ! -f "$TALOSCONFIG" ]]; then
@@ -27,7 +29,7 @@ for config in "$OUTPUT_DIR"/*/machineconfig.yaml; do
   fi
 
   echo "🚀 Applying config to $HOSTNAME ($NODE_IP)"
-  talosctl apply-config --nodes "$NODE_IP" --file "$config"
+  "$TALOSCTL_BIN" --context "$TALOS_CONTEXT" apply-config --nodes "$NODE_IP" --file "$config"
 done
 
 echo "✅ All machine configs applied."

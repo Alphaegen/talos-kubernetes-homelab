@@ -487,6 +487,20 @@ script:
       - variables:
           should_cancel_program: "{{ cancel_program | default(false) | bool }}"
 
+      - if:
+          - condition: template
+            value_template: "{{ should_cancel_program }}"
+        then:
+          - action: input_boolean.turn_off
+            target:
+              entity_id: input_boolean.rainbird_program_running
+
+          - action: input_number.set_value
+            target:
+              entity_id: input_number.rainbird_program_step
+            data:
+              value: 0
+
       - action: switch.turn_off
         target:
           entity_id:
@@ -510,16 +524,6 @@ script:
           - condition: template
             value_template: "{{ should_cancel_program }}"
         then:
-          - action: input_boolean.turn_off
-            target:
-              entity_id: input_boolean.rainbird_program_running
-
-          - action: input_number.set_value
-            target:
-              entity_id: input_number.rainbird_program_step
-            data:
-              value: 0
-
           - action: input_text.set_value
             target:
               entity_id: input_text.rainbird_last_message

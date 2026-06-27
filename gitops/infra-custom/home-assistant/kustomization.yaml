@@ -5,10 +5,6 @@ configMapGenerator:
   - name: home-assistant-rainbird-package
     files:
       - rainbird.yaml=packages/rainbird.yaml
-  - name: home-assistant-rainbird-dashboard
-    files:
-      - rainbird.yaml=rainbird-dashboard.yaml
-      - lovelace-rainbird-card.yaml=lovelace-rainbird-card.yaml
 generatorOptions:
   disableNameSuffixHash: true
   annotations:

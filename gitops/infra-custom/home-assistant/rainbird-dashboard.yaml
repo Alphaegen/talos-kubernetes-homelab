@@ -1,7 +1,0 @@
-title: RainBird
-views:
-  - title: Irrigation
-    path: irrigation
-    icon: mdi:sprinkler-variant
-    cards:
-      - !include lovelace-rainbird-card.yaml

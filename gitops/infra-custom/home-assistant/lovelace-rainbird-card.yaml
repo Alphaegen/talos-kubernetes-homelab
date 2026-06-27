@@ -12,10 +12,8 @@ cards:
         name: Status
       - entity: sensor.rainbird_active_zone
         name: Active zone
-      - entity: input_text.rainbird_last_message
+      - entity: sensor.rainbird_last_message
         name: Last message
-      - entity: binary_sensor.rainbird_busy
-        name: Busy
 
       - type: section
         label: Zones
@@ -80,8 +78,8 @@ cards:
         name: Zone 4
       - entity: sensor.rainbird_program_total_duration
         name: Total duration
-      - entity: input_boolean.rainbird_program_running
-        name: Program running
+      - entity: sensor.rainbird_program_status
+        name: Program status
 
       - type: section
         label: Program Control

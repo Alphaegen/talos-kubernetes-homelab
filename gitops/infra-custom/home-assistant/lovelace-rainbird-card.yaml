@@ -13,11 +13,11 @@ cards:
 
       - type: markdown
         content: |
-          **Remaining program(s)**
+          **Remaining program(s):**
 
           {{ states('sensor.rainbird_program_remaining') }}
 
-          **Last message**
+          **Last message:**
 
           {{ states('sensor.rainbird_last_message') }}
 
@@ -82,6 +82,8 @@ cards:
             tap_action:
               action: call-service
               service: script.rainbird_stop_all_zones
+              data:
+                cancel_program: false
 
   - type: custom:stack-in-card
     cards:
@@ -143,3 +145,5 @@ cards:
             tap_action:
               action: call-service
               service: script.rainbird_stop_all_zones
+              data:
+                cancel_program: true

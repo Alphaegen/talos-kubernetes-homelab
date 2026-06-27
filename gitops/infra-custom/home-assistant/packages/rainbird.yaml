@@ -1,41 +1,41 @@
 input_number:
   rainbird_duration:
     name: RainBird Duration
-    min: 1
+    min: 5
     max: 60
-    step: 1
+    step: 5
     unit_of_measurement: min
     icon: mdi:timer-outline
 
   rainbird_program_zone_1_duration:
     name: RainBird Program Zone 1
     min: 0
-    max: 120
-    step: 1
+    max: 60
+    step: 5
     unit_of_measurement: min
     icon: mdi:numeric-1-circle-outline
 
   rainbird_program_zone_2_duration:
     name: RainBird Program Zone 2
     min: 0
-    max: 120
-    step: 1
+    max: 60
+    step: 5
     unit_of_measurement: min
     icon: mdi:numeric-2-circle-outline
 
   rainbird_program_zone_3_duration:
     name: RainBird Program Zone 3
     min: 0
-    max: 120
-    step: 1
+    max: 60
+    step: 5
     unit_of_measurement: min
     icon: mdi:numeric-3-circle-outline
 
   rainbird_program_zone_4_duration:
     name: RainBird Program Zone 4
     min: 0
-    max: 120
-    step: 1
+    max: 60
+    step: 5
     unit_of_measurement: min
     icon: mdi:numeric-4-circle-outline
 
@@ -113,10 +113,10 @@ template:
         unit_of_measurement: min
         state: >-
           {{
-            states('input_number.rainbird_program_zone_1_duration') | int(0)
-            + states('input_number.rainbird_program_zone_2_duration') | int(0)
-            + states('input_number.rainbird_program_zone_3_duration') | int(0)
-            + states('input_number.rainbird_program_zone_4_duration') | int(0)
+            ([states('input_number.rainbird_program_zone_1_duration') | int(0), 60] | min)
+            + ([states('input_number.rainbird_program_zone_2_duration') | int(0), 60] | min)
+            + ([states('input_number.rainbird_program_zone_3_duration') | int(0), 60] | min)
+            + ([states('input_number.rainbird_program_zone_4_duration') | int(0), 60] | min)
           }}
 
       - name: RainBird Program Remaining
@@ -127,10 +127,10 @@ template:
             No program running
           {% else %}
             {% set step = states('input_number.rainbird_program_step') | int(0) %}
-            {% set z1 = states('input_number.rainbird_program_zone_1_duration') | int(0) %}
-            {% set z2 = states('input_number.rainbird_program_zone_2_duration') | int(0) %}
-            {% set z3 = states('input_number.rainbird_program_zone_3_duration') | int(0) %}
-            {% set z4 = states('input_number.rainbird_program_zone_4_duration') | int(0) %}
+            {% set z1 = [states('input_number.rainbird_program_zone_1_duration') | int(0), 60] | min %}
+            {% set z2 = [states('input_number.rainbird_program_zone_2_duration') | int(0), 60] | min %}
+            {% set z3 = [states('input_number.rainbird_program_zone_3_duration') | int(0), 60] | min %}
+            {% set z4 = [states('input_number.rainbird_program_zone_4_duration') | int(0), 60] | min %}
             {% set ns = namespace(items=[]) %}
             {% if z1 > 0 and step < 1 %}
               {% set ns.items = ns.items + ['Zone 1 (' ~ z1 ~ ' min)'] %}
@@ -170,8 +170,15 @@ script:
         required: false
     sequence:
       - variables:
-          duration_min: >-
+          requested_duration_min: >-
             {{ duration | default(states('input_number.rainbird_duration')) | int(10) }}
+          duration_min: >-
+            {% set requested = requested_duration_min | int(0) %}
+            {% if requested <= 0 %}
+              0
+            {% else %}
+              {{ [[requested, 5] | max, 60] | min }}
+            {% endif %}
           zone_name: >-
             {{
               {
@@ -478,7 +485,7 @@ script:
         required: false
     sequence:
       - variables:
-          should_cancel_program: "{{ cancel_program | default(true) | bool }}"
+          should_cancel_program: "{{ cancel_program | default(false) | bool }}"
 
       - action: switch.turn_off
         target:

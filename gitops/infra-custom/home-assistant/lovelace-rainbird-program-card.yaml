@@ -58,3 +58,5 @@ cards:
         tap_action:
           action: call-service
           service: script.rainbird_stop_all_zones
+          data:
+            cancel_program: true

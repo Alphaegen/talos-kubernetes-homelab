@@ -7,6 +7,60 @@ input_number:
     unit_of_measurement: min
     icon: mdi:timer-outline
 
+  rainbird_program_zone_1_duration:
+    name: RainBird Program Zone 1
+    min: 0
+    max: 120
+    step: 1
+    unit_of_measurement: min
+    icon: mdi:numeric-1-circle-outline
+
+  rainbird_program_zone_2_duration:
+    name: RainBird Program Zone 2
+    min: 0
+    max: 120
+    step: 1
+    unit_of_measurement: min
+    icon: mdi:numeric-2-circle-outline
+
+  rainbird_program_zone_3_duration:
+    name: RainBird Program Zone 3
+    min: 0
+    max: 120
+    step: 1
+    unit_of_measurement: min
+    icon: mdi:numeric-3-circle-outline
+
+  rainbird_program_zone_4_duration:
+    name: RainBird Program Zone 4
+    min: 0
+    max: 120
+    step: 1
+    unit_of_measurement: min
+    icon: mdi:numeric-4-circle-outline
+
+input_boolean:
+  rainbird_command_pending:
+    name: RainBird Command Pending
+    icon: mdi:progress-clock
+
+  rainbird_last_start_confirmed:
+    name: RainBird Last Start Confirmed
+    icon: mdi:check-circle-outline
+
+  rainbird_program_running:
+    name: RainBird Program Running
+    icon: mdi:playlist-play
+
+input_text:
+  rainbird_requested_zone:
+    name: RainBird Requested Zone
+    max: 40
+
+  rainbird_last_message:
+    name: RainBird Last Message
+    max: 255
+
 timer:
   rainbird_time_left:
     name: RainBird Time Left
@@ -31,19 +85,101 @@ template:
             Idle
           {% endif %}
 
+      - name: RainBird Status
+        unique_id: rainbird_status
+        icon: mdi:sprinkler-variant
+        state: >-
+          {% if is_state('input_boolean.rainbird_command_pending', 'on') %}
+            Starting {{ states('input_text.rainbird_requested_zone') }}
+          {% elif is_state('input_boolean.rainbird_program_running', 'on') %}
+            Program running - {{ states('sensor.rainbird_active_zone') }}
+          {% elif states('sensor.rainbird_active_zone') != 'Idle' %}
+            Running {{ states('sensor.rainbird_active_zone') }}
+          {% else %}
+            Idle
+          {% endif %}
+
+      - name: RainBird Program Total Duration
+        unique_id: rainbird_program_total_duration
+        icon: mdi:timer-sand
+        unit_of_measurement: min
+        state: >-
+          {{
+            states('input_number.rainbird_program_zone_1_duration') | int(0)
+            + states('input_number.rainbird_program_zone_2_duration') | int(0)
+            + states('input_number.rainbird_program_zone_3_duration') | int(0)
+            + states('input_number.rainbird_program_zone_4_duration') | int(0)
+          }}
+
+  - binary_sensor:
+      - name: RainBird Busy
+        unique_id: rainbird_busy
+        icon: mdi:progress-clock
+        state: >-
+          {{
+            is_state('input_boolean.rainbird_command_pending', 'on')
+            or is_state('input_boolean.rainbird_program_running', 'on')
+            or is_state('timer.rainbird_time_left', 'active')
+          }}
+
 script:
   rainbird_start_single_zone:
     alias: RainBird - Start Single Zone
-    mode: restart
+    mode: single
+    max_exceeded: silent
     fields:
       zone_switch:
         name: Zone switch
         required: true
+      duration:
+        name: Duration
+        required: false
     sequence:
       - variables:
-          duration_min: "{{ states('input_number.rainbird_duration') | int(10) }}"
-          timer_duration: >-
-            {{ '%02d:%02d:00' | format(duration_min // 60, duration_min % 60) }}
+          duration_min: >-
+            {{ duration | default(states('input_number.rainbird_duration')) | int(10) }}
+          zone_name: >-
+            {{
+              {
+                'switch.rain_bird_sprinkler_1': 'Zone 1',
+                'switch.rain_bird_sprinkler_2': 'Zone 2',
+                'switch.rain_bird_sprinkler_3': 'Zone 3',
+                'switch.rain_bird_sprinkler_4': 'Zone 4',
+              }.get(zone_switch, zone_switch)
+            }}
+          zone_id: >-
+            {{
+              {
+                'switch.rain_bird_sprinkler_1': 'zone_1',
+                'switch.rain_bird_sprinkler_2': 'zone_2',
+                'switch.rain_bird_sprinkler_3': 'zone_3',
+                'switch.rain_bird_sprinkler_4': 'zone_4',
+              }.get(zone_switch, 'unknown')
+            }}
+          started_at: "{{ as_timestamp(now()) }}"
+
+      - condition: template
+        value_template: "{{ duration_min | int(0) > 0 }}"
+
+      - action: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.rainbird_last_start_confirmed
+
+      - action: input_text.set_value
+        target:
+          entity_id: input_text.rainbird_requested_zone
+        data:
+          value: "{{ zone_name }}"
+
+      - action: input_text.set_value
+        target:
+          entity_id: input_text.rainbird_last_message
+        data:
+          value: "Sending start command for {{ zone_name }} ({{ duration_min | int(0) }} min)."
+
+      - action: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.rainbird_command_pending
 
       - action: timer.cancel
         target:
@@ -61,20 +197,244 @@ script:
       - delay: "00:00:02"
 
       - action: rainbird.start_irrigation
-        data:
-          entity_id: "{{ zone_switch }}"
-          duration: "{{ duration_min }}"
-
-      - action: timer.start
         target:
-          entity_id: timer.rainbird_time_left
+          entity_id: "{{ zone_switch }}"
         data:
-          duration: "{{ timer_duration }}"
+          duration: "{{ duration_min | int(0) }}"
+        continue_on_error: true
+
+      - wait_for_trigger:
+          - platform: state
+            entity_id: switch.rain_bird_sprinkler_1
+            to: "on"
+            id: zone_1
+          - platform: state
+            entity_id: switch.rain_bird_sprinkler_2
+            to: "on"
+            id: zone_2
+          - platform: state
+            entity_id: switch.rain_bird_sprinkler_3
+            to: "on"
+            id: zone_3
+          - platform: state
+            entity_id: switch.rain_bird_sprinkler_4
+            to: "on"
+            id: zone_4
+        timeout: "00:01:15"
+        continue_on_timeout: true
+
+      - if:
+          - condition: template
+            value_template: "{{ wait.completed and wait.trigger is not none and wait.trigger.id == zone_id }}"
+        then:
+          - variables:
+              elapsed_seconds: "{{ (as_timestamp(now()) - (started_at | float)) | round(0) | int }}"
+              remaining_seconds: "{{ [((duration_min | int(0)) * 60) - (elapsed_seconds | int(0)), 1] | max }}"
+              timer_duration: >-
+                {% set remaining = remaining_seconds | int(1) %}
+                {{
+                  '%02d:%02d:%02d'
+                  | format(
+                    remaining // 3600,
+                    (remaining % 3600) // 60,
+                    remaining % 60
+                  )
+                }}
+
+          - action: input_boolean.turn_on
+            target:
+              entity_id: input_boolean.rainbird_last_start_confirmed
+
+          - action: input_boolean.turn_off
+            target:
+              entity_id: input_boolean.rainbird_command_pending
+
+          - action: timer.start
+            target:
+              entity_id: timer.rainbird_time_left
+            data:
+              duration: "{{ timer_duration }}"
+
+          - action: input_text.set_value
+            target:
+              entity_id: input_text.rainbird_last_message
+            data:
+              value: "{{ zone_name }} confirmed running for {{ duration_min | int(0) }} min."
+        else:
+          - action: input_boolean.turn_off
+            target:
+              entity_id: input_boolean.rainbird_command_pending
+
+          - action: input_boolean.turn_off
+            target:
+              entity_id: input_boolean.rainbird_last_start_confirmed
+
+          - action: timer.cancel
+            target:
+              entity_id: timer.rainbird_time_left
+
+          - action: input_text.set_value
+            target:
+              entity_id: input_text.rainbird_last_message
+            data:
+              value: "Could not confirm {{ zone_name }} started. RainBird may be unreachable or busy."
+
+          - action: persistent_notification.create
+            data:
+              title: RainBird start failed
+              message: "Could not confirm {{ zone_name }} started. RainBird may be unreachable or busy."
+
+  rainbird_run_program:
+    alias: RainBird - Run Program
+    mode: single
+    max_exceeded: silent
+    sequence:
+      - condition: template
+        value_template: "{{ states('sensor.rainbird_program_total_duration') | int(0) > 0 }}"
+
+      - action: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.rainbird_program_running
+
+      - action: input_text.set_value
+        target:
+          entity_id: input_text.rainbird_last_message
+        data:
+          value: "Starting RainBird program."
+
+      - if:
+          - condition: template
+            value_template: "{{ states('input_number.rainbird_program_zone_1_duration') | int(0) > 0 }}"
+        then:
+          - action: script.rainbird_start_single_zone
+            data:
+              zone_switch: switch.rain_bird_sprinkler_1
+              duration: "{{ states('input_number.rainbird_program_zone_1_duration') | int(0) }}"
+          - if:
+              - condition: state
+                entity_id: input_boolean.rainbird_last_start_confirmed
+                state: "off"
+            then:
+              - action: input_boolean.turn_off
+                target:
+                  entity_id: input_boolean.rainbird_program_running
+              - stop: RainBird program stopped because Zone 1 did not start.
+          - wait_template: "{{ is_state('timer.rainbird_time_left', 'idle') }}"
+            timeout:
+              minutes: "{{ states('input_number.rainbird_program_zone_1_duration') | int(0) + 2 }}"
+            continue_on_timeout: true
+          - if:
+              - condition: state
+                entity_id: input_boolean.rainbird_program_running
+                state: "off"
+            then:
+              - stop: RainBird program cancelled.
+
+      - if:
+          - condition: template
+            value_template: "{{ states('input_number.rainbird_program_zone_2_duration') | int(0) > 0 }}"
+        then:
+          - action: script.rainbird_start_single_zone
+            data:
+              zone_switch: switch.rain_bird_sprinkler_2
+              duration: "{{ states('input_number.rainbird_program_zone_2_duration') | int(0) }}"
+          - if:
+              - condition: state
+                entity_id: input_boolean.rainbird_last_start_confirmed
+                state: "off"
+            then:
+              - action: input_boolean.turn_off
+                target:
+                  entity_id: input_boolean.rainbird_program_running
+              - stop: RainBird program stopped because Zone 2 did not start.
+          - wait_template: "{{ is_state('timer.rainbird_time_left', 'idle') }}"
+            timeout:
+              minutes: "{{ states('input_number.rainbird_program_zone_2_duration') | int(0) + 2 }}"
+            continue_on_timeout: true
+          - if:
+              - condition: state
+                entity_id: input_boolean.rainbird_program_running
+                state: "off"
+            then:
+              - stop: RainBird program cancelled.
+
+      - if:
+          - condition: template
+            value_template: "{{ states('input_number.rainbird_program_zone_3_duration') | int(0) > 0 }}"
+        then:
+          - action: script.rainbird_start_single_zone
+            data:
+              zone_switch: switch.rain_bird_sprinkler_3
+              duration: "{{ states('input_number.rainbird_program_zone_3_duration') | int(0) }}"
+          - if:
+              - condition: state
+                entity_id: input_boolean.rainbird_last_start_confirmed
+                state: "off"
+            then:
+              - action: input_boolean.turn_off
+                target:
+                  entity_id: input_boolean.rainbird_program_running
+              - stop: RainBird program stopped because Zone 3 did not start.
+          - wait_template: "{{ is_state('timer.rainbird_time_left', 'idle') }}"
+            timeout:
+              minutes: "{{ states('input_number.rainbird_program_zone_3_duration') | int(0) + 2 }}"
+            continue_on_timeout: true
+          - if:
+              - condition: state
+                entity_id: input_boolean.rainbird_program_running
+                state: "off"
+            then:
+              - stop: RainBird program cancelled.
+
+      - if:
+          - condition: template
+            value_template: "{{ states('input_number.rainbird_program_zone_4_duration') | int(0) > 0 }}"
+        then:
+          - action: script.rainbird_start_single_zone
+            data:
+              zone_switch: switch.rain_bird_sprinkler_4
+              duration: "{{ states('input_number.rainbird_program_zone_4_duration') | int(0) }}"
+          - if:
+              - condition: state
+                entity_id: input_boolean.rainbird_last_start_confirmed
+                state: "off"
+            then:
+              - action: input_boolean.turn_off
+                target:
+                  entity_id: input_boolean.rainbird_program_running
+              - stop: RainBird program stopped because Zone 4 did not start.
+          - wait_template: "{{ is_state('timer.rainbird_time_left', 'idle') }}"
+            timeout:
+              minutes: "{{ states('input_number.rainbird_program_zone_4_duration') | int(0) + 2 }}"
+            continue_on_timeout: true
+          - if:
+              - condition: state
+                entity_id: input_boolean.rainbird_program_running
+                state: "off"
+            then:
+              - stop: RainBird program cancelled.
+
+      - action: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.rainbird_program_running
+
+      - action: input_text.set_value
+        target:
+          entity_id: input_text.rainbird_last_message
+        data:
+          value: "RainBird program complete."
 
   rainbird_stop_all_zones:
     alias: RainBird - Stop All Zones
     mode: restart
+    fields:
+      cancel_program:
+        name: Cancel program
+        required: false
     sequence:
+      - variables:
+          should_cancel_program: "{{ cancel_program | default(true) | bool }}"
+
       - action: switch.turn_off
         target:
           entity_id:
@@ -88,6 +448,26 @@ script:
         target:
           entity_id: timer.rainbird_time_left
 
+      - action: input_boolean.turn_off
+        target:
+          entity_id:
+            - input_boolean.rainbird_command_pending
+            - input_boolean.rainbird_last_start_confirmed
+
+      - if:
+          - condition: template
+            value_template: "{{ should_cancel_program }}"
+        then:
+          - action: input_boolean.turn_off
+            target:
+              entity_id: input_boolean.rainbird_program_running
+
+          - action: input_text.set_value
+            target:
+              entity_id: input_text.rainbird_last_message
+            data:
+              value: "RainBird irrigation stopped."
+
 automation:
   - alias: RainBird - Stop when shared timer finishes
     id: rainbird_stop_when_shared_timer_finishes
@@ -99,3 +479,5 @@ automation:
           entity_id: timer.rainbird_time_left
     action:
       - action: script.rainbird_stop_all_zones
+        data:
+          cancel_program: false

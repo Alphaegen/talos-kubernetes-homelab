@@ -36,6 +36,13 @@ spec:
     helm:
       releaseName: grafana
       values: |-
+        replicas: {{ .Values.monitoring.grafana.replicas | default 1 }}
+
+        {{- with .Values.monitoring.grafana.deploymentStrategy }}
+        deploymentStrategy:
+{{ toYaml . | indent 10 }}
+        {{- end }}
+
         # Expose Grafana metrics so Prometheus can scrape them
         grafana.ini:
           metrics:

@@ -52,6 +52,9 @@ monitoring:
   grafana:
     # renovate: datasource=helm depName=grafana registryUrl=https://grafana.github.io/helm-charts versioning=helm
     version: "10.5.15"
+    replicas: 1
+    deploymentStrategy:
+      type: Recreate
     ingress:
       enabled: true
       ingressClassName: nginx

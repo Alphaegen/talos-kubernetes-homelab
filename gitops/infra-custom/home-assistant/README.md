@@ -76,6 +76,10 @@ zones through `script.rainbird_start_single_zone` or
 
 ## Lovelace
 
-Use `lovelace-rainbird-card.yaml` as the dashboard card snippet. Add it to a
-manual Lovelace dashboard or a YAML-backed dashboard as appropriate for the Home
-Assistant instance.
+`rainbird-dashboard.yaml` is mounted at `/config/dashboards/rainbird.yaml` and
+registered as a YAML-backed Lovelace dashboard named `RainBird`. It is shown in
+the Home Assistant sidebar, so changes to `lovelace-rainbird-card.yaml` are
+deployed through GitOps instead of being copied into the dashboard editor.
+
+`lovelace-rainbird-card.yaml` remains the reusable card body included by the
+dashboard file.

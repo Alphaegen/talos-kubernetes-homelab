@@ -106,6 +106,15 @@ spec:
               frontend:
                 themes: !include_dir_merge_named themes
 
+              lovelace:
+                dashboards:
+                  rainbird-irrigation:
+                    mode: yaml
+                    title: RainBird
+                    icon: mdi:sprinkler-variant
+                    show_in_sidebar: true
+                    filename: dashboards/rainbird.yaml
+
               automation: !include automations.yaml
               script: !include scripts.yaml
               scene: !include scenes.yaml
@@ -148,10 +157,16 @@ spec:
             - name: rainbird-packages
               configMap:
                 name: home-assistant-rainbird-package
+            - name: rainbird-dashboard
+              configMap:
+                name: home-assistant-rainbird-dashboard
 
           additionalMounts:
             - mountPath: /config/packages
               name: rainbird-packages
+              readOnly: true
+            - mountPath: /config/dashboards
+              name: rainbird-dashboard
               readOnly: true
 
           # USB passthrough example (e.g., Zigbee stick). Requires privileged:

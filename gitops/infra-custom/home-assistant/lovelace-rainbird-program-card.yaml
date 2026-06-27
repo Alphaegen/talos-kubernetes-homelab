@@ -1,31 +1,60 @@
-type: entities
-title: RainBird Program
-show_header_toggle: false
-entities:
-  - entity: input_number.rainbird_program_zone_1_duration
-    name: Zone 1
-  - entity: input_number.rainbird_program_zone_2_duration
-    name: Zone 2
-  - entity: input_number.rainbird_program_zone_3_duration
-    name: Zone 3
-  - entity: input_number.rainbird_program_zone_4_duration
-    name: Zone 4
-  - entity: sensor.rainbird_program_total_duration
-    name: Total duration
+type: custom:stack-in-card
+cards:
+  - type: entities
+    title: RainBird Program
+    show_header_toggle: false
+    entities:
+      - entity: sensor.rainbird_program_total_duration
+        name: Total duration
 
-  - type: section
-    label: Program Control
+  - type: grid
+    columns: 2
+    square: false
+    cards:
+      - type: tile
+        entity: input_number.rainbird_program_zone_1_duration
+        name: Zone 1
+        features_position: bottom
+        features:
+          - type: numeric-input
 
-  - type: button
-    name: Run program
-    icon: mdi:playlist-play
-    tap_action:
-      action: call-service
-      service: script.rainbird_run_program
+      - type: tile
+        entity: input_number.rainbird_program_zone_2_duration
+        name: Zone 2
+        features_position: bottom
+        features:
+          - type: numeric-input
 
-  - type: button
-    name: Stop / Cancel program
-    icon: mdi:playlist-remove
-    tap_action:
-      action: call-service
-      service: script.rainbird_stop_all_zones
+      - type: tile
+        entity: input_number.rainbird_program_zone_3_duration
+        name: Zone 3
+        features_position: bottom
+        features:
+          - type: numeric-input
+
+      - type: tile
+        entity: input_number.rainbird_program_zone_4_duration
+        name: Zone 4
+        features_position: bottom
+        features:
+          - type: numeric-input
+
+  - type: entities
+    show_header_toggle: false
+    entities:
+      - type: section
+        label: Program Control
+
+      - type: button
+        name: Run program
+        icon: mdi:playlist-play
+        tap_action:
+          action: call-service
+          service: script.rainbird_run_program
+
+      - type: button
+        name: Stop / Cancel program
+        icon: mdi:playlist-remove
+        tap_action:
+          action: call-service
+          service: script.rainbird_stop_all_zones

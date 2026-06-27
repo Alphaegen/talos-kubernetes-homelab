@@ -1,55 +1,61 @@
-type: entities
-title: RainBird Manual Control
-show_header_toggle: false
-entities:
-  - entity: input_number.rainbird_duration
+type: custom:stack-in-card
+cards:
+  - type: markdown
+    content: "### RainBird Manual Control"
+
+  - type: tile
+    entity: input_number.rainbird_duration
     name: Duration
+    features_position: bottom
+    features:
+      - type: numeric-input
 
-  - type: section
-    label: Zones
+  - type: grid
+    columns: 2
+    square: false
+    cards:
+      - type: button
+        name: Start Zone 1
+        icon: mdi:numeric-1-circle-outline
+        tap_action:
+          action: call-service
+          service: script.rainbird_start_single_zone
+          data:
+            zone_switch: switch.rain_bird_sprinkler_1
 
-  - type: button
-    name: Start Zone 1
-    icon: mdi:numeric-1-circle-outline
-    tap_action:
-      action: call-service
-      service: script.rainbird_start_single_zone
-      data:
-        zone_switch: switch.rain_bird_sprinkler_1
+      - type: button
+        name: Start Zone 2
+        icon: mdi:numeric-2-circle-outline
+        tap_action:
+          action: call-service
+          service: script.rainbird_start_single_zone
+          data:
+            zone_switch: switch.rain_bird_sprinkler_2
 
-  - type: button
-    name: Start Zone 2
-    icon: mdi:numeric-2-circle-outline
-    tap_action:
-      action: call-service
-      service: script.rainbird_start_single_zone
-      data:
-        zone_switch: switch.rain_bird_sprinkler_2
+      - type: button
+        name: Start Zone 3
+        icon: mdi:numeric-3-circle-outline
+        tap_action:
+          action: call-service
+          service: script.rainbird_start_single_zone
+          data:
+            zone_switch: switch.rain_bird_sprinkler_3
 
-  - type: button
-    name: Start Zone 3
-    icon: mdi:numeric-3-circle-outline
-    tap_action:
-      action: call-service
-      service: script.rainbird_start_single_zone
-      data:
-        zone_switch: switch.rain_bird_sprinkler_3
+      - type: button
+        name: Start Zone 4
+        icon: mdi:numeric-4-circle-outline
+        tap_action:
+          action: call-service
+          service: script.rainbird_start_single_zone
+          data:
+            zone_switch: switch.rain_bird_sprinkler_4
 
-  - type: button
-    name: Start Zone 4
-    icon: mdi:numeric-4-circle-outline
-    tap_action:
-      action: call-service
-      service: script.rainbird_start_single_zone
-      data:
-        zone_switch: switch.rain_bird_sprinkler_4
-
-  - type: section
-    label: Control
-
-  - type: button
-    name: Stop / Cancel irrigation
-    icon: mdi:stop-circle-outline
-    tap_action:
-      action: call-service
-      service: script.rainbird_stop_all_zones
+  - type: entities
+    show_header_toggle: false
+    entities:
+      - type: button
+        name: Stop / Cancel irrigation
+        icon: mdi:stop-circle-outline
+        tap_action:
+          action: call-service
+          service: script.rainbird_stop_all_zones

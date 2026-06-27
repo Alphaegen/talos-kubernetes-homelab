@@ -1,102 +1,145 @@
 type: vertical-stack
 cards:
-  - type: entities
-    title: RainBird Status
-    show_header_toggle: false
-    entities:
-      - entity: timer.rainbird_time_left
-        name: Time left
-      - entity: sensor.rainbird_status
-        name: Status
-      - entity: sensor.rainbird_program_remaining
-        name: Remaining program
-      - entity: sensor.rainbird_last_message
-        name: Last message
+  - type: custom:stack-in-card
+    cards:
+      - type: entities
+        title: RainBird Status
+        show_header_toggle: false
+        entities:
+          - entity: sensor.rainbird_status
+            name: Status
+          - entity: timer.rainbird_time_left
+            name: Time left
 
-  - type: entities
-    title: RainBird Manual Control
-    show_header_toggle: false
-    entities:
-      - entity: input_number.rainbird_duration
+      - type: markdown
+        content: |
+          **Remaining program(s)**
+
+          {{ states('sensor.rainbird_program_remaining') }}
+
+          **Last message**
+
+          {{ states('sensor.rainbird_last_message') }}
+
+  - type: custom:stack-in-card
+    cards:
+      - type: markdown
+        content: "### RainBird Manual Control"
+
+      - type: tile
+        entity: input_number.rainbird_duration
         name: Duration
+        features_position: bottom
+        features:
+          - type: numeric-input
 
-      - type: section
-        label: Zones
+      - type: grid
+        columns: 2
+        square: false
+        cards:
+          - type: button
+            name: Start Zone 1
+            icon: mdi:numeric-1-circle-outline
+            tap_action:
+              action: call-service
+              service: script.rainbird_start_single_zone
+              data:
+                zone_switch: switch.rain_bird_sprinkler_1
 
-      - type: button
-        name: Start Zone 1
-        icon: mdi:numeric-1-circle-outline
-        tap_action:
-          action: call-service
-          service: script.rainbird_start_single_zone
-          data:
-            zone_switch: switch.rain_bird_sprinkler_1
+          - type: button
+            name: Start Zone 2
+            icon: mdi:numeric-2-circle-outline
+            tap_action:
+              action: call-service
+              service: script.rainbird_start_single_zone
+              data:
+                zone_switch: switch.rain_bird_sprinkler_2
 
-      - type: button
-        name: Start Zone 2
-        icon: mdi:numeric-2-circle-outline
-        tap_action:
-          action: call-service
-          service: script.rainbird_start_single_zone
-          data:
-            zone_switch: switch.rain_bird_sprinkler_2
+          - type: button
+            name: Start Zone 3
+            icon: mdi:numeric-3-circle-outline
+            tap_action:
+              action: call-service
+              service: script.rainbird_start_single_zone
+              data:
+                zone_switch: switch.rain_bird_sprinkler_3
 
-      - type: button
-        name: Start Zone 3
-        icon: mdi:numeric-3-circle-outline
-        tap_action:
-          action: call-service
-          service: script.rainbird_start_single_zone
-          data:
-            zone_switch: switch.rain_bird_sprinkler_3
+          - type: button
+            name: Start Zone 4
+            icon: mdi:numeric-4-circle-outline
+            tap_action:
+              action: call-service
+              service: script.rainbird_start_single_zone
+              data:
+                zone_switch: switch.rain_bird_sprinkler_4
 
-      - type: button
-        name: Start Zone 4
-        icon: mdi:numeric-4-circle-outline
-        tap_action:
-          action: call-service
-          service: script.rainbird_start_single_zone
-          data:
-            zone_switch: switch.rain_bird_sprinkler_4
+      - type: entities
+        show_header_toggle: false
+        entities:
+          - type: button
+            name: Stop / Cancel irrigation
+            icon: mdi:stop-circle-outline
+            tap_action:
+              action: call-service
+              service: script.rainbird_stop_all_zones
 
-      - type: section
-        label: Control
+  - type: custom:stack-in-card
+    cards:
+      - type: entities
+        title: RainBird Program
+        show_header_toggle: false
+        entities:
+          - entity: sensor.rainbird_program_total_duration
+            name: Total duration
 
-      - type: button
-        name: Stop / Cancel irrigation
-        icon: mdi:stop-circle-outline
-        tap_action:
-          action: call-service
-          service: script.rainbird_stop_all_zones
+      - type: grid
+        columns: 2
+        square: false
+        cards:
+          - type: tile
+            entity: input_number.rainbird_program_zone_1_duration
+            name: Zone 1
+            features_position: bottom
+            features:
+              - type: numeric-input
 
-  - type: entities
-    title: RainBird Program
-    show_header_toggle: false
-    entities:
-      - entity: input_number.rainbird_program_zone_1_duration
-        name: Zone 1
-      - entity: input_number.rainbird_program_zone_2_duration
-        name: Zone 2
-      - entity: input_number.rainbird_program_zone_3_duration
-        name: Zone 3
-      - entity: input_number.rainbird_program_zone_4_duration
-        name: Zone 4
-      - entity: sensor.rainbird_program_total_duration
-        name: Total duration
+          - type: tile
+            entity: input_number.rainbird_program_zone_2_duration
+            name: Zone 2
+            features_position: bottom
+            features:
+              - type: numeric-input
 
-      - type: section
-        label: Program Control
+          - type: tile
+            entity: input_number.rainbird_program_zone_3_duration
+            name: Zone 3
+            features_position: bottom
+            features:
+              - type: numeric-input
 
-      - type: button
-        name: Run program
-        icon: mdi:playlist-play
-        tap_action:
-          action: call-service
-          service: script.rainbird_run_program
+          - type: tile
+            entity: input_number.rainbird_program_zone_4_duration
+            name: Zone 4
+            features_position: bottom
+            features:
+              - type: numeric-input
 
-      - type: button
-        name: Stop / Cancel program
-        icon: mdi:playlist-remove
-        tap_action:
-          action: call-service
-          service: script.rainbird_stop_all_zones
+      - type: entities
+        show_header_toggle: false
+        entities:
+          - type: section
+            label: Program Control
+
+          - type: button
+            name: Run program
+            icon: mdi:playlist-play
+            tap_action:
+              action: call-service
+              service: script.rainbird_run_program
+
+          - type: button
+            name: Stop / Cancel program
+            icon: mdi:playlist-remove
+            tap_action:
+              action: call-service
+              service: script.rainbird_stop_all_zones

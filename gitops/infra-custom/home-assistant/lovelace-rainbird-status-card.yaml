@@ -1,12 +1,18 @@
-type: entities
-title: RainBird Status
-show_header_toggle: false
-entities:
-  - entity: timer.rainbird_time_left
-    name: Time left
-  - entity: sensor.rainbird_status
-    name: Status
-  - entity: sensor.rainbird_program_remaining
-    name: Remaining program
-  - entity: sensor.rainbird_last_message
-    name: Last message
+type: custom:stack-in-card
+cards:
+  - type: entities
+    title: RainBird Status
+    show_header_toggle: false
+    entities:
+      - entity: sensor.rainbird_status
+        name: Status
+      - entity: timer.rainbird_time_left
+        name: Time left
+
+  - type: markdown
+    content: |
+      **Remaining program(s):**
+      {{ states('sensor.rainbird_program_remaining') }}
+
+      **Last message:**
+      {{ states('sensor.rainbird_last_message') }}

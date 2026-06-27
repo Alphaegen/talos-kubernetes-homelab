@@ -17,6 +17,7 @@ shared countdown timer, and a simple sequential watering program:
 - `input_number.rainbird_program_zone_2_duration`
 - `input_number.rainbird_program_zone_3_duration`
 - `input_number.rainbird_program_zone_4_duration`
+- `input_number.rainbird_program_step`
 - `input_boolean.rainbird_command_pending`
 - `input_boolean.rainbird_last_start_confirmed`
 - `input_boolean.rainbird_program_running`
@@ -26,7 +27,8 @@ shared countdown timer, and a simple sequential watering program:
 - `sensor.rainbird_active_zone`
 - `sensor.rainbird_status`
 - `sensor.rainbird_program_total_duration`
-- `binary_sensor.rainbird_busy`
+- `sensor.rainbird_program_remaining`
+- `sensor.rainbird_last_message`
 - `script.rainbird_start_single_zone`
 - `script.rainbird_run_program`
 - `script.rainbird_stop_all_zones`
@@ -40,8 +42,9 @@ created.
 
 The program runner uses the four program duration helpers in zone order. Set a
 zone duration to `0` to skip it; for example, Zone 1 at `45` and Zone 2 at `30`
-runs Zone 1 first and Zone 2 afterwards. Manual stop cancels the timer, turns
-off all zones, and cancels any running program.
+runs Zone 1 first and Zone 2 afterwards. `sensor.rainbird_program_remaining`
+shows the scheduled zones that have not started yet. Manual stop cancels the
+timer, turns off all zones, and cancels any running program.
 
 The active-zone entity is a read-only template sensor derived from the real Rain
 Bird switch states. It cannot start zones from the UI, and it shows zones
@@ -76,7 +79,13 @@ zones through `script.rainbird_start_single_zone` or
 
 ## Lovelace
 
-Use `lovelace-rainbird-card.yaml` as the card snippet for the RainBird page in
-the main Home Assistant dashboard. The main dashboard itself is managed in Home
-Assistant storage, so this file is the source-of-truth snippet to paste into
-that page when the RainBird controls change.
+Use these snippets on the RainBird page in the main Home Assistant dashboard:
+
+- `lovelace-rainbird-status-card.yaml`
+- `lovelace-rainbird-manual-card.yaml`
+- `lovelace-rainbird-program-card.yaml`
+
+`lovelace-rainbird-card.yaml` contains the same three cards as one
+`vertical-stack` for quick full-page replacement. The main dashboard itself is
+managed in Home Assistant storage, so these files are the source-of-truth
+snippets to paste into that page when the RainBird controls change.

@@ -39,6 +39,13 @@ input_number:
     unit_of_measurement: min
     icon: mdi:numeric-4-circle-outline
 
+  rainbird_program_step:
+    name: RainBird Program Step
+    min: 0
+    max: 4
+    step: 1
+    icon: mdi:playlist-check
+
 input_boolean:
   rainbird_command_pending:
     name: RainBird Command Pending
@@ -112,14 +119,36 @@ template:
             + states('input_number.rainbird_program_zone_4_duration') | int(0)
           }}
 
-      - name: RainBird Program Status
-        unique_id: rainbird_program_status
-        icon: mdi:playlist-play
+      - name: RainBird Program Remaining
+        unique_id: rainbird_program_remaining
+        icon: mdi:playlist-check
         state: >-
-          {% if is_state('input_boolean.rainbird_program_running', 'on') %}
-            Running
+          {% if not is_state('input_boolean.rainbird_program_running', 'on') %}
+            No program running
           {% else %}
-            Idle
+            {% set step = states('input_number.rainbird_program_step') | int(0) %}
+            {% set z1 = states('input_number.rainbird_program_zone_1_duration') | int(0) %}
+            {% set z2 = states('input_number.rainbird_program_zone_2_duration') | int(0) %}
+            {% set z3 = states('input_number.rainbird_program_zone_3_duration') | int(0) %}
+            {% set z4 = states('input_number.rainbird_program_zone_4_duration') | int(0) %}
+            {% set ns = namespace(items=[]) %}
+            {% if z1 > 0 and step < 1 %}
+              {% set ns.items = ns.items + ['Zone 1 (' ~ z1 ~ ' min)'] %}
+            {% endif %}
+            {% if z2 > 0 and step < 2 %}
+              {% set ns.items = ns.items + ['Zone 2 (' ~ z2 ~ ' min)'] %}
+            {% endif %}
+            {% if z3 > 0 and step < 3 %}
+              {% set ns.items = ns.items + ['Zone 3 (' ~ z3 ~ ' min)'] %}
+            {% endif %}
+            {% if z4 > 0 and step < 4 %}
+              {% set ns.items = ns.items + ['Zone 4 (' ~ z4 ~ ' min)'] %}
+            {% endif %}
+            {% if ns.items | count > 0 %}
+              {{ ns.items | join(' -> ') }}
+            {% else %}
+              No remaining zones
+            {% endif %}
           {% endif %}
 
       - name: RainBird Last Message
@@ -280,6 +309,12 @@ script:
         target:
           entity_id: input_boolean.rainbird_program_running
 
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.rainbird_program_step
+        data:
+          value: 0
+
       - action: input_text.set_value
         target:
           entity_id: input_text.rainbird_last_message
@@ -303,6 +338,11 @@ script:
                 target:
                   entity_id: input_boolean.rainbird_program_running
               - stop: RainBird program stopped because Zone 1 did not start.
+          - action: input_number.set_value
+            target:
+              entity_id: input_number.rainbird_program_step
+            data:
+              value: 1
           - wait_template: "{{ is_state('timer.rainbird_time_left', 'idle') }}"
             timeout:
               minutes: "{{ states('input_number.rainbird_program_zone_1_duration') | int(0) + 2 }}"
@@ -331,6 +371,11 @@ script:
                 target:
                   entity_id: input_boolean.rainbird_program_running
               - stop: RainBird program stopped because Zone 2 did not start.
+          - action: input_number.set_value
+            target:
+              entity_id: input_number.rainbird_program_step
+            data:
+              value: 2
           - wait_template: "{{ is_state('timer.rainbird_time_left', 'idle') }}"
             timeout:
               minutes: "{{ states('input_number.rainbird_program_zone_2_duration') | int(0) + 2 }}"
@@ -359,6 +404,11 @@ script:
                 target:
                   entity_id: input_boolean.rainbird_program_running
               - stop: RainBird program stopped because Zone 3 did not start.
+          - action: input_number.set_value
+            target:
+              entity_id: input_number.rainbird_program_step
+            data:
+              value: 3
           - wait_template: "{{ is_state('timer.rainbird_time_left', 'idle') }}"
             timeout:
               minutes: "{{ states('input_number.rainbird_program_zone_3_duration') | int(0) + 2 }}"
@@ -387,6 +437,11 @@ script:
                 target:
                   entity_id: input_boolean.rainbird_program_running
               - stop: RainBird program stopped because Zone 4 did not start.
+          - action: input_number.set_value
+            target:
+              entity_id: input_number.rainbird_program_step
+            data:
+              value: 4
           - wait_template: "{{ is_state('timer.rainbird_time_left', 'idle') }}"
             timeout:
               minutes: "{{ states('input_number.rainbird_program_zone_4_duration') | int(0) + 2 }}"
@@ -401,6 +456,12 @@ script:
       - action: input_boolean.turn_off
         target:
           entity_id: input_boolean.rainbird_program_running
+
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.rainbird_program_step
+        data:
+          value: 0
 
       - action: input_text.set_value
         target:
@@ -445,6 +506,12 @@ script:
           - action: input_boolean.turn_off
             target:
               entity_id: input_boolean.rainbird_program_running
+
+          - action: input_number.set_value
+            target:
+              entity_id: input_number.rainbird_program_step
+            data:
+              value: 0
 
           - action: input_text.set_value
             target:

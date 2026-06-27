@@ -4,4 +4,4 @@ views:
     path: irrigation
     icon: mdi:sprinkler-variant
     cards:
-      - !include dashboards/lovelace-rainbird-card.yaml
+      - !include lovelace-rainbird-card.yaml

@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: bookorbit-books
+  namespace: bookorbit
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  accessModes:
+    - ReadWriteMany
+  volumeName: bookorbit-books
+  storageClassName: ""
+  resources:
+    requests:
+      storage: 1Ti

@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: bookorbit-books
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  capacity:
+    storage: 1Ti
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""
+  mountOptions:
+    - nfsvers=4.1
+  nfs:
+    server: nas.niekvlam.nl
+    # TODO: confirm this dedicated NAS share exists before syncing.
+    path: /volume1/Books

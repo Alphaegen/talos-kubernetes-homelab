@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: bookorbit-config
+  namespace: bookorbit
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+data:
+  APP_URL: https://bookorbit.homelab.niekvlam.nl
+  CLIENT_URL: https://bookorbit.homelab.niekvlam.nl
+  POSTGRES_HOST: bookorbit-postgres
+  POSTGRES_PORT: "5432"
+  POSTGRES_USER: bookorbit
+  POSTGRES_DB: bookorbit
+  PUID: "1000"
+  PGID: "1000"
+  NODE_MAX_OLD_SPACE_SIZE: "2048"
+  LIBRARY_BROWSE_ROOT: /books
+  LOG_LEVEL: info
+  BOOKORBIT_FIX_PERMISSIONS: "false"

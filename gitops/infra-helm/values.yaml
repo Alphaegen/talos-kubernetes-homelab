@@ -11,6 +11,9 @@ cluster:
 
 sync: true
 
+bookorbit:
+  enabled: true
+
 ingressController:
   enabled: true
   class: nginx

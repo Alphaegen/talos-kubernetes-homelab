@@ -13,7 +13,7 @@ stores:
         namespace: external-secrets
 
   onepassword:
-    enabled: true
+    enabled: false
     name: onepassword
     vault: "Homelab"
     auth:
@@ -46,10 +46,10 @@ argocd:
         namespace: argocd
         repositoryName: homelab-repo
         project: default
-        url: git@github.com:Alphaegen/talos-homelab.git
+        url: https://github.com/Alphaegen/talos-kubernetes-homelab.git
         type: git
       - secretName: repo-1485164468
         namespace: argocd
         project: homelab.niekvlam
-        url: git@github.com:Alphaegen/talos-homelab.git
+        url: https://github.com/Alphaegen/talos-kubernetes-homelab.git
         type: git

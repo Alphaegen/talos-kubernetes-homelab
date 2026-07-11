@@ -6,7 +6,7 @@ cluster:
   # Used for ArgoCD Application metadata.name.
   appNamePrefix: homelab
   namespace: argocd
-  repoURL: "git@github.com:Alphaegen/talos-homelab.git"
+  repoURL: "https://github.com/Alphaegen/talos-kubernetes-homelab.git"
   revision: "main"
 
 sync: true

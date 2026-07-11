@@ -10,3 +10,4 @@ id_*
 _diag
 _out*
 _rebuild_exports
+.tokensave

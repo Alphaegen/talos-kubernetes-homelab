@@ -19,7 +19,7 @@ spec:
         fsGroupChangePolicy: OnRootMismatch
       containers:
         - name: qb
-          image: sxyzy1016/qbittorrent-enhanced-edition:release-5.1.3.10
+          image: sxyzy1016/qbittorrent-enhanced-edition:release-5.2.1.10
           ports:
             - { name: http, containerPort: 8080 }
             - { name: bt-tcp, containerPort: 50413, protocol: TCP }

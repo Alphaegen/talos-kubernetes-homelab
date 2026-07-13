@@ -182,7 +182,7 @@ Mosquitto and Zigbee2MQTT run in a dedicated `home-automation` namespace. Zigbee
 
 ### Media services
 
-The media stack includes Sonarr, Radarr, Prowlarr, qBittorrent Enhanced Edition, Seerr, Profilarr, and FlareSolverr. Kubernetes-managed configuration volumes are separated from shared media data on NFS.
+The media stack includes Sonarr, Radarr, Prowlarr, qBittorrent Enhanced Edition, Seerr, Profilarr, and Trawl. Trawl exposes a FlareSolverr-compatible service alias so the existing Prowlarr proxy configuration keeps working. Kubernetes-managed configuration volumes are separated from shared media data on NFS.
 
 ### BookOrbit
 

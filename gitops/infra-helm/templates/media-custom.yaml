@@ -31,6 +31,7 @@ spec:
     {{- end }}
     syncOptions:
       - CreateNamespace=true
+      - PruneLast=true
       - RespectIgnoreDifferences=true
   source:
     repoURL: {{ .Values.cluster.repoURL | quote }}

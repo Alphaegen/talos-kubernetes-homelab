@@ -10,6 +10,7 @@ helmCharts:
     version: 9.7.1
     releaseName: argocd
     namespace: argocd
+    skipTests: true
     valuesFile: helm-values.yaml
     apiVersions:
       - monitoring.coreos.com/v1

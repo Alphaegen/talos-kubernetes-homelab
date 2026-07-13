@@ -30,6 +30,38 @@
   },
   "packageRules": [
     {
+      "description": "Parse LinuxServer application and image build versions",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "lscr.io/linuxserver/prowlarr",
+        "lscr.io/linuxserver/radarr",
+        "lscr.io/linuxserver/sonarr"
+      ],
+      "versioning": "regex:^(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)\\.(?<build>\\d+)-ls(?<revision>\\d+)$"
+    },
+    {
+      "description": "Parse qBittorrent Enhanced Edition release tags",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "sxyzy1016/qbittorrent-enhanced-edition"
+      ],
+      "versioning": "regex:^release-(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)\\.(?<build>\\d+)$"
+    },
+    {
+      "description": "Track both Go and Alpine versions in the builder image",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "golang"
+      ],
+      "versioning": "regex:^(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)-alpine(?<build>\\d+)\\.(?<revision>\\d+)$"
+    },
+    {
       "description": "Group routine Helm updates while keeping major upgrades isolated",
       "matchDatasources": [
         "helm"

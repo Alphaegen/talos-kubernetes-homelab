@@ -6,9 +6,13 @@ nodes:
   - hostname: rpi-cp-1
     ip: 192.168.3.101
     role: controlplane
+    nodeLabels:
+      hardware.niekvlam.nl/pi5-fan: "true"
   - hostname: rpi-w-1
     ip: 192.168.3.102
     role: worker
+    nodeLabels:
+      hardware.niekvlam.nl/pi5-fan: "true"
   - hostname: rpi-w-2
     ip: 192.168.3.103
     role: worker
@@ -17,3 +21,5 @@ nodes:
   - hostname: rpi-w-3
     ip: 192.168.3.104
     role: worker
+    nodeLabels:
+      hardware.niekvlam.nl/pi5-fan: "true"

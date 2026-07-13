@@ -101,11 +101,11 @@ only for RP1 MMIO and must be removed with the workaround.
 
 ## Canary rollout on rpi-w-2
 
-`nodes.yaml` assigns `hardware.niekvlam.nl/pi5-fan: "true"` only to
+The initial rollout assigned `hardware.niekvlam.nl/pi5-fan: "true"` only to
 `rpi-w-2` (`192.168.3.103`). The DaemonSet also requires ARM64 and this explicit
-label, so it cannot schedule on the other nodes. Generate the Talos configs and
-inspect the canary diff. Apply only the label to the live machine configuration
-so unrelated Talos settings are not replaced:
+label, so it could not schedule on the other nodes during the canary. Generate
+the Talos configs and inspect the canary diff. Apply only the label to the live
+machine configuration so unrelated Talos settings are not replaced:
 
 ```bash
 ./generate.sh
@@ -151,8 +151,9 @@ feedback and must not be described as RPM verification.
 
 ## Enabling the remaining nodes
 
-Only after physical canary verification, add the same `nodeLabels` mapping to
-`rpi-cp-1`, `rpi-w-1`, and `rpi-w-3` in `nodes.yaml`:
+Physical canary verification on `rpi-w-2` completed successfully on 2026-07-13.
+The same `nodeLabels` mapping is therefore enabled for `rpi-cp-1`, `rpi-w-1`,
+and `rpi-w-3` in `nodes.yaml`:
 
 ```yaml
 nodeLabels:

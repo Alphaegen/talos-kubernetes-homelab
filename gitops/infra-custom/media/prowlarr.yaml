@@ -17,7 +17,7 @@ spec:
         fsGroupChangePolicy: OnRootMismatch
       containers:
         - name: prowlarr
-          image: ghcr.io/linuxserver/prowlarr:2.3.5.5327-ls147
+          image: lscr.io/linuxserver/prowlarr:2.3.5.5327-ls147
           ports: [{ name: http, containerPort: 9696 }]
           env:
             - { name: PUID, value: "1000" }

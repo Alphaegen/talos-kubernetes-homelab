@@ -3,6 +3,7 @@
   "extends": [
     "config:recommended"
   ],
+  "dependencyDashboardApproval": false,
   "customManagers": [
     {
       "customType": "regex",
@@ -29,16 +30,40 @@
   },
   "packageRules": [
     {
+      "description": "Group routine Helm updates while keeping major upgrades isolated",
       "matchDatasources": [
         "helm"
+      ],
+      "matchUpdateTypes": [
+        "minor",
+        "patch",
+        "pin",
+        "digest"
       ],
       "groupName": "helm chart updates"
     },
     {
+      "description": "Group routine container updates while keeping major upgrades isolated",
       "matchDatasources": [
         "docker"
       ],
+      "matchUpdateTypes": [
+        "minor",
+        "patch",
+        "pin",
+        "digest"
+      ],
       "groupName": "container image updates"
+    },
+    {
+      "description": "The private smoke image is released by this repository and is not anonymously queryable",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "ghcr.io/alphaegen/homelab-platform-smoke"
+      ],
+      "enabled": false
     }
   ],
   "rangeStrategy": "pin",

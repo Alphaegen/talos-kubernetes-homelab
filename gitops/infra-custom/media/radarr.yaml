@@ -28,7 +28,7 @@ spec:
                       - rpi-w-3
       containers:
         - name: radarr
-          image: ghcr.io/linuxserver/radarr:6.1.1.10360-ls303
+          image: lscr.io/linuxserver/radarr:6.1.1.10360-ls303
           ports: [{ name: http, containerPort: 7878 }]
           env:
             - { name: PUID, value: "1000" }

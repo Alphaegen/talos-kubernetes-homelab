@@ -19,6 +19,9 @@ Version selectors are pinned (no `>=0.0.0` or `HEAD` fallbacks for Helm sources)
 
 - update annotated Helm chart versions in YAML (`# renovate: ...`)
 - update pinned container image tags in `gitops/infra-custom/*`
+- group routine Helm and container updates, while keeping major upgrades isolated
+- create eligible update branches without dependency-dashboard approval
+- skip external lookup for the private, repository-managed smoke image
 
 Recommended flow:
 

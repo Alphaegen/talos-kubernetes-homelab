@@ -168,7 +168,7 @@ Grafana is provisioned with Prometheus and Loki data sources, upstream component
 
 The smoke-test application uses an Argo Rollouts canary strategy. Canary weight advances through 20%, 50%, and 100% stages with timed pauses and analysis steps. This gives me a predictable workload for checking rollout behaviour, metrics, and alerts.
 
-Renovate tracks annotated Helm versions and pinned container images. Helm chart and container updates are grouped separately so rendered changes and upstream release notes can be reviewed before merge.
+Renovate tracks annotated Helm versions and pinned container images. Routine Helm chart and container updates are grouped separately, while major upgrades stay isolated for focused review. Renovate creates eligible update branches automatically without dependency-dashboard approval.
 
 ## Workloads
 

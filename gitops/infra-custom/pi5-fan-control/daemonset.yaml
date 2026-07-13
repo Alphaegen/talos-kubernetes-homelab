@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: pi5-fan-control
+  namespace: pi5-fan-control
+  labels:
+    app.kubernetes.io/name: pi5-fan-control
+    app.kubernetes.io/component: thermal-management
+    app.kubernetes.io/part-of: infrastructure
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: pi5-fan-control
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: pi5-fan-control
+        app.kubernetes.io/component: thermal-management
+        app.kubernetes.io/part-of: infrastructure
+    spec:
+      serviceAccountName: pi5-fan-control
+      automountServiceAccountToken: false
+      priorityClassName: system-node-critical
+      terminationGracePeriodSeconds: 15
+      nodeSelector:
+        kubernetes.io/arch: arm64
+        hardware.niekvlam.nl/pi5-fan: "true"
+      tolerations:
+        - operator: Exists
+      containers:
+        - name: controller
+          # renovate: datasource=docker depName=ghcr.io/alphaegen/pi5-fan-control
+          image: ghcr.io/alphaegen/pi5-fan-control:v0.1.0@sha256:28aa555854129f657fc7b958f72fa97d28851e9e42f54fe4d985a61d952b9655
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: INTERVAL_SECONDS
+              value: "5"
+            - name: TEMP_OFF
+              value: "65"
+            - name: FAN_CURVE
+              value: "68:30,72:45,75:70,78:100"
+            - name: STARTUP_TEST_SECONDS
+              value: "2"
+          securityContext:
+            privileged: true
+            runAsUser: 0
+            readOnlyRootFilesystem: true
+          resources:
+            requests:
+              cpu: 10m
+              memory: 16Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
+          volumeMounts:
+            - name: host-sys
+              mountPath: /host-sys
+      volumes:
+        - name: host-sys
+          hostPath:
+            path: /sys
+            type: Directory

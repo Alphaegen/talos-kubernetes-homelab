@@ -209,6 +209,10 @@ networkWatchdog:
   enabled: true
   namespace: kube-system
 
+pi5FanControl:
+  enabled: true
+  namespace: pi5-fan-control
+
 homeassistant:
   enabled: true
   namespace: home-assistant

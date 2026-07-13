@@ -63,6 +63,15 @@ spec:
 {{- range $ns := .Values.excludeNamespaces }}
                 - "{{ $ns }}"
 {{- end }}
+          # This node agent is the only workload allowed to use privileged
+          # access and host /sys in its dedicated namespace.
+          - resources:
+              kinds: ["Pod"]
+              names: ["pi5-fan-control-*"]
+              namespaces: ["pi5-fan-control"]
+              selector:
+                matchLabels:
+                  app.kubernetes.io/name: pi5-fan-control
       validate:
         message: "Privileged/host features are restricted by default"
         pattern:

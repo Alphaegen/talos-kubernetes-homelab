@@ -78,6 +78,7 @@ yq -o=json '.nodes[]' "$NODES_FILE" | jq -c '.' | while read -r node; do
   HOST=$(jq -r '.hostname' <<<"$node")
   IP=$(jq -r '.ip' <<<"$node")
   ROLE=$(jq -r '.role' <<<"$node")
+  NODE_LABELS=$(jq -c '.nodeLabels // {}' <<<"$node")
 
   NODE_DIR="$OUTPUT_DIR/$HOST"
   mkdir -p "$NODE_DIR"
@@ -135,6 +136,11 @@ yq -o=json '.nodes[]' "$NODES_FILE" | jq -c '.' | while read -r node; do
     --config-patch "$NETWORK_PATCH"
     --config-patch "$INSTALL_PATCH"
   )
+
+  if [[ "$NODE_LABELS" != "{}" ]]; then
+    NODE_LABEL_PATCH=$(jq -cn --argjson labels "$NODE_LABELS" '{machine: {nodeLabels: $labels}}')
+    PATCH_ARGS+=(--config-patch "$NODE_LABEL_PATCH")
+  fi
 
   # Keep Longhorn user volume on workers by default; opt-in on controlplane for debugging.
   if [[ "$ROLE" == "worker" || "$APPLY_DISK_PATCH_TO_CP" == "true" ]]; then

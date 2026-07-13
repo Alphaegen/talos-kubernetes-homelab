@@ -1,0 +1,34 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/refs/heads/main/argoproj.io/application_v1alpha1.json
+{{- if .Values.pi5FanControl.enabled }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ include "infra.appName" (dict "root" . "name" "pi5-fan-control") }}
+  labels:
+    cluster: {{ .Values.cluster.name | quote }}
+    app: pi5-fan-control
+  namespace: {{ .Values.cluster.namespace | quote }}
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+    app.kubernetes.io/part-of: infrastructure
+spec:
+  project: {{ include "infra.projectName" . }}
+  destination:
+    server: {{ .Values.cluster.url | default "https://kubernetes.default.svc" | quote }}
+    namespace: {{ .Values.pi5FanControl.namespace | default "pi5-fan-control" | quote }}
+  syncPolicy:
+    {{- if .Values.sync }}
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: false
+    {{- end }}
+    syncOptions:
+      - CreateNamespace=false
+  source:
+    repoURL: {{ .Values.cluster.repoURL | quote }}
+    targetRevision: {{ .Values.cluster.revision | default "main" | quote }}
+    path: gitops/infra-custom/pi5-fan-control
+{{- end }}

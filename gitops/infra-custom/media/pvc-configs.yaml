@@ -48,6 +48,8 @@ spec:
   resources: { requests: { storage: 2Gi } }
   storageClassName: longhorn
 ---
+# Profilarr v1 data is not compatible with v2. Keep this restored claim intact
+# as a rollback/data reference while v2 uses a clean claim below.
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -56,6 +58,18 @@ metadata:
 spec:
   accessModes: [ReadWriteOnce]
   volumeName: restore-pvc-8f2644c7-2a66-4976-a787-190404ed68da
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: longhorn
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: profilarr-v2-config
+  namespace: media
+spec:
+  accessModes: [ReadWriteOnce]
   resources:
     requests:
       storage: 5Gi

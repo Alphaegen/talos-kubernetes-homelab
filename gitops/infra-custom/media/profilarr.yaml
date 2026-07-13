@@ -16,26 +16,91 @@ spec:
       labels:
         app: profilarr
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: profilarr
-          image: santiagosayshey/profilarr:v1.1.5
+          image: ghcr.io/dictionarry-hub/profilarr:2.0.9
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
           ports:
             - name: http
               containerPort: 6868
           env:
+            - name: PUID
+              value: "1000"
+            - name: PGID
+              value: "1000"
+            - name: UMASK
+              value: "022"
             - name: TZ
               value: Europe/Amsterdam
+            - name: ORIGIN
+              value: https://profilarr.homelab.niekvlam.nl
+            - name: PARSER_HOST
+              value: 127.0.0.1
+            - name: PARSER_PORT
+              value: "5000"
+          startupProbe:
+            httpGet:
+              path: /api/v1/health
+              port: http
+            failureThreshold: 30
+            periodSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /api/v1/health
+              port: http
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /api/v1/health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 30
           volumeMounts:
             - name: config
               mountPath: /config
-            - name: appuser-home
-              mountPath: /home/appuser
+        - name: parser
+          image: ghcr.io/dictionarry-hub/profilarr-parser:2.0.9
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          ports:
+            - name: parser
+              containerPort: 5000
+          startupProbe:
+            httpGet:
+              path: /health
+              port: parser
+            failureThreshold: 30
+            periodSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: parser
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: parser
+            initialDelaySeconds: 30
+            periodSeconds: 30
       volumes:
         - name: config
           persistentVolumeClaim:
-            claimName: profilarr-config
-        - name: appuser-home
-          emptyDir: {}
+            claimName: profilarr-v2-config
 ---
 apiVersion: v1
 kind: Service

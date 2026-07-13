@@ -103,13 +103,14 @@ only for RP1 MMIO and must be removed with the workaround.
 
 `nodes.yaml` assigns `hardware.niekvlam.nl/pi5-fan: "true"` only to
 `rpi-w-2` (`192.168.3.103`). The DaemonSet also requires ARM64 and this explicit
-label, so it cannot schedule on the other nodes. Generate the Talos configs,
-inspect the canary diff, and apply only the canary configuration:
+label, so it cannot schedule on the other nodes. Generate the Talos configs and
+inspect the canary diff. Apply only the label to the live machine configuration
+so unrelated Talos settings are not replaced:
 
 ```bash
 ./generate.sh
-talosctl -n 192.168.3.103 apply-config \
-  --file output/rpi-w-2/machineconfig.yaml
+talosctl -n 192.168.3.103 patch machineconfig \
+  --patch '{"machine":{"nodeLabels":{"hardware.niekvlam.nl/pi5-fan":"true"}}}'
 ```
 
 Render the app-of-apps chart, commit the reviewed changes, and let ArgoCD
@@ -127,7 +128,7 @@ Monitor the canary temperature from Fish shell:
 ```fish
 while true
     set temp (talosctl -n 192.168.3.103 read /sys/class/thermal/thermal_zone0/temp 2>/dev/null)
-    echo (date "+%H:%M:%S")" - "(math --scale=1 "$temp / 1000")"C"
+    echo (date "+%H:%M:%S")" - "(math --scale=1 "$temp / 1000")"°C"
     sleep 2
 end
 ```
@@ -158,13 +159,14 @@ nodeLabels:
   hardware.niekvlam.nl/pi5-fan: "true"
 ```
 
-Regenerate, inspect, and apply only those three node configs:
+Regenerate and inspect the three node configs, then patch only the labels on the
+live machines:
 
 ```bash
 ./generate.sh
-talosctl -n 192.168.3.101 apply-config --file output/rpi-cp-1/machineconfig.yaml
-talosctl -n 192.168.3.102 apply-config --file output/rpi-w-1/machineconfig.yaml
-talosctl -n 192.168.3.104 apply-config --file output/rpi-w-3/machineconfig.yaml
+talosctl -n 192.168.3.101 patch machineconfig --patch '{"machine":{"nodeLabels":{"hardware.niekvlam.nl/pi5-fan":"true"}}}'
+talosctl -n 192.168.3.102 patch machineconfig --patch '{"machine":{"nodeLabels":{"hardware.niekvlam.nl/pi5-fan":"true"}}}'
+talosctl -n 192.168.3.104 patch machineconfig --patch '{"machine":{"nodeLabels":{"hardware.niekvlam.nl/pi5-fan":"true"}}}'
 ```
 
 The catch-all toleration allows the DaemonSet to run on the control-plane node
@@ -174,11 +176,13 @@ after it is explicitly labeled.
 
 Adjust the curve by editing the DaemonSet environment values and reviewing the
 Kustomize render. To disable the controller, set `pi5FanControl.enabled: false`
-and remove the opt-in `nodeLabels` entry from `nodes.yaml`. For immediate
-canary unscheduling while GitOps catches up:
+and remove the opt-in `nodeLabels` entry from `nodes.yaml`. Remove the persistent
+label from the live canary machine configuration; the Kubernetes label will then
+be reconciled away:
 
 ```bash
-kubectl label node rpi-w-2 hardware.niekvlam.nl/pi5-fan-
+talosctl -n 192.168.3.103 patch machineconfig \
+  --patch '{"machine":{"nodeLabels":{"hardware.niekvlam.nl/pi5-fan":null}}}'
 ```
 
 Graceful termination intentionally programs 100% before unmapping the BAR. An

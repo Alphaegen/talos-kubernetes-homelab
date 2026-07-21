@@ -122,7 +122,7 @@ display light is turned off during the sleep period. The display is not forced
 back on during the day.
 
 The controller runs when a relevant setting or measured temperature changes
-and at least every five minutes. `lovelace-airco-card.yaml` is a standard
-Lovelace card snippet containing both thermostats, automation toggles, targets,
-and sleep schedules. Paste it into a manual card on the storage-managed main
+and at least every five minutes. `lovelace-airco-card.yaml` is a standalone
+Lovelace card containing both thermostats, automation toggles, targets, and
+sleep schedules. Paste it into a Manual card on the storage-managed main
 dashboard.

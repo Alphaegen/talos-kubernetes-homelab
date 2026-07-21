@@ -1,7 +1,8 @@
-type: grid
+type: vertical-stack
 cards:
   - square: true
     type: grid
+    columns: 2
     cards:
       - type: thermostat
         entity: climate.airco_boven
@@ -25,174 +26,94 @@ cards:
             style: dropdown
           - type: climate-swing-horizontal-modes
             style: dropdown
+  - square: false
+    type: grid
     columns: 2
-
-  - type: tile
-    entity: input_boolean.airco_boven_automation
-    name: Automatisch boven
-    icon: mdi:robot
-    vertical: false
-    tap_action:
-      action: toggle
-    features_position: bottom
-    grid_options:
-      columns: 6
-      rows: auto
-
-  - type: tile
-    entity: input_boolean.airco_beneden_automation
-    name: Automatisch beneden
-    icon: mdi:robot
-    vertical: false
-    tap_action:
-      action: toggle
-    features_position: bottom
-    grid_options:
-      columns: 6
-      rows: auto
-
-  - type: tile
-    entity: switch.airco_boven_ionizer
-    name:
-      type: entity
-    vertical: false
-    tap_action:
-      action: toggle
-    features_position: bottom
-
-  - type: tile
-    grid_options:
-      rows: auto
-    entity: switch.airco_beneden_ionizer
-    name:
-      type: entity
-    show_entity_picture: false
-    hide_state: false
-    vertical: false
-    tap_action:
-      action: toggle
-    features_position: bottom
-
-  - type: gauge
-    entity: sensor.airco_boven_filter_remaining_life
-    grid_options:
-      columns: 6
-      rows: auto
-    needle: true
-    severity:
-      green: 30
-      yellow: 10
-      red: 0
-    name:
-      type: entity
-
-  - type: gauge
-    entity: sensor.airco_beneden_filter_remaining_life
-    grid_options:
-      columns: 6
-      rows: auto
-    needle: true
-    severity:
-      green: 30
-      yellow: 10
-      red: 0
-    name:
-      type: entity
-
-  - type: tile
-    entity: input_number.airco_day_limit
-    name: Overdag inschakelen vanaf
-    icon: mdi:thermometer-chevron-up
-    vertical: false
-    features:
-      - type: numeric-input
-        style: buttons
-    features_position: bottom
-    grid_options:
-      columns: 6
-      rows: auto
-
-  - type: tile
-    entity: input_number.airco_sleep_target
-    name: Slaaptemperatuur
-    icon: mdi:sleep
-    vertical: false
-    features:
-      - type: numeric-input
-        style: buttons
-    features_position: bottom
-    grid_options:
-      columns: 6
-      rows: auto
-
-  - type: tile
-    entity: input_datetime.airco_boven_sleep_start
-    name: Boven start slaapperiode
-    icon: mdi:weather-night
-    vertical: false
-    tap_action:
-      action: more-info
-    features_position: bottom
-    grid_options:
-      columns: 6
-      rows: auto
-
-  - type: tile
-    entity: input_datetime.airco_boven_sleep_end
-    name: Boven einde slaapperiode
-    icon: mdi:weather-sunset-up
-    vertical: false
-    tap_action:
-      action: more-info
-    features_position: bottom
-    grid_options:
-      columns: 6
-      rows: auto
-
-  - type: tile
-    entity: binary_sensor.airco_boven_slaapperiode
-    name: Slaapperiode boven actief
-    icon: mdi:sleep
-    vertical: false
-    tap_action:
-      action: more-info
-    features_position: bottom
-    grid_options:
-      columns: 12
-      rows: auto
-
-  - type: tile
-    entity: input_datetime.airco_beneden_sleep_start
-    name: Beneden start slaapperiode
-    icon: mdi:weather-night
-    vertical: false
-    tap_action:
-      action: more-info
-    features_position: bottom
-    grid_options:
-      columns: 6
-      rows: auto
-
-  - type: tile
-    entity: input_datetime.airco_beneden_sleep_end
-    name: Beneden einde slaapperiode
-    icon: mdi:weather-sunset-up
-    vertical: false
-    tap_action:
-      action: more-info
-    features_position: bottom
-    grid_options:
-      columns: 6
-      rows: auto
-
-  - type: tile
-    entity: binary_sensor.airco_beneden_slaapperiode
-    name: Slaapperiode beneden actief
-    icon: mdi:sleep
-    vertical: false
-    tap_action:
-      action: more-info
-    features_position: bottom
-    grid_options:
-      columns: 12
-      rows: auto
+    cards:
+      - type: tile
+        entity: input_boolean.airco_boven_automation
+        name: Automatisch boven
+        icon: mdi:robot
+        vertical: false
+        tap_action:
+          action: toggle
+        features_position: bottom
+      - type: tile
+        entity: input_boolean.airco_beneden_automation
+        name: Automatisch beneden
+        icon: mdi:robot
+        vertical: false
+        tap_action:
+          action: toggle
+        features_position: bottom
+  - square: false
+    type: grid
+    columns: 2
+    cards:
+      - type: tile
+        entity: switch.airco_boven_ionizer
+        name:
+          type: entity
+        vertical: false
+        tap_action:
+          action: toggle
+        features_position: bottom
+      - type: tile
+        entity: switch.airco_beneden_ionizer
+        name:
+          type: entity
+        show_entity_picture: false
+        hide_state: false
+        vertical: false
+        tap_action:
+          action: toggle
+        features_position: bottom
+  - square: false
+    type: grid
+    columns: 2
+    cards:
+      - type: gauge
+        entity: sensor.airco_boven_filter_remaining_life
+        needle: true
+        severity:
+          green: 30
+          yellow: 10
+          red: 0
+        name:
+          type: entity
+      - type: gauge
+        entity: sensor.airco_beneden_filter_remaining_life
+        needle: true
+        severity:
+          green: 30
+          yellow: 10
+          red: 0
+        name:
+          type: entity
+  - type: entities
+    title: Airco automatisering
+    show_header_toggle: false
+    entities:
+      - entity: input_number.airco_day_limit
+        name: Inschakelen vanaf
+      - entity: input_number.airco_sleep_target
+        name: Slaaptemperatuur
+      - type: section
+        label: Boven
+      - entity: input_datetime.airco_boven_sleep_start
+        name: Start slaapperiode
+      - entity: input_datetime.airco_boven_sleep_end
+        name: Einde slaapperiode
+      - entity: binary_sensor.airco_boven_slaapperiode
+        name: Slaapperiode actief
+      - type: section
+        label: Beneden
+      - entity: input_datetime.airco_beneden_sleep_start
+        name: Start slaapperiode
+      - entity: input_datetime.airco_beneden_sleep_end
+        name: Einde slaapperiode
+      - entity: binary_sensor.airco_beneden_slaapperiode
+        name: Slaapperiode actief
+grid_options:
+  columns: 12
+  rows: auto

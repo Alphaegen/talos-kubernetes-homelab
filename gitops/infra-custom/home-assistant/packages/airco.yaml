@@ -1,0 +1,317 @@
+input_boolean:
+  airco_beneden_automation:
+    name: Airco beneden automatisch
+    icon: mdi:air-conditioner
+
+  airco_boven_automation:
+    name: Airco boven automatisch
+    icon: mdi:air-conditioner
+
+  airco_defaults_initialized:
+    name: Airco standaardwaarden ingesteld
+    icon: mdi:cog-check-outline
+
+input_number:
+  airco_day_limit:
+    name: Airco daglimiet
+    min: 20
+    max: 28
+    step: 1
+    unit_of_measurement: "°C"
+    icon: mdi:thermometer-chevron-up
+    mode: slider
+
+  airco_sleep_target:
+    name: Airco slaaptemperatuur
+    min: 16
+    max: 22
+    step: 1
+    unit_of_measurement: "°C"
+    icon: mdi:sleep
+    mode: slider
+
+input_datetime:
+  airco_beneden_sleep_start:
+    name: Airco beneden slaaptijd start
+    has_date: false
+    has_time: true
+    icon: mdi:weather-night
+
+  airco_beneden_sleep_end:
+    name: Airco beneden slaaptijd einde
+    has_date: false
+    has_time: true
+    icon: mdi:weather-sunset-up
+
+  airco_boven_sleep_start:
+    name: Airco boven slaaptijd start
+    has_date: false
+    has_time: true
+    icon: mdi:weather-night
+
+  airco_boven_sleep_end:
+    name: Airco boven slaaptijd einde
+    has_date: false
+    has_time: true
+    icon: mdi:weather-sunset-up
+
+template:
+  - binary_sensor:
+      - name: Airco beneden slaapperiode
+        unique_id: airco_beneden_sleep_period
+        icon: mdi:sleep
+        state: >-
+          {% set start = states('input_datetime.airco_beneden_sleep_start') %}
+          {% set end = states('input_datetime.airco_beneden_sleep_end') %}
+          {% set current = now().strftime('%H:%M:%S') %}
+          {% if start in ['unknown', 'unavailable'] or end in ['unknown', 'unavailable'] %}
+            false
+          {% elif start < end %}
+            {{ start <= current < end }}
+          {% elif start > end %}
+            {{ current >= start or current < end }}
+          {% else %}
+            false
+          {% endif %}
+
+      - name: Airco boven slaapperiode
+        unique_id: airco_boven_sleep_period
+        icon: mdi:sleep
+        state: >-
+          {% set start = states('input_datetime.airco_boven_sleep_start') %}
+          {% set end = states('input_datetime.airco_boven_sleep_end') %}
+          {% set current = now().strftime('%H:%M:%S') %}
+          {% if start in ['unknown', 'unavailable'] or end in ['unknown', 'unavailable'] %}
+            false
+          {% elif start < end %}
+            {{ start <= current < end }}
+          {% elif start > end %}
+            {{ current >= start or current < end }}
+          {% else %}
+            false
+          {% endif %}
+
+script:
+  airco_reconcile_room:
+    alias: Airco - Regel een kamer
+    description: >-
+      Reconciles one LG air conditioner with the configured day limit, sleep
+      target, schedule, and quiet fan policy.
+    mode: parallel
+    max: 4
+    fields:
+      climate_entity:
+        name: Climate entity
+        required: true
+      automation_entity:
+        name: Automation toggle
+        required: true
+      sleep_period_entity:
+        name: Sleep period sensor
+        required: true
+      display_entity:
+        name: Display light switch
+        required: true
+      jet_entity:
+        name: Jet mode switch
+        required: true
+    sequence:
+      - condition: template
+        value_template: "{{ is_state(automation_entity, 'on') }}"
+
+      - condition: template
+        value_template: >-
+          {{
+            states(climate_entity) not in ['unknown', 'unavailable']
+            and state_attr(climate_entity, 'current_temperature') is not none
+          }}
+
+      - variables:
+          current_temperature: >-
+            {{ state_attr(climate_entity, 'current_temperature') | float }}
+          sleep_period: "{{ is_state(sleep_period_entity, 'on') }}"
+          day_limit: "{{ states('input_number.airco_day_limit') | float(24) }}"
+          sleep_target: "{{ states('input_number.airco_sleep_target') | float(18) }}"
+          setpoint: >-
+            {% if sleep_period | bool %}
+              {{ sleep_target | float }}
+            {% else %}
+              {{ (day_limit | float) - 1 }}
+            {% endif %}
+          should_cool: >-
+            {% if sleep_period | bool %}
+              {{ (current_temperature | float) >= (sleep_target | float) }}
+            {% else %}
+              {{ (current_temperature | float) >= (day_limit | float) }}
+            {% endif %}
+          desired_fan_mode: >-
+            {% if (current_temperature | float) > ((setpoint | float) + 1) %}
+              high
+            {% else %}
+              low
+            {% endif %}
+
+      # Jet mode overrides the predictable high/low fan policy and is much
+      # louder, so managed rooms always leave it disabled.
+      - if:
+          - condition: template
+            value_template: "{{ is_state(jet_entity, 'on') }}"
+        then:
+          - action: switch.turn_off
+            target:
+              entity_id: "{{ jet_entity }}"
+            continue_on_error: true
+
+      # Do not illuminate the indoor unit during the configured sleep period.
+      # Daytime never turns the display back on, preserving the user's choice.
+      - if:
+          - condition: template
+            value_template: >-
+              {{ sleep_period | bool and not is_state(display_entity, 'off') }}
+        then:
+          - action: switch.turn_off
+            target:
+              entity_id: "{{ display_entity }}"
+            continue_on_error: true
+
+      - choose:
+          - conditions:
+              - condition: template
+                value_template: "{{ should_cool | bool }}"
+            sequence:
+              - if:
+                  - condition: template
+                    value_template: "{{ not is_state(climate_entity, 'cool') }}"
+                then:
+                  - action: climate.set_hvac_mode
+                    target:
+                      entity_id: "{{ climate_entity }}"
+                    data:
+                      hvac_mode: cool
+
+              - if:
+                  - condition: template
+                    value_template: >-
+                      {{
+                        (state_attr(climate_entity, 'temperature') | float(-99))
+                        != (setpoint | float)
+                      }}
+                then:
+                  - action: climate.set_temperature
+                    target:
+                      entity_id: "{{ climate_entity }}"
+                    data:
+                      temperature: "{{ setpoint | float }}"
+
+              - if:
+                  - condition: template
+                    value_template: >-
+                      {{ state_attr(climate_entity, 'fan_mode') != desired_fan_mode }}
+                then:
+                  - action: climate.set_fan_mode
+                    target:
+                      entity_id: "{{ climate_entity }}"
+                    data:
+                      fan_mode: "{{ desired_fan_mode }}"
+        default:
+          - if:
+              - condition: template
+                value_template: "{{ not is_state(climate_entity, 'off') }}"
+            then:
+              - action: climate.turn_off
+                target:
+                  entity_id: "{{ climate_entity }}"
+
+automation:
+  - alias: Airco - Initialiseer standaardwaarden
+    id: airco_initialize_defaults
+    mode: single
+    triggers:
+      - trigger: homeassistant
+        event: start
+    conditions:
+      - condition: state
+        entity_id: input_boolean.airco_defaults_initialized
+        state: "off"
+    actions:
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.airco_day_limit
+        data:
+          value: 24
+
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.airco_sleep_target
+        data:
+          value: 18
+
+      - action: input_datetime.set_datetime
+        target:
+          entity_id:
+            - input_datetime.airco_beneden_sleep_start
+            - input_datetime.airco_boven_sleep_start
+        data:
+          time: "22:00:00"
+
+      - action: input_datetime.set_datetime
+        target:
+          entity_id:
+            - input_datetime.airco_beneden_sleep_end
+            - input_datetime.airco_boven_sleep_end
+        data:
+          time: "07:00:00"
+
+      - action: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.airco_defaults_initialized
+
+  - alias: Airco - Regel beide kamers
+    id: airco_reconcile_both_rooms
+    mode: restart
+    triggers:
+      - trigger: homeassistant
+        event: start
+      - trigger: time_pattern
+        minutes: "/5"
+      - trigger: state
+        entity_id:
+          - input_boolean.airco_beneden_automation
+          - input_boolean.airco_boven_automation
+          - input_number.airco_day_limit
+          - input_number.airco_sleep_target
+          - input_datetime.airco_beneden_sleep_start
+          - input_datetime.airco_beneden_sleep_end
+          - input_datetime.airco_boven_sleep_start
+          - input_datetime.airco_boven_sleep_end
+          - binary_sensor.airco_beneden_slaapperiode
+          - binary_sensor.airco_boven_slaapperiode
+      - trigger: state
+        entity_id: climate.airco_beneden
+        attribute: current_temperature
+      - trigger: state
+        entity_id: climate.airco_boven
+        attribute: current_temperature
+    actions:
+      # Give integrations time to restore their entities after a HA restart.
+      - if:
+          - condition: template
+            value_template: "{{ trigger.platform == 'homeassistant' }}"
+        then:
+          - delay: "00:00:20"
+
+      - action: script.airco_reconcile_room
+        data:
+          climate_entity: climate.airco_beneden
+          automation_entity: input_boolean.airco_beneden_automation
+          sleep_period_entity: binary_sensor.airco_beneden_slaapperiode
+          display_entity: switch.airco_beneden_display_light
+          jet_entity: switch.airco_beneden_jet_mode
+
+      - action: script.airco_reconcile_room
+        data:
+          climate_entity: climate.airco_boven
+          automation_entity: input_boolean.airco_boven_automation
+          sleep_period_entity: binary_sensor.airco_boven_slaapperiode
+          display_entity: switch.airco_boven_display_light
+          jet_entity: switch.airco_boven_jet_mode

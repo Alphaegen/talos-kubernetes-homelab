@@ -2,13 +2,14 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: home-assistant
 configMapGenerator:
-  - name: home-assistant-rainbird-package
+  - name: home-assistant-packages
     files:
       - rainbird.yaml=packages/rainbird.yaml
+      - airco.yaml=packages/airco.yaml
 generatorOptions:
   disableNameSuffixHash: true
   annotations:
     argocd.argoproj.io/sync-wave: "-1"
   labels:
     app.kubernetes.io/name: home-assistant
-    app.kubernetes.io/component: rainbird-package
+    app.kubernetes.io/component: packages

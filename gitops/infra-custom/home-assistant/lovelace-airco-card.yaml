@@ -1,0 +1,41 @@
+type: vertical-stack
+cards:
+  - type: horizontal-stack
+    cards:
+      - type: thermostat
+        entity: climate.airco_beneden
+        name: Beneden
+      - type: thermostat
+        entity: climate.airco_boven
+        name: Boven
+
+  - type: entities
+    title: Airco automatisering
+    show_header_toggle: false
+    entities:
+      - entity: input_boolean.airco_beneden_automation
+        name: Beneden automatisch
+      - entity: input_boolean.airco_boven_automation
+        name: Boven automatisch
+      - entity: input_number.airco_day_limit
+        name: Overdag inschakelen vanaf
+      - entity: input_number.airco_sleep_target
+        name: Slaaptemperatuur
+
+  - type: entities
+    title: Slaaptijden
+    show_header_toggle: false
+    entities:
+      - entity: input_datetime.airco_beneden_sleep_start
+        name: Beneden start
+      - entity: input_datetime.airco_beneden_sleep_end
+        name: Beneden einde
+      - entity: binary_sensor.airco_beneden_slaapperiode
+        name: Beneden actief
+      - type: divider
+      - entity: input_datetime.airco_boven_sleep_start
+        name: Boven start
+      - entity: input_datetime.airco_boven_sleep_end
+        name: Boven einde
+      - entity: binary_sensor.airco_boven_slaapperiode
+        name: Boven actief

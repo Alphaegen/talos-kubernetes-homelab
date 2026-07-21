@@ -5,9 +5,9 @@ This directory contains Kubernetes manifests that are applied into the
 
 ## RainBird Irrigation
 
-`packages/rainbird.yaml` is rendered into the
-`home-assistant-rainbird-package` ConfigMap and mounted at
-`/config/packages/rainbird.yaml`.
+`packages/rainbird.yaml` and `packages/airco.yaml` are rendered into the
+`home-assistant-packages` ConfigMap and mounted read-only under
+`/config/packages`.
 
 The package creates manual run controls, confirmed-start status helpers, a
 shared countdown timer, and a simple sequential watering program:
@@ -89,3 +89,40 @@ Use these snippets on the RainBird page in the main Home Assistant dashboard:
 `vertical-stack` for quick full-page replacement. The main dashboard itself is
 managed in Home Assistant storage, so these files are the source-of-truth
 snippets to paste into that page when the RainBird controls change.
+
+## Air Conditioning
+
+`packages/airco.yaml` manages the two LG air conditioners exposed by the
+SmartThinQ integration:
+
+- `climate.airco_beneden`
+- `climate.airco_boven`
+
+The package is opt-in per room. After deployment, review the targets and sleep
+times, then enable `input_boolean.airco_beneden_automation` and/or
+`input_boolean.airco_boven_automation`. While a room's toggle is off, the
+package does not change that air conditioner, so manual control remains
+available.
+
+The first Home Assistant start after installing the package initializes a 24
+°C daytime limit, an 18 °C sleep target, and a 22:00-07:00 sleep period for
+both rooms. These helpers restore their last value on subsequent restarts, so
+changes made from the dashboard survive a Home Assistant pod replacement. If
+the Home Assistant PVC is replaced, Git recreates these helper definitions and
+defaults, but UI-managed integration credentials and dashboard storage still
+need to be restored from a Home Assistant backup (or configured again).
+
+During the day, a managed unit starts cooling at the configured day limit. Its
+setpoint is one degree below the limit, and it turns fully off below the limit.
+During the sleep period, it cools at the configured sleep target and turns off
+only if the room is already colder than the target. Fan speed is `high` while
+the room is more than 1 °C above the active setpoint and `low` when it is close
+to the target. Jet mode is disabled whenever automation is enabled, and the
+display light is turned off during the sleep period. The display is not forced
+back on during the day.
+
+The controller runs when a relevant setting or measured temperature changes
+and at least every five minutes. `lovelace-airco-card.yaml` is a standard
+Lovelace card snippet containing both thermostats, automation toggles, targets,
+and sleep schedules. Paste it into a manual card on the storage-managed main
+dashboard.

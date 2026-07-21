@@ -145,13 +145,13 @@ spec:
               release: {{ .Values.homeassistant.serviceMonitor.release | default "prometheus" | quote }}
 
           additionalVolumes:
-            - name: rainbird-packages
+            - name: home-assistant-packages
               configMap:
-                name: home-assistant-rainbird-package
+                name: home-assistant-packages
 
           additionalMounts:
             - mountPath: /config/packages
-              name: rainbird-packages
+              name: home-assistant-packages
               readOnly: true
 
           # USB passthrough example (e.g., Zigbee stick). Requires privileged:

@@ -106,8 +106,9 @@ available.
 
 The first Home Assistant start after installing the package initializes a 24
 °C daytime limit, an 18 °C sleep target, and a 22:00-07:00 sleep period for
-both rooms. These helpers restore their last value on subsequent restarts, so
-changes made from the dashboard survive a Home Assistant pod replacement. If
+each room. The targets and sleep periods can be adjusted independently for
+upstairs and downstairs. These helpers restore their last value on subsequent
+restarts, so changes made from the dashboard survive a Home Assistant pod replacement. If
 the Home Assistant PVC is replaced, Git recreates these helper definitions and
 defaults, but UI-managed integration credentials and dashboard storage still
 need to be restored from a Home Assistant backup (or configured again).

@@ -31,26 +31,6 @@ cards:
     columns: 2
     cards:
       - type: tile
-        entity: input_boolean.airco_boven_automation
-        name: Automatisch boven
-        icon: mdi:robot
-        vertical: false
-        tap_action:
-          action: toggle
-        features_position: bottom
-      - type: tile
-        entity: input_boolean.airco_beneden_automation
-        name: Automatisch beneden
-        icon: mdi:robot
-        vertical: false
-        tap_action:
-          action: toggle
-        features_position: bottom
-  - square: false
-    type: grid
-    columns: 2
-    cards:
-      - type: tile
         entity: switch.airco_boven_ionizer
         name:
           type: entity
@@ -90,30 +70,88 @@ cards:
           red: 0
         name:
           type: entity
-  - type: entities
-    title: Airco automatisering
-    show_header_toggle: false
-    entities:
-      - entity: input_number.airco_day_limit
-        name: Inschakelen vanaf
-      - entity: input_number.airco_sleep_target
-        name: Slaaptemperatuur
-      - type: section
-        label: Boven
-      - entity: input_datetime.airco_boven_sleep_start
-        name: Start slaapperiode
-      - entity: input_datetime.airco_boven_sleep_end
-        name: Einde slaapperiode
-      - entity: binary_sensor.airco_boven_slaapperiode
-        name: Slaapperiode actief
-      - type: section
-        label: Beneden
-      - entity: input_datetime.airco_beneden_sleep_start
-        name: Start slaapperiode
-      - entity: input_datetime.airco_beneden_sleep_end
-        name: Einde slaapperiode
-      - entity: binary_sensor.airco_beneden_slaapperiode
-        name: Slaapperiode actief
+  - type: heading
+    heading: Automatisering
+    heading_style: subtitle
+    icon: mdi:robot
+  - square: false
+    type: grid
+    columns: 2
+    cards:
+      - type: tile
+        entity: input_boolean.airco_boven_automation
+        name: Automatisch
+        vertical: false
+        tap_action:
+          action: toggle
+        features_position: bottom
+      - type: tile
+        entity: input_boolean.airco_beneden_automation
+        name: Automatisch
+        vertical: false
+        tap_action:
+          action: toggle
+        features_position: bottom
+  - square: false
+    type: grid
+    columns: 2
+    cards:
+      - type: vertical-stack
+        cards:
+          - type: button
+            entity: input_number.airco_boven_day_limit
+            name: Dag temperatuur
+            show_icon: false
+            show_state: true
+            tap_action:
+              action: more-info
+          - type: button
+            entity: input_number.airco_boven_sleep_target
+            name: Nacht temperatuur
+            show_icon: false
+            show_state: true
+            tap_action:
+              action: more-info
+          - type: tile
+            entity: input_datetime.airco_boven_sleep_start
+            name: Begin nacht
+            vertical: true
+            tap_action:
+              action: more-info
+          - type: tile
+            entity: input_datetime.airco_boven_sleep_end
+            name: Einde nacht
+            vertical: true
+            tap_action:
+              action: more-info
+      - type: vertical-stack
+        cards:
+          - type: button
+            entity: input_number.airco_beneden_day_limit
+            name: Dag temperatuur
+            show_icon: false
+            show_state: true
+            tap_action:
+              action: more-info
+          - type: button
+            entity: input_number.airco_beneden_sleep_target
+            name: Nacht temperatuur
+            show_icon: false
+            show_state: true
+            tap_action:
+              action: more-info
+          - type: tile
+            entity: input_datetime.airco_beneden_sleep_start
+            name: Begin nacht
+            vertical: true
+            tap_action:
+              action: more-info
+          - type: tile
+            entity: input_datetime.airco_beneden_sleep_end
+            name: Einde nacht
+            vertical: true
+            tap_action:
+              action: more-info
 grid_options:
   columns: 12
   rows: auto

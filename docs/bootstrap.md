@@ -101,7 +101,7 @@ kustomize build --enable-helm gitops/argocd
 Apply the reviewed output:
 
 ```bash
-kustomize build --enable-helm gitops/argocd | kubectl apply -f -
+kustomize build --enable-helm gitops/argocd | kubectl apply --server-side -f -
 ```
 
 The repository credential can then be supplied through the External Secrets integration. The External Secrets 1Password service-account token is introduced with:

@@ -1,6 +1,6 @@
 # Cilium Operations
 
-## Enable Gateway API (Cilium 1.19.4)
+## Enable Gateway API
 
 This repo now includes a helper script to enable Cilium Gateway API support and create a shared Gateway used by app `HTTPRoute` resources.
 

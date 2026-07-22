@@ -125,6 +125,12 @@ The controller runs when a relevant setting or measured temperature changes
 and at least every five minutes. When a unit is switched to cooling, the
 controller waits for the `cool` state and then gives the LG unit five seconds
 to become ready before sending its temperature and fan settings.
+
+When either air conditioner's remaining filter life drops below 10%, Home
+Assistant sends a notification to every registered mobile: `alpha-mobile`,
+`M.J.Vlam iPhone`, and `Wil Mobiel`. Each unit has its own notification tag, so
+alerts for the upstairs and downstairs filters do not replace each other.
+
 `lovelace-airco-card.yaml` is a standalone Lovelace card containing both
 thermostats, automation toggles, targets, and sleep schedules. Paste it into a
 Manual card on the storage-managed main dashboard.

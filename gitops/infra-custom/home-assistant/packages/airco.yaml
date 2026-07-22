@@ -137,9 +137,6 @@ script:
       sleep_target_entity:
         name: Sleep target helper
         required: true
-      jet_entity:
-        name: Jet mode switch
-        required: true
     sequence:
       - condition: template
         value_template: "{{ is_state(automation_entity, 'on') }}"
@@ -175,17 +172,6 @@ script:
             {% else %}
               low
             {% endif %}
-
-      # Jet mode overrides the predictable high/low fan policy and is much
-      # louder, so managed rooms always leave it disabled.
-      - if:
-          - condition: template
-            value_template: "{{ is_state(jet_entity, 'on') }}"
-        then:
-          - action: switch.turn_off
-            target:
-              entity_id: "{{ jet_entity }}"
-            continue_on_error: true
 
       - choose:
           - conditions:
@@ -341,7 +327,6 @@ automation:
           sleep_period_entity: binary_sensor.airco_beneden_slaapperiode
           day_limit_entity: input_number.airco_beneden_day_limit
           sleep_target_entity: input_number.airco_beneden_sleep_target
-          jet_entity: switch.airco_beneden_jet_mode
 
       - action: script.airco_reconcile_room
         data:
@@ -350,4 +335,3 @@ automation:
           sleep_period_entity: binary_sensor.airco_boven_slaapperiode
           day_limit_entity: input_number.airco_boven_day_limit
           sleep_target_entity: input_number.airco_boven_sleep_target
-          jet_entity: switch.airco_boven_jet_mode

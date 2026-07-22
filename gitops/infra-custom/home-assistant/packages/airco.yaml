@@ -359,8 +359,6 @@ automation:
         {{ 'Airco boven'
            if trigger.entity_id == 'sensor.airco_boven_filter_remaining_life'
            else 'Airco beneden' }}
-      notification_tag: >-
-        airco-filter-{{ trigger.entity_id.split('.')[1] }}
     actions:
       - action: notify.send_message
         target:
@@ -374,5 +372,3 @@ automation:
             {{ airco_name }} heeft nog
             {{ trigger.to_state.state | float(0) | round(0) | int }}%
             filterlevensduur. Maak het filter schoon of vervang het.
-          data:
-            tag: "{{ notification_tag }}"

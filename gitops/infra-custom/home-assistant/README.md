@@ -128,8 +128,8 @@ to become ready before sending its temperature and fan settings.
 
 When either air conditioner's remaining filter life drops below 10%, Home
 Assistant sends a notification to every registered mobile: `alpha-mobile`,
-`M.J.Vlam iPhone`, and `Wil Mobiel`. Each unit has its own notification tag, so
-alerts for the upstairs and downstairs filters do not replace each other.
+`M.J.Vlam iPhone`, and `Wil Mobiel`. The notification identifies whether the
+upstairs or downstairs filter needs attention.
 
 `lovelace-airco-card.yaml` is a standalone Lovelace card containing both
 thermostats, automation toggles, targets, and sleep schedules. Paste it into a

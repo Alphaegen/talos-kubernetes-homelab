@@ -188,6 +188,14 @@ script:
                     data:
                       hvac_mode: cool
 
+                  # LG ThinQ can report the new HVAC mode before the indoor
+                  # unit is ready to accept temperature and fan commands.
+                  - wait_template: "{{ is_state(climate_entity, 'cool') }}"
+                    timeout: "00:00:20"
+                    continue_on_timeout: false
+
+                  - delay: "00:00:05"
+
               - if:
                   - condition: template
                     value_template: >-

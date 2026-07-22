@@ -122,7 +122,9 @@ to the target. Jet mode and the display-light setting are left entirely under
 manual control.
 
 The controller runs when a relevant setting or measured temperature changes
-and at least every five minutes. `lovelace-airco-card.yaml` is a standalone
-Lovelace card containing both thermostats, automation toggles, targets, and
-sleep schedules. Paste it into a Manual card on the storage-managed main
-dashboard.
+and at least every five minutes. When a unit is switched to cooling, the
+controller waits for the `cool` state and then gives the LG unit five seconds
+to become ready before sending its temperature and fan settings.
+`lovelace-airco-card.yaml` is a standalone Lovelace card containing both
+thermostats, automation toggles, targets, and sleep schedules. Paste it into a
+Manual card on the storage-managed main dashboard.

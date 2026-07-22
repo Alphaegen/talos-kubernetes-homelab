@@ -371,4 +371,4 @@ automation:
           message: >-
             {{ airco_name }} heeft nog
             {{ trigger.to_state.state | float(0) | round(0) | int }}%
-            filterlevensduur. Maak het filter schoon of vervang het.
+            filterlevensduur. Maak het filter schoon.

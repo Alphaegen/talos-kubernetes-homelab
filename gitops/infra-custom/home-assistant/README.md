@@ -119,8 +119,7 @@ During the sleep period, it cools at the configured sleep target and turns off
 only if the room is already colder than the target. Fan speed is `high` while
 the room is more than 1 °C above the active setpoint and `low` when it is close
 to the target. Jet mode is disabled whenever automation is enabled, and the
-display light is turned off during the sleep period. The display is not forced
-back on during the day.
+display-light setting is left entirely under manual control.
 
 The controller runs when a relevant setting or measured temperature changes
 and at least every five minutes. `lovelace-airco-card.yaml` is a standalone

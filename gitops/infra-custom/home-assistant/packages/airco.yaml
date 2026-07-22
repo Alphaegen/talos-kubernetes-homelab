@@ -137,9 +137,6 @@ script:
       sleep_target_entity:
         name: Sleep target helper
         required: true
-      display_entity:
-        name: Display light switch
-        required: true
       jet_entity:
         name: Jet mode switch
         required: true
@@ -188,18 +185,6 @@ script:
           - action: switch.turn_off
             target:
               entity_id: "{{ jet_entity }}"
-            continue_on_error: true
-
-      # Do not illuminate the indoor unit during the configured sleep period.
-      # Daytime never turns the display back on, preserving the user's choice.
-      - if:
-          - condition: template
-            value_template: >-
-              {{ sleep_period | bool and not is_state(display_entity, 'off') }}
-        then:
-          - action: switch.turn_off
-            target:
-              entity_id: "{{ display_entity }}"
             continue_on_error: true
 
       - choose:
@@ -356,7 +341,6 @@ automation:
           sleep_period_entity: binary_sensor.airco_beneden_slaapperiode
           day_limit_entity: input_number.airco_beneden_day_limit
           sleep_target_entity: input_number.airco_beneden_sleep_target
-          display_entity: switch.airco_beneden_display_light
           jet_entity: switch.airco_beneden_jet_mode
 
       - action: script.airco_reconcile_room
@@ -366,5 +350,4 @@ automation:
           sleep_period_entity: binary_sensor.airco_boven_slaapperiode
           day_limit_entity: input_number.airco_boven_day_limit
           sleep_target_entity: input_number.airco_boven_sleep_target
-          display_entity: switch.airco_boven_display_light
           jet_entity: switch.airco_boven_jet_mode

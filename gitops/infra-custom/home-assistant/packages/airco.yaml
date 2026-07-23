@@ -15,15 +15,31 @@ input_boolean:
     name: Airco kamertemperaturen ingesteld
     icon: mdi:thermometer-check
 
-  airco_beneden_night_pull_down_complete:
-    name: Airco beneden nachtelijke afkoeling voltooid
+  airco_beneden_pull_down_complete:
+    name: Airco beneden afkoelfase voltooid
     icon: mdi:snowflake-check
 
-  airco_boven_night_pull_down_complete:
-    name: Airco boven nachtelijke afkoeling voltooid
+  airco_boven_pull_down_complete:
+    name: Airco boven afkoelfase voltooid
     icon: mdi:snowflake-check
 
 input_number:
+  airco_beneden_maintenance_fan_level:
+    name: Airco beneden onderhoudsventilatorniveau
+    min: 0
+    max: 4
+    step: 1
+    icon: mdi:fan-chevron-up
+    mode: box
+
+  airco_boven_maintenance_fan_level:
+    name: Airco boven onderhoudsventilatorniveau
+    min: 0
+    max: 4
+    step: 1
+    icon: mdi:fan-chevron-up
+    mode: box
+
   airco_boven_day_limit:
     name: Airco boven maximale dagtemperatuur
     min: 20
@@ -126,8 +142,7 @@ script:
     alias: Airco - Regel een kamer
     description: >-
       Reconciles one LG air conditioner with the configured maximum
-      temperatures, high-fan pull-down, low-fan maintenance, and quiet
-      nighttime policy.
+      temperatures, high-fan pull-down, and adaptive maintenance fan levels.
     mode: parallel
     max: 4
     fields:
@@ -146,26 +161,15 @@ script:
       sleep_target_entity:
         name: Night maximum helper
         required: true
-      night_pull_down_entity:
-        name: Night pull-down state helper
+      pull_down_entity:
+        name: Pull-down state helper
+        required: true
+      maintenance_fan_level_entity:
+        name: Maintenance fan level helper
         required: true
     sequence:
       - variables:
           sleep_period: "{{ is_state(sleep_period_entity, 'on') }}"
-
-      # The latch only applies to the active sleep period. Clear it during the
-      # day even while automatic climate control itself is disabled.
-      - if:
-          - condition: template
-            value_template: >-
-              {{
-                not (sleep_period | bool)
-                and is_state(night_pull_down_entity, 'on')
-              }}
-        then:
-          - action: input_boolean.turn_off
-            target:
-              entity_id: "{{ night_pull_down_entity }}"
 
       - condition: template
         value_template: "{{ is_state(automation_entity, 'on') }}"
@@ -182,8 +186,33 @@ script:
             {{ state_attr(climate_entity, 'current_temperature') | float }}
           currently_cooling: "{{ is_state(climate_entity, 'cool') }}"
           current_fan_mode: "{{ state_attr(climate_entity, 'fan_mode') }}"
-          night_pull_down_complete: >-
-            {{ is_state(night_pull_down_entity, 'on') }}
+          pull_down_complete: >-
+            {{ is_state(pull_down_entity, 'on') }}
+          supported_fan_modes: >-
+            {{ state_attr(climate_entity, 'fan_modes') | default([], true) }}
+          fan_mode_ladder: >-
+            {% set preferred_modes =
+              ['low', 'LOW_MID', 'medium', 'MID_HIGH', 'high'] %}
+            {% set ns = namespace(modes=[]) %}
+            {% for mode in preferred_modes %}
+              {% if mode in supported_fan_modes %}
+                {% set ns.modes = ns.modes + [mode] %}
+              {% endif %}
+            {% endfor %}
+            {% if ns.modes | count >= 2 %}
+              {{ ns.modes }}
+            {% else %}
+              {{ preferred_modes }}
+            {% endif %}
+          maximum_maintenance_fan_level: >-
+            {{ [((fan_mode_ladder | count) - 1), 0] | max }}
+          maintenance_fan_level: >-
+            {{
+              [
+                [states(maintenance_fan_level_entity) | int(0), 0] | max,
+                maximum_maintenance_fan_level | int(0)
+              ] | min
+            }}
           day_maximum: "{{ states(day_limit_entity) | float(24) }}"
           night_maximum: "{{ states(sleep_target_entity) | float(18) }}"
           setpoint: >-
@@ -198,7 +227,7 @@ script:
           should_cool: >-
             {% if sleep_period | bool %}
               {{
-                (night_pull_down_complete | bool)
+                (pull_down_complete | bool)
                 or (currently_cooling | bool)
                 or (current_temperature | float) >= (start_threshold | float)
               }}
@@ -207,11 +236,45 @@ script:
             {% else %}
               {{ (current_temperature | float) >= (start_threshold | float) }}
             {% endif %}
+          next_maintenance_fan_level: >-
+            {% set current_level = maintenance_fan_level | int(0) %}
+            {% set maximum_level = maximum_maintenance_fan_level | int(0) %}
+            {% if not (pull_down_complete | bool) %}
+              {{ current_level }}
+            {% elif sleep_period | bool %}
+              {% if (current_temperature | float) > ((setpoint | float) + 4) %}
+                {% set required_level = 4 %}
+              {% elif (current_temperature | float) > ((setpoint | float) + 3) %}
+                {% set required_level = 3 %}
+              {% elif (current_temperature | float) > ((setpoint | float) + 2) %}
+                {% set required_level = 2 %}
+              {% elif (current_temperature | float) > ((setpoint | float) + 1) %}
+                {% set required_level = 1 %}
+              {% else %}
+                {% set required_level = 0 %}
+              {% endif %}
+              {{
+                [
+                  [current_level, required_level] | max,
+                  maximum_level
+                ] | min
+              }}
+            {% elif current_fan_mode != 'high'
+                      and (current_temperature | float)
+                        > (high_fan_restart_threshold | float) %}
+              {{ [current_level + 1, maximum_level] | min }}
+            {% else %}
+              {{ current_level }}
+            {% endif %}
+          maintenance_fan_mode: >-
+            {{
+              fan_mode_ladder[
+                next_maintenance_fan_level | int(0)
+              ]
+            }}
           desired_fan_mode: >-
-            {% if sleep_period | bool %}
-              {% if night_pull_down_complete | bool %}
-                low
-              {% elif not (currently_cooling | bool) %}
+            {% if not (pull_down_complete | bool) %}
+              {% if not (currently_cooling | bool) %}
                 high
               {% elif (current_temperature | float) > (start_threshold | float) %}
                 high
@@ -219,21 +282,25 @@ script:
                         and (current_temperature | float) > (setpoint | float) %}
                 high
               {% else %}
-                low
+                {{ fan_mode_ladder[0] }}
               {% endif %}
+            {% elif sleep_period | bool %}
+              {{ maintenance_fan_mode }}
             {% elif not (currently_cooling | bool) %}
               high
-            {% elif current_fan_mode == 'high' %}
+            {% elif current_fan_mode == 'high'
+                      and (next_maintenance_fan_level | int(0))
+                        < (maximum_maintenance_fan_level | int(0)) %}
               {% if (current_temperature | float) > (setpoint | float) %}
                 high
               {% else %}
-                low
+                {{ maintenance_fan_mode }}
               {% endif %}
             {% elif (current_temperature | float)
                       > (high_fan_restart_threshold | float) %}
               high
             {% else %}
-              low
+              {{ maintenance_fan_mode }}
             {% endif %}
 
       - choose:
@@ -276,6 +343,20 @@ script:
               - if:
                   - condition: template
                     value_template: >-
+                      {{
+                        (maintenance_fan_level | int(0))
+                        != (next_maintenance_fan_level | int(0))
+                      }}
+                then:
+                  - action: input_number.set_value
+                    target:
+                      entity_id: "{{ maintenance_fan_level_entity }}"
+                    data:
+                      value: "{{ next_maintenance_fan_level | int(0) }}"
+
+              - if:
+                  - condition: template
+                    value_template: >-
                       {{ state_attr(climate_entity, 'fan_mode') != desired_fan_mode }}
                 then:
                   - action: climate.set_fan_mode
@@ -284,20 +365,19 @@ script:
                     data:
                       fan_mode: "{{ desired_fan_mode }}"
 
-              # Once the initial nighttime pull-down reaches its maximum
-              # temperature, low fan is locked until the sleep period ends.
+              # After the initial pull-down reaches the active maximum, the
+              # controller enters maintenance mode for the rest of this period.
               - if:
                   - condition: template
                     value_template: >-
                       {{
-                        sleep_period | bool
-                        and not (night_pull_down_complete | bool)
-                        and desired_fan_mode == 'low'
+                        not (pull_down_complete | bool)
+                        and desired_fan_mode != 'high'
                       }}
                 then:
                   - action: input_boolean.turn_on
                     target:
-                      entity_id: "{{ night_pull_down_entity }}"
+                      entity_id: "{{ pull_down_entity }}"
         default:
           - if:
               - condition: template
@@ -372,12 +452,18 @@ automation:
 
   - alias: Airco - Regel beide kamers
     id: airco_reconcile_both_rooms
-    mode: restart
+    # Queue schedule transitions so simultaneous upstairs/downstairs changes
+    # cannot interrupt one room between resetting its two controller helpers.
+    mode: queued
+    max: 10
+    max_exceeded: silent
     triggers:
       - trigger: homeassistant
         event: start
+        id: startup
       - trigger: time_pattern
         minutes: "/5"
+        id: periodic
       - trigger: state
         entity_id:
           - input_boolean.airco_beneden_automation
@@ -390,21 +476,73 @@ automation:
           - input_datetime.airco_beneden_sleep_end
           - input_datetime.airco_boven_sleep_start
           - input_datetime.airco_boven_sleep_end
+        id: settings_changed
+      - trigger: state
+        entity_id:
           - binary_sensor.airco_beneden_slaapperiode
           - binary_sensor.airco_boven_slaapperiode
+        from: "off"
+        to: "on"
+        id: sleep_period_started
+      - trigger: state
+        entity_id:
+          - binary_sensor.airco_beneden_slaapperiode
+          - binary_sensor.airco_boven_slaapperiode
+        from: "on"
+        to: "off"
+        id: day_period_started
       - trigger: state
         entity_id: climate.airco_beneden
         attribute: current_temperature
+        id: downstairs_temperature_changed
       - trigger: state
         entity_id: climate.airco_boven
         attribute: current_temperature
+        id: upstairs_temperature_changed
     actions:
       # Give integrations time to restore their entities after a HA restart.
       - if:
           - condition: template
-            value_template: "{{ trigger.platform == 'homeassistant' }}"
+            value_template: "{{ trigger.id == 'startup' }}"
         then:
           - delay: "00:00:20"
+
+      # Every day and sleep period starts by trying the quietest maintenance
+      # speed again. Levels only increase until the next schedule transition.
+      - if:
+          - condition: template
+            value_template: >-
+              {{
+                trigger.id in ['sleep_period_started', 'day_period_started']
+              }}
+        then:
+          - variables:
+              transition_maintenance_fan_level_entity: >-
+                {{
+                  'input_number.airco_boven_maintenance_fan_level'
+                  if trigger.entity_id
+                    == 'binary_sensor.airco_boven_slaapperiode'
+                  else
+                  'input_number.airco_beneden_maintenance_fan_level'
+                }}
+              transition_pull_down_entity: >-
+                {{
+                  'input_boolean.airco_boven_pull_down_complete'
+                  if trigger.entity_id
+                    == 'binary_sensor.airco_boven_slaapperiode'
+                  else
+                  'input_boolean.airco_beneden_pull_down_complete'
+                }}
+
+          - action: input_number.set_value
+            target:
+              entity_id: "{{ transition_maintenance_fan_level_entity }}"
+            data:
+              value: 0
+
+          - action: input_boolean.turn_off
+            target:
+              entity_id: "{{ transition_pull_down_entity }}"
 
       - action: script.airco_reconcile_room
         data:
@@ -413,7 +551,8 @@ automation:
           sleep_period_entity: binary_sensor.airco_beneden_slaapperiode
           day_limit_entity: input_number.airco_beneden_day_limit
           sleep_target_entity: input_number.airco_beneden_sleep_target
-          night_pull_down_entity: input_boolean.airco_beneden_night_pull_down_complete
+          pull_down_entity: input_boolean.airco_beneden_pull_down_complete
+          maintenance_fan_level_entity: input_number.airco_beneden_maintenance_fan_level
 
       - action: script.airco_reconcile_room
         data:
@@ -422,7 +561,8 @@ automation:
           sleep_period_entity: binary_sensor.airco_boven_slaapperiode
           day_limit_entity: input_number.airco_boven_day_limit
           sleep_target_entity: input_number.airco_boven_sleep_target
-          night_pull_down_entity: input_boolean.airco_boven_night_pull_down_complete
+          pull_down_entity: input_boolean.airco_boven_pull_down_complete
+          maintenance_fan_level_entity: input_number.airco_boven_maintenance_fan_level
 
   - alias: Airco - Waarschuw bij lage filterlevensduur
     id: airco_notify_low_filter_life

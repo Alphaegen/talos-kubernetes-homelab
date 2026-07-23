@@ -115,16 +115,20 @@ need to be restored from a Home Assistant backup (or configured again).
 
 The active maximum is also the air conditioner's setpoint. An off unit starts
 at 1 °C above that maximum and uses `high` fan until the room reaches the
-maximum, then switches to `low` to maintain it. During the day, low fan returns
-to high only when the room becomes more than 2 °C warmer than the maximum, and
-the unit turns fully off only below 1 °C under the maximum.
+maximum, then starts maintenance at the quietest supported fan speed. The
+maintenance ladder is built from the modes each LG unit exposes, ordered as
+`low`, `LOW_MID`, `medium`, `MID_HIGH`, and `high`.
 
-During the sleep period, the same high-fan pull-down is allowed. Once the room
-reaches the nighttime maximum, the controller locks the unit to `cool` with
-`low` fan and sends no further temperature-driven changes until the sleep
-period ends. An internal per-room helper preserves that quiet-mode latch across
-a Home Assistant restart. Jet mode and the display-light setting remain under
-manual control.
+During the day, a rise to more than 2 °C above the maximum means the current
+maintenance level was insufficient. The controller advances one maintenance
+level, uses `high` to pull the room back to the maximum, then maintains the new
+level. During the sleep period it escalates maintenance directly: more than 1
+°C above the maximum requires at least the first intermediate level, more than
+2 °C requires the next, and so on. Maintenance levels never decrease within a
+day or sleep period, but reset to the quietest level at the next schedule
+transition. Per-room helpers preserve the current phase and level across a Home
+Assistant restart. Jet mode and the display-light setting remain under manual
+control.
 
 The controller runs when a relevant setting or measured temperature changes
 and at least every five minutes. When a unit is switched to cooling, the

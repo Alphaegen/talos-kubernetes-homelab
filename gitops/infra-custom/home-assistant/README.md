@@ -105,20 +105,25 @@ package does not change that air conditioner, so manual control remains
 available.
 
 The first Home Assistant start after installing the package initializes a 24
-°C daytime limit, an 18 °C sleep target, and a 22:00-07:00 sleep period for
-each room. The targets and sleep periods can be adjusted independently for
+°C daytime maximum, an 18 °C nighttime maximum, and a 22:00-07:00 sleep period
+for each room. The maxima and sleep periods can be adjusted independently for
 upstairs and downstairs. These helpers restore their last value on subsequent
 restarts, so changes made from the dashboard survive a Home Assistant pod replacement. If
 the Home Assistant PVC is replaced, Git recreates these helper definitions and
 defaults, but UI-managed integration credentials and dashboard storage still
 need to be restored from a Home Assistant backup (or configured again).
 
-During the day, a managed unit starts cooling at the configured day limit. Its
-setpoint is one degree below the limit, and it turns fully off below the limit.
-During the sleep period, it cools at the configured sleep target and turns off
-only if the room is already colder than the target. Fan speed is `high` while
-the room is more than 1 °C above the active setpoint and `low` when it is close
-to the target. Jet mode and the display-light setting are left entirely under
+The active maximum is also the air conditioner's setpoint. An off unit starts
+at 1 °C above that maximum and uses `high` fan until the room reaches the
+maximum, then switches to `low` to maintain it. During the day, low fan returns
+to high only when the room becomes more than 2 °C warmer than the maximum, and
+the unit turns fully off only below 1 °C under the maximum.
+
+During the sleep period, the same high-fan pull-down is allowed. Once the room
+reaches the nighttime maximum, the controller locks the unit to `cool` with
+`low` fan and sends no further temperature-driven changes until the sleep
+period ends. An internal per-room helper preserves that quiet-mode latch across
+a Home Assistant restart. Jet mode and the display-light setting remain under
 manual control.
 
 The controller runs when a relevant setting or measured temperature changes

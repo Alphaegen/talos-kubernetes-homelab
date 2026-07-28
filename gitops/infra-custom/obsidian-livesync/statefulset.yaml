@@ -110,7 +110,8 @@ spec:
           configMap:
             name: obsidian-livesync-config
         - name: runtime-config
-          emptyDir: {}
+          persistentVolumeClaim:
+            claimName: obsidian-livesync-config
         - name: runtime-log
           emptyDir: {}
         - name: tmp

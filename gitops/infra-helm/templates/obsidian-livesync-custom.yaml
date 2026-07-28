@@ -1,0 +1,39 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/refs/heads/main/argoproj.io/application_v1alpha1.json
+{{- if .Values.obsidianLiveSync.enabled }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ include "infra.appName" (dict "root" . "name" "obsidian-livesync") }}
+  namespace: {{ .Values.cluster.namespace | quote }}
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  labels:
+    cluster: {{ .Values.cluster.name | quote }}
+    app: obsidian-livesync
+  annotations:
+    argocd.argoproj.io/sync-wave: "15"
+spec:
+  project: {{ include "infra.projectName" . }}
+  destination:
+    server: {{ .Values.cluster.url | default "https://kubernetes.default.svc" | quote }}
+    namespace: obsidian-livesync
+  ignoreDifferences:
+    - group: ""
+      kind: PersistentVolumeClaim
+      jqPathExpressions:
+        - .spec.volumeName
+  syncPolicy:
+    {{- if .Values.sync }}
+    automated:
+      prune: true
+      selfHeal: true
+    {{- end }}
+    syncOptions:
+      - CreateNamespace=true
+      - PruneLast=true
+      - RespectIgnoreDifferences=true
+  source:
+    repoURL: {{ .Values.cluster.repoURL | quote }}
+    targetRevision: {{ .Values.cluster.revision | default "main" | quote }}
+    path: gitops/infra-custom/obsidian-livesync
+{{- end }}

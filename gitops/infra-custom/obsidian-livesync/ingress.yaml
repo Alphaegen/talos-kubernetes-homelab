@@ -1,0 +1,35 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: obsidian-livesync
+  namespace: obsidian-livesync
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+    cert-manager.io/cluster-issuer: letsencrypt-dns
+    nginx.ingress.kubernetes.io/backend-protocol: HTTP
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: 50m
+    nginx.ingress.kubernetes.io/proxy-buffering: "off"
+    nginx.ingress.kubernetes.io/proxy-request-buffering: "off"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+  labels:
+    app.kubernetes.io/name: obsidian-livesync
+    app.kubernetes.io/part-of: obsidian-livesync
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - livesync.homelab.niekvlam.nl
+      secretName: obsidian-livesync-tls
+  rules:
+    - host: livesync.homelab.niekvlam.nl
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: obsidian-livesync
+                port:
+                  number: 5984

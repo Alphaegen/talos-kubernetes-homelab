@@ -18,7 +18,7 @@ This repository contains the configuration for a four-node Kubernetes homelab ru
 | Supplemental node cooling | Opt-in Raspberry Pi 5 RP1 PWM fan controller with one-node canary rollout |
 | Progressive delivery | Argo Rollouts canaries with analysis steps against a dedicated smoke-test workload |
 | Dependency maintenance | Renovate groups Helm chart and container-image updates into reviewable pull requests |
-| Persistent workloads | Home Assistant, Zigbee2MQTT, media services, and BookOrbit |
+| Persistent workloads | Home Assistant, Zigbee2MQTT, media services, BookOrbit, and Obsidian LiveSync |
 
 ## Architecture
 
@@ -61,11 +61,13 @@ flowchart TB
             automation["Mosquitto and Zigbee2MQTT"]
             media["Media services"]
             bookorbit["BookOrbit and PostgreSQL"]
+            livesync["Obsidian LiveSync and CouchDB"]
             smoke["Platform smoke test"]
             appentry --> homeassistant
             appentry --> automation
             appentry --> media
             appentry --> bookorbit
+            appentry --> livesync
             appentry --> smoke
         end
 
@@ -146,7 +148,7 @@ The Tailscale operator provides remote access through a home-LAN subnet router a
 
 Longhorn stores Kubernetes-managed application state on dedicated worker NVMe volumes formatted with XFS. Large shared media and book datasets remain on the NAS and are provisioned through NFS. Talos system disks are kept separate from Longhorn data volumes.
 
-Home Assistant, Grafana, Loki, Mosquitto, Zigbee2MQTT, and BookOrbit use Longhorn-backed claims. Media applications consume shared NFS storage through the NFS subdir external provisioner.
+Home Assistant, Grafana, Loki, Mosquitto, Zigbee2MQTT, BookOrbit, and Obsidian LiveSync use Longhorn-backed claims. Media applications consume shared NFS storage through the NFS subdir external provisioner.
 
 ### Secrets and certificate management
 
@@ -187,6 +189,10 @@ The media stack includes Sonarr, Radarr, Prowlarr, qBittorrent Enhanced Edition,
 ### BookOrbit
 
 BookOrbit runs with a dedicated PostgreSQL StatefulSet, Longhorn-backed application and database claims, an NFS-backed books volume, External Secrets-managed credentials, and TLS ingress.
+
+### Obsidian Self-hosted LiveSync
+
+Self-hosted LiveSync uses a dedicated single-node CouchDB StatefulSet with Longhorn-backed storage, External Secrets-managed credentials, LiveSync-compatible CORS configuration, and TLS ingress. CouchDB provides the cluster endpoint; the LiveSync plugin and end-to-end encryption settings remain on each Obsidian client.
 
 ## Deployment model
 

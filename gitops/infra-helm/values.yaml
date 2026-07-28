@@ -14,6 +14,9 @@ sync: true
 bookorbit:
   enabled: true
 
+obsidianLiveSync:
+  enabled: true
+
 ingressController:
   enabled: true
   class: nginx

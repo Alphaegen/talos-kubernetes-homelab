@@ -1,0 +1,23 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: obsidian-livesync
+
+resources:
+  - namespace.yaml
+  - externalsecret.yaml
+  - pvc.yaml
+  - statefulset.yaml
+  - service.yaml
+  - ingress.yaml
+  - networkpolicy.yaml
+
+configMapGenerator:
+  - name: obsidian-livesync-config
+    files:
+      - 10-livesync.ini=livesync.ini
+
+generatorOptions:
+  labels:
+    app.kubernetes.io/name: obsidian-livesync
+    app.kubernetes.io/part-of: obsidian-livesync

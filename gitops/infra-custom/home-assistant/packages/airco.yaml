@@ -472,6 +472,8 @@ automation:
           - input_number.airco_boven_sleep_target
           - input_number.airco_beneden_day_limit
           - input_number.airco_beneden_sleep_target
+          - input_number.airco_boven_maintenance_fan_level
+          - input_number.airco_beneden_maintenance_fan_level
           - input_datetime.airco_beneden_sleep_start
           - input_datetime.airco_beneden_sleep_end
           - input_datetime.airco_boven_sleep_start

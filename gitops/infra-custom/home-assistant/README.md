@@ -130,6 +130,12 @@ transition. Per-room helpers preserve the current phase and level across a Home
 Assistant restart. Jet mode and the display-light setting remain under manual
 control.
 
+The Lovelace card exposes each room's current maintenance level as an editable
+numeric control: `0` is `low`, `1` is `LOW_MID`, `2` is `medium`, `3` is
+`MID_HIGH`, and `4` is `high`. Lowering the helper applies immediately. During
+the sleep period, the controller can raise it again when the measured
+temperature still requires a higher minimum level.
+
 The controller runs when a relevant setting or measured temperature changes
 and at least every five minutes. When a unit is switched to cooling, the
 controller waits for the `cool` state and then gives the LG unit five seconds

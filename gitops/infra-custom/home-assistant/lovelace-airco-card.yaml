@@ -92,6 +92,10 @@ cards:
         tap_action:
           action: toggle
         features_position: bottom
+  - type: markdown
+    content: >-
+      **Onderhoudsniveau:** 0 = low · 1 = LOW_MID · 2 = medium ·
+      3 = MID_HIGH · 4 = high
   - square: false
     type: grid
     columns: 2
@@ -112,6 +116,12 @@ cards:
             show_state: true
             tap_action:
               action: more-info
+          - type: tile
+            entity: input_number.airco_boven_maintenance_fan_level
+            name: Onderhoudsniveau
+            features_position: bottom
+            features:
+              - type: numeric-input
           - type: tile
             entity: input_datetime.airco_boven_sleep_start
             name: Begin nacht
@@ -140,6 +150,12 @@ cards:
             show_state: true
             tap_action:
               action: more-info
+          - type: tile
+            entity: input_number.airco_beneden_maintenance_fan_level
+            name: Onderhoudsniveau
+            features_position: bottom
+            features:
+              - type: numeric-input
           - type: tile
             entity: input_datetime.airco_beneden_sleep_start
             name: Begin nacht

@@ -84,7 +84,7 @@ spec:
             timeoutSeconds: 5
             failureThreshold: 6
         - name: configure-qbittorrent-vpn
-          image: sxyzy1016/qbittorrent-enhanced-edition:release-5.2.1.10
+          image: sxyzy1016/qbittorrent-enhanced-edition:release-5.2.3.10
           command: ["/bin/sh", "-ec"]
           args:
             - |
@@ -116,7 +116,7 @@ spec:
             - { name: config, mountPath: /config }
       containers:
         - name: qb
-          image: sxyzy1016/qbittorrent-enhanced-edition:release-5.2.1.10
+          image: sxyzy1016/qbittorrent-enhanced-edition:release-5.2.3.10
           ports:
             - { name: http, containerPort: 8080 }
           env:

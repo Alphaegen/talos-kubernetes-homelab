@@ -3,6 +3,9 @@ kind: Deployment
 metadata:
   name: qbittorrent
   namespace: media
+  annotations:
+    # Wait for External Secrets to materialize the Proton WireGuard key.
+    argocd.argoproj.io/sync-wave: "1"
 spec:
   replicas: 1
   revisionHistoryLimit: 2
@@ -14,30 +17,134 @@ spec:
       labels: { app: qbittorrent }
     spec:
       terminationGracePeriodSeconds: 180
+      # Use Gluetun's encrypted DNS resolver from every container in this Pod.
+      dnsPolicy: None
+      dnsConfig:
+        nameservers: ["127.0.0.1"]
       securityContext:
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
+      initContainers:
+        # Native sidecar: establishes the VPN and its firewall before qBittorrent starts.
+        - name: gluetun
+          image: qmcgaw/gluetun:v3.41.3
+          restartPolicy: Always
+          command: ["/bin/sh", "-ec"]
+          args:
+            - >-
+              (ip rule del table 51820; ip -6 rule del table 51820) >/dev/null 2>&1 || true;
+              exec /gluetun-entrypoint
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              add: ["NET_ADMIN"]
+          env:
+            - { name: TZ, value: "Europe/Amsterdam" }
+            - { name: VPN_SERVICE_PROVIDER, value: "protonvpn" }
+            - { name: VPN_TYPE, value: "wireguard" }
+            - name: WIREGUARD_PRIVATE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: qbittorrent-protonvpn
+                  key: WIREGUARD_PRIVATE_KEY
+            - { name: SERVER_COUNTRIES, value: "Netherlands" }
+            - { name: PORT_FORWARD_ONLY, value: "on" }
+            - { name: VPN_PORT_FORWARDING, value: "on" }
+            # Keep the Web UI reachable through the ClusterIP Service/Ingress.
+            - { name: FIREWALL_INPUT_PORTS, value: "8080" }
+            # Proton assigns a dynamic port. Keep qBittorrent bound to the tunnel
+            # and update its listening port after every VPN (re)connection.
+            - name: VPN_PORT_FORWARDING_UP_COMMAND
+              value: >-
+                /bin/sh -c 'wget -O- -nv --retry-connrefused
+                --post-data "json={\"listen_port\":{{PORT}},\"current_network_interface\":\"{{VPN_INTERFACE}}\",\"random_port\":false,\"upnp\":false}"
+                http://127.0.0.1:8080/api/v2/app/setPreferences'
+            - name: VPN_PORT_FORWARDING_DOWN_COMMAND
+              value: >-
+                /bin/sh -c 'wget -O- -nv --retry-connrefused
+                --post-data "json={\"listen_port\":0,\"current_network_interface\":\"lo\"}"
+                http://127.0.0.1:8080/api/v2/app/setPreferences'
+          volumeMounts:
+            - { name: tun, mountPath: /dev/net/tun }
+          startupProbe:
+            exec: { command: ["/gluetun-entrypoint", "healthcheck"] }
+            periodSeconds: 2
+            timeoutSeconds: 5
+            failureThreshold: 60
+          readinessProbe:
+            exec: { command: ["/gluetun-entrypoint", "healthcheck"] }
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          livenessProbe:
+            exec: { command: ["/gluetun-entrypoint", "healthcheck"] }
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 6
+        - name: configure-qbittorrent-vpn
+          image: sxyzy1016/qbittorrent-enhanced-edition:release-5.2.1.10
+          command: ["/bin/sh", "-ec"]
+          args:
+            - |
+              config_file=/config/qBittorrent/qBittorrent.conf
+              mkdir -p "$(dirname "$config_file")"
+              if [ ! -f "$config_file" ]; then
+                printf '[Preferences]\n' > "$config_file"
+              fi
+              set_preference() {
+                key="$1"
+                value="$2"
+                if grep -q "^${key}=" "$config_file"; then
+                  sed -i "s|^${key}=.*|${key}=${value}|" "$config_file"
+                else
+                  printf '%s=%s\n' "$key" "$value" >> "$config_file"
+                fi
+              }
+              set_preference 'WebUI\\LocalHostAuth' 'false'
+              set_preference 'Connection\\Interface' 'tun0'
+              set_preference 'Connection\\UPnP' 'false'
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+          volumeMounts:
+            - { name: config, mountPath: /config }
       containers:
         - name: qb
           image: sxyzy1016/qbittorrent-enhanced-edition:release-5.2.1.10
           ports:
             - { name: http, containerPort: 8080 }
-            - { name: bt-tcp, containerPort: 50413, protocol: TCP }
-            - { name: bt-udp, containerPort: 50413, protocol: UDP }
           env:
             - { name: PUID, value: "1000" }
             - { name: PGID, value: "1000" }
             - { name: WEBUI_PORT, value: "8080" }
-            - { name: TORRENTING_PORT, value: "50413" }
             - { name: UMASK, value: "002" }
           volumeMounts:
             - { name: data, mountPath: /data }
             - { name: config, mountPath: /config }
+          readinessProbe:
+            tcpSocket: { port: http }
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket: { port: http }
+            initialDelaySeconds: 30
+            periodSeconds: 20
+            failureThreshold: 3
       volumes:
         - name: data
           persistentVolumeClaim: { claimName: media-shared }
         - name: config
           persistentVolumeClaim: { claimName: qbittorrent-config }
+        - name: tun
+          hostPath:
+            path: /dev/net/tun
+            type: CharDevice
 ---
 apiVersion: v1
 kind: Service
@@ -48,27 +155,6 @@ spec:
   selector: { app: qbittorrent }
   ports:
     - { name: http, port: 8080, targetPort: http }
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: qbittorrent-bittorrent
-  namespace: media
-  annotations:
-    metallb.universe.tf/allow-shared-ip: media-ingress # optional, only if you want to share an IP with other Services
-spec:
-  type: LoadBalancer
-  selector:
-    app: qbittorrent
-  ports:
-    - name: tcp
-      protocol: TCP
-      port: 50413
-      targetPort: bt-tcp
-    - name: udp
-      protocol: UDP
-      port: 50413
-      targetPort: bt-udp
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress

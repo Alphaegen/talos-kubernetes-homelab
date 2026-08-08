@@ -38,7 +38,7 @@ longhorn:
 certmanager:
   enabled: true
   # renovate: datasource=helm depName=cert-manager registryUrl=https://charts.jetstack.io versioning=helm
-  version: "v1.21.0"
+  version: "v1.21.1"
   acme:
     email: vlam4695+homelab@gmail.com
     server: "https://acme-v02.api.letsencrypt.org/directory"
@@ -51,7 +51,7 @@ sealedsecrets:
 ceph:
   enabled: false
   # renovate: datasource=helm depName=rook-ceph registryUrl=https://charts.rook.io/release versioning=helm
-  version: "v1.20.2"
+  version: "v1.20.3"
 
 monitoring:
   enabled: true
@@ -119,7 +119,7 @@ monitoring:
 
   loki:
     # renovate: datasource=helm depName=loki registryUrl=https://grafana.github.io/helm-charts versioning=helm
-    version: "7.0.0"
+    version: "7.2.0"
     deploymentMode: SingleBinary
     singleBinary:
       replicas: 1
@@ -220,7 +220,7 @@ homeassistant:
   enabled: true
   namespace: home-assistant
   # renovate: datasource=helm depName=home-assistant registryUrl=http://pajikos.github.io/home-assistant-helm-chart/ versioning=helm
-  version: "0.3.70"
+  version: "0.3.74"
   image:
     tag: ""
 
@@ -311,7 +311,7 @@ progressiveDelivery:
     enabled: true
     namespace: argo-rollouts
     # renovate: datasource=helm depName=argo-rollouts registryUrl=https://argoproj.github.io/argo-helm versioning=helm
-    version: "2.41.0"
+    version: "2.41.1"
     serviceMonitorLabel: kube-prometheus-stack
 
 media:
@@ -342,7 +342,7 @@ security:
   eso:
     enabled: true
     # renovate: datasource=helm depName=external-secrets registryUrl=https://charts.external-secrets.io versioning=helm
-    version: "2.7.0"
+    version: "2.9.0"
     serviceMonitorLabel: kube-prometheus-stack
     bootstrap: true
 
@@ -363,13 +363,13 @@ security:
   trivy:
     enabled: false
     # renovate: datasource=helm depName=trivy-operator registryUrl=https://aquasecurity.github.io/helm-charts/ versioning=helm
-    version: "0.34.0"
+    version: "0.35.0"
     serviceMonitorLabel: kube-prometheus-stack
 
   tailscale:
     enabled: true
     # renovate: datasource=helm depName=tailscale-operator registryUrl=https://pkgs.tailscale.com/helmcharts versioning=helm
-    version: "1.98.4"
+    version: "1.98.9"
     namespace: tailscale
     repoURL: https://pkgs.tailscale.com/helmcharts
     chart: tailscale-operator

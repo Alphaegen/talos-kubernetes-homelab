@@ -58,7 +58,7 @@ spec:
             # and update its listening port after every VPN (re)connection.
             - name: VPN_PORT_FORWARDING_UP_COMMAND
               value: >-
-                /bin/sh -c 'wget -O- -nv --retry-connrefused
+                /bin/sh -c 'wget -O- -nv --retry-connrefused --tries=0 --timeout=5 --waitretry=2
                 --post-data "json={\"listen_port\":{{PORT}},\"current_network_interface\":\"{{VPN_INTERFACE}}\",\"random_port\":false,\"upnp\":false}"
                 http://127.0.0.1:8080/api/v2/app/setPreferences'
             - name: VPN_PORT_FORWARDING_DOWN_COMMAND

@@ -26,7 +26,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: profilarr
-          image: ghcr.io/dictionarry-hub/profilarr:2.0.9
+          image: ghcr.io/dictionarry-hub/profilarr:2.2.0
           imagePullPolicy: IfNotPresent
           securityContext:
             allowPrivilegeEscalation: false
@@ -71,7 +71,7 @@ spec:
             - name: config
               mountPath: /config
         - name: parser
-          image: ghcr.io/dictionarry-hub/profilarr-parser:2.0.9
+          image: ghcr.io/dictionarry-hub/profilarr-parser:2.2.0
           imagePullPolicy: IfNotPresent
           securityContext:
             allowPrivilegeEscalation: false

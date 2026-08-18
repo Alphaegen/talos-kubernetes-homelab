@@ -42,17 +42,7 @@ spec:
               set -eu
 
               if [ -s /app/data/configuration.yaml ]; then
-                if awk '
-                  /^serial:[[:space:]]*$/ { in_serial=1; next }
-                  in_serial && /^[^[:space:]]/ { in_serial=0 }
-                  in_serial && /^[[:space:]]+adapter:/ { found=1 }
-                  END { exit(found ? 0 : 1) }
-                ' /app/data/configuration.yaml; then
-                  echo "Using existing /app/data/configuration.yaml from PVC."
-                  exit 0
-                fi
-
-                echo "Patching existing /app/data/configuration.yaml with serial adapter settings."
+                echo "Reconciling existing /app/data/configuration.yaml serial adapter settings."
                 tmp_file="$(mktemp)"
                 awk \
                   -v serial_port="${SERIAL_PORT}" \
@@ -83,19 +73,19 @@ spec:
 
                   in_serial && /^[[:space:]]+port:/ {
                     has_port=1
-                    print
+                    print "  port: \"" serial_port "\""
                     next
                   }
 
                   in_serial && /^[[:space:]]+adapter:/ {
                     has_adapter=1
-                    print
+                    print "  adapter: \"" serial_adapter "\""
                     next
                   }
 
                   in_serial && /^[[:space:]]+baudrate:/ {
                     has_baudrate=1
-                    print
+                    print "  baudrate: " serial_baudrate
                     next
                   }
 
@@ -116,7 +106,7 @@ spec:
                   }
                 ' /app/data/configuration.yaml > "${tmp_file}"
                 mv "${tmp_file}" /app/data/configuration.yaml
-                echo "Patched /app/data/configuration.yaml."
+                echo "Reconciled /app/data/configuration.yaml."
                 exit 0
               fi
 

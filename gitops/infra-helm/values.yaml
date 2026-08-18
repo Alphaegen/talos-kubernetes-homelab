@@ -33,7 +33,7 @@ metallb:
 longhorn:
   enabled: true
   # renovate: datasource=helm depName=longhorn registryUrl=https://charts.longhorn.io versioning=helm
-  version: "1.12.0"
+  version: "1.12.1"
 
 certmanager:
   enabled: true
@@ -46,12 +46,12 @@ certmanager:
 sealedsecrets:
   enabled: false
   # renovate: datasource=helm depName=sealed-secrets registryUrl=https://bitnami.github.io/sealed-secrets versioning=helm
-  version: "2.19.1"
+  version: "2.19.2"
 
 ceph:
   enabled: false
   # renovate: datasource=helm depName=rook-ceph registryUrl=https://charts.rook.io/release versioning=helm
-  version: "v1.20.3"
+  version: "v1.20.4"
 
 monitoring:
   enabled: true
@@ -119,7 +119,7 @@ monitoring:
 
   loki:
     # renovate: datasource=helm depName=loki registryUrl=https://grafana.github.io/helm-charts versioning=helm
-    version: "7.2.0"
+    version: "7.3.0"
     deploymentMode: SingleBinary
     singleBinary:
       replicas: 1
@@ -335,7 +335,7 @@ security:
   vault:
     enabled: false
     # renovate: datasource=helm depName=vault registryUrl=https://helm.releases.hashicorp.com versioning=helm
-    version: "0.34.0"
+    version: "0.34.1"
     host: vault.homelab.niekvlam.nl
     storageSize: 10Gi
 
@@ -369,7 +369,7 @@ security:
   tailscale:
     enabled: true
     # renovate: datasource=helm depName=tailscale-operator registryUrl=https://pkgs.tailscale.com/helmcharts versioning=helm
-    version: "1.98.9"
+    version: "1.102.2"
     namespace: tailscale
     repoURL: https://pkgs.tailscale.com/helmcharts
     chart: tailscale-operator

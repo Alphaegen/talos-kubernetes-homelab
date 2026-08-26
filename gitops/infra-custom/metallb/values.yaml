@@ -1,9 +1,5 @@
 namespace: metallb-system
 
-ipAddressPool:
-  name: public
-  addresses: []
+ipAddressPools: []
 
-l2Advertisement:
-  enabled: true
-  name: public
+l2Advertisements: []

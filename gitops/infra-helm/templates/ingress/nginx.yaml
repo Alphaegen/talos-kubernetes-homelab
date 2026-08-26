@@ -34,4 +34,10 @@ spec:
     helm:
       version: v3
       releaseName: nginx
+      valuesObject:
+        controller:
+          service:
+            loadBalancerIP: {{ .Values.ingressController.loadBalancerIP | quote }}
+            annotations:
+              metallb.io/address-pool: {{ .Values.ingressController.addressPool | quote }}
 {{- end }}

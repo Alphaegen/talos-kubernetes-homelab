@@ -84,13 +84,26 @@ spec:
       releaseName: metallb-config
       values: |
         namespace: metallb-system
-        ipAddressPool:
-          name: public
-          addresses:
-          {{- range .Values.metallb.endpoints }}
-            - {{ . }}
+        ipAddressPools:
+        {{- range .Values.metallb.pools }}
+          - name: {{ .name }}
+            addresses:
+            {{- range .addresses }}
+              - {{ . }}
+            {{- end }}
+        {{- end }}
+        l2Advertisements:
+        {{- range .Values.metallb.pools }}
+          - name: {{ .name }}
+            ipAddressPools:
+              - {{ .name }}
+            nodeSelectors:
+              - matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values:
+                    {{- range .advertisementNodes }}
+                      - {{ . }}
+                    {{- end }}
           {{- end }}
-        l2Advertisement:
-          name: public
-          enabled: true
 {{- end }}

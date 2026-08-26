@@ -20,6 +20,10 @@ obsidianLiveSync:
 ingressController:
   enabled: true
   class: nginx
+  # Stage 1 of the VLAN cutover: keep ingress on the old pool while both pools
+  # and their VLAN-specific announcers are established.
+  loadBalancerIP: "192.168.3.110"
+  addressPool: public
   # renovate: datasource=helm depName=ingress-nginx registryUrl=https://kubernetes.github.io/ingress-nginx versioning=helm
   version: "4.15.1"
 
@@ -27,8 +31,18 @@ metallb:
   enabled: true
   # renovate: datasource=helm depName=metallb registryUrl=https://metallb.github.io/metallb versioning=helm
   version: "0.16.1"
-  endpoints:
-    - "192.168.3.110-192.168.3.129"
+  pools:
+    - name: public
+      addresses:
+        - "192.168.3.110-192.168.3.129"
+      advertisementNodes:
+        - rpi-w-3
+    - name: servers
+      addresses:
+        - "192.168.20.110-192.168.20.129"
+      advertisementNodes:
+        - rpi-w-1
+        - rpi-w-2
 
 longhorn:
   enabled: true

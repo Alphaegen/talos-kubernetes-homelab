@@ -8,6 +8,9 @@ metadata:
     app.kubernetes.io/part-of: cilium-gateway-api
 spec:
   gatewayClassName: cilium
+  addresses:
+    - type: IPAddress
+      value: 192.168.3.112
   listeners:
     - name: http
       protocol: HTTP

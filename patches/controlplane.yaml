@@ -13,9 +13,6 @@ machine:
   # certSANs:
   # - <load_balancer_ip>
   kubelet:
-    nodeIP:
-      validSubnets:
-        - 192.168.3.0/24
     extraArgs:
       rotate-server-certificates: true
   features:

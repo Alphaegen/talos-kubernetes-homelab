@@ -19,7 +19,10 @@ The expected `talosctl` version is pinned in [`.tool-versions`](../.tool-version
 
 ### 1. Define the cluster
 
-[`nodes.yaml`](../nodes.yaml) contains the cluster name, Kubernetes endpoint, control-plane VIP, and node inventory. Review it together with:
+[`nodes.yaml`](../nodes.yaml) contains the current cluster name, Kubernetes
+endpoint, control-plane VIP, network parameters, registry mirror, and node
+inventory. Review the selected inventory
+together with:
 
 - [`patches/controlplane.yaml`](../patches/controlplane.yaml)
 - [`patches/worker.yaml`](../patches/worker.yaml)
@@ -37,7 +40,7 @@ The main settings to confirm are:
 - gateway and DNS servers;
 - worker Longhorn disk selection.
 
-`generate.sh` defaults to `/dev/nvme0n1` and enables installation-disk wiping. Confirm the target hardware before generating or applying machine configuration.
+`generate.sh` defaults to `/dev/mmcblk0` and enables installation-disk wiping. Confirm the target hardware before generating or applying machine configuration.
 
 ### 2. Generate Talos configuration
 
@@ -59,7 +62,7 @@ Common overrides:
 
 ```bash
 TALOS_SECRETS_FILE=/secure/path/secrets.yaml
-TALOS_INSTALL_DISK=/dev/nvme0n1
+TALOS_INSTALL_DISK=/dev/mmcblk0
 TALOS_INSTALL_WIPE=true
 TALOS_ENABLE_VIP=true
 TALOS_MERGE_KUBECONFIG=false
@@ -147,3 +150,6 @@ Custom charts under `gitops/infra-custom` can be rendered individually with thei
 - the `home-cluster` Talos context by default.
 
 Override `TALOSCONFIG`, `TALOS_CONTEXT`, or `TALOSCTL_BIN` when operating from a different local setup. Generate and inspect the new configuration before applying it to the cluster.
+
+`TALOS_NODES_FILE` and `TALOS_OUTPUT_DIR` select a non-default inventory and
+its matching generated directory.

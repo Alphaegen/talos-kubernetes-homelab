@@ -1,18 +1,17 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-NODES_FILE="nodes.yaml"
-OUTPUT_DIR="output"
+NODES_FILE="${TALOS_NODES_FILE:-nodes.yaml}"
+OUTPUT_DIR="${TALOS_OUTPUT_DIR:-output}"
 TALOSCTL_BIN="${TALOSCTL_BIN:-talosctl}"
 CLUSTER_CONTEXT="${TALOS_CLUSTER_CONTEXT:-homelab}"
 SECRETS_FILE="${TALOS_SECRETS_FILE:-$HOME/.talos/$CLUSTER_CONTEXT/secrets.yaml}"
-INSTALLER_IMAGE="${TALOS_INSTALLER_IMAGE:-factory.talos.dev/metal-installer/5199ca37666edc3419ae8e1cfe49bdd89f1b5b2995e0078abaa9d710871b6751:v1.12.8}"
-INSTALLER_IMAGE_CP="${TALOS_INSTALLER_IMAGE_CONTROLPLANE:-$INSTALLER_IMAGE}"
-INSTALLER_IMAGE_WORKER="${TALOS_INSTALLER_IMAGE_WORKER:-$INSTALLER_IMAGE}"
-INSTALL_DISK="${TALOS_INSTALL_DISK:-/dev/nvme0n1}"
+DEFAULT_INSTALLER_IMAGE="factory.talos.dev/metal-installer/5199ca37666edc3419ae8e1cfe49bdd89f1b5b2995e0078abaa9d710871b6751:v1.12.8"
+INSTALLER_IMAGE_OVERRIDE="${TALOS_INSTALLER_IMAGE:-}"
+INSTALLER_IMAGE_CP_OVERRIDE="${TALOS_INSTALLER_IMAGE_CONTROLPLANE:-}"
+INSTALLER_IMAGE_WORKER_OVERRIDE="${TALOS_INSTALLER_IMAGE_WORKER:-}"
+INSTALL_DISK="${TALOS_INSTALL_DISK:-/dev/mmcblk0}"
 INSTALL_WIPE="${TALOS_INSTALL_WIPE:-true}"
-REGISTRY_MIRROR_HOST="${TALOS_REGISTRY_MIRROR_HOST:-192.168.3.247:5000}"
-REGISTRY_MIRROR_ENDPOINT="${TALOS_REGISTRY_MIRROR_ENDPOINT:-http://192.168.3.247:5000}"
 KUBERNETES_VERSION="${TALOS_KUBERNETES_VERSION:-1.34.4}"
 APPLY_DISK_PATCH_TO_CP="${TALOS_APPLY_DISK_PATCH_TO_CONTROLPLANE:-false}"
 ENABLE_VIP="${TALOS_ENABLE_VIP:-true}"
@@ -31,6 +30,21 @@ chmod 600 "$SECRETS_FILE"
 # 2. Cluster facts
 CLUSTER_NAME=$(yq e '.cluster_name' "$NODES_FILE")
 VIP=$(yq e '.vip' "$NODES_FILE")
+API_SERVER_CERT_SANS=$(yq e -o=json '.api_server_cert_sans // []' "$NODES_FILE")
+NETWORK_PREFIX=$(yq e '.network.prefix' "$NODES_FILE")
+NETWORK_GATEWAY=$(yq e '.network.gateway' "$NODES_FILE")
+NETWORK_NAMESERVERS=$(yq e -o=json '.network.nameservers' "$NODES_FILE")
+NETWORK_VALID_SUBNETS=$(yq e -o=json '.network.valid_subnets' "$NODES_FILE")
+ETCD_ADVERTISED_SUBNETS=$(yq e -o=json '.network.etcd_advertised_subnets' "$NODES_FILE")
+FILE_INSTALLER_IMAGE=$(yq e '.install.image // ""' "$NODES_FILE")
+FILE_REGISTRY_MIRROR_HOST=$(yq e '.registry.mirror_host // ""' "$NODES_FILE")
+FILE_REGISTRY_MIRROR_ENDPOINT=$(yq e '.registry.mirror_endpoint // ""' "$NODES_FILE")
+REGISTRY_MIRROR_HOST="${TALOS_REGISTRY_MIRROR_HOST:-$FILE_REGISTRY_MIRROR_HOST}"
+REGISTRY_MIRROR_ENDPOINT="${TALOS_REGISTRY_MIRROR_ENDPOINT:-$FILE_REGISTRY_MIRROR_ENDPOINT}"
+INSTALLER_IMAGE="${INSTALLER_IMAGE_OVERRIDE:-$FILE_INSTALLER_IMAGE}"
+INSTALLER_IMAGE="${INSTALLER_IMAGE:-$DEFAULT_INSTALLER_IMAGE}"
+INSTALLER_IMAGE_CP="${INSTALLER_IMAGE_CP_OVERRIDE:-$INSTALLER_IMAGE}"
+INSTALLER_IMAGE_WORKER="${INSTALLER_IMAGE_WORKER_OVERRIDE:-$INSTALLER_IMAGE}"
 CONTROLPLANE_IP=$(yq e '.nodes[] | select(.role == "controlplane") | .ip' "$NODES_FILE" | head -n 1)
 NODE_IPS=($(yq e '.nodes[].ip' "$NODES_FILE"))
 
@@ -51,13 +65,10 @@ mkdir -p "$OUTPUT_DIR"
 
 export TALOSCONFIG="${OUTPUT_DIR}/talosconfig"
 
-if [[ "$ENABLE_VIP" == "true" ]]; then
-  "$TALOSCTL_BIN" config endpoint "$VIP"
-  "$TALOSCTL_BIN" config node "${NODE_IPS[@]}"
-else
-  "$TALOSCTL_BIN" config endpoint "$CONTROLPLANE_IP"
-  "$TALOSCTL_BIN" config node "${NODE_IPS[@]}"
-fi
+# The Talos API endpoint is always a real control-plane machine. The VIP is the
+# Kubernetes API endpoint and must never be used as the talosconfig endpoint.
+"$TALOSCTL_BIN" config endpoint "$CONTROLPLANE_IP"
+"$TALOSCTL_BIN" config node "${NODE_IPS[@]}"
 
 if [[ "$MERGE_KUBECONFIG" == "true" ]]; then
   "$TALOSCTL_BIN" kubeconfig \
@@ -101,33 +112,41 @@ yq -o=json '.nodes[]' "$NODES_FILE" | jq -c '.' | while read -r node; do
       NETWORK_PATCH=$(yq -n -o=json "
       .machine.network.hostname = \"$HOST\" |
       .machine.network.interfaces[0].interface = \"end0\" |
-      .machine.network.interfaces[0].addresses = [\"$IP/24\"] |
+      .machine.network.interfaces[0].addresses = [\"$IP/$NETWORK_PREFIX\"] |
       .machine.network.interfaces[0].dhcp = false |
       .machine.network.interfaces[0].routes[0].network = \"0.0.0.0/0\" |
-      .machine.network.interfaces[0].routes[0].gateway = \"192.168.3.1\" |
-      .machine.network.nameservers = [\"192.168.3.1\", \"1.1.1.1\"] |
-      .machine.network.interfaces[0].vip.ip = \"$VIP\"
+      .machine.network.interfaces[0].routes[0].gateway = \"$NETWORK_GATEWAY\" |
+      .machine.network.nameservers = $NETWORK_NAMESERVERS |
+      .machine.network.interfaces[0].vip.ip = \"$VIP\" |
+      .machine.kubelet.nodeIP.validSubnets = $NETWORK_VALID_SUBNETS |
+      .cluster.apiServer.certSANs = $API_SERVER_CERT_SANS |
+      .cluster.etcd.advertisedSubnets = $ETCD_ADVERTISED_SUBNETS
     ")
     else
       NETWORK_PATCH=$(yq -n -o=json "
       .machine.network.hostname = \"$HOST\" |
       .machine.network.interfaces[0].interface = \"end0\" |
-      .machine.network.interfaces[0].addresses = [\"$IP/24\"] |
+      .machine.network.interfaces[0].addresses = [\"$IP/$NETWORK_PREFIX\"] |
       .machine.network.interfaces[0].dhcp = false |
       .machine.network.interfaces[0].routes[0].network = \"0.0.0.0/0\" |
-      .machine.network.interfaces[0].routes[0].gateway = \"192.168.3.1\" |
-      .machine.network.nameservers = [\"192.168.3.1\", \"1.1.1.1\"]
+      .machine.network.interfaces[0].routes[0].gateway = \"$NETWORK_GATEWAY\" |
+      .machine.network.nameservers = $NETWORK_NAMESERVERS |
+      .machine.kubelet.nodeIP.validSubnets = $NETWORK_VALID_SUBNETS |
+      .cluster.apiServer.certSANs = $API_SERVER_CERT_SANS |
+      .cluster.etcd.advertisedSubnets = $ETCD_ADVERTISED_SUBNETS
     ")
     fi
   else
     NETWORK_PATCH=$(yq -n -o=json "
     .machine.network.hostname = \"$HOST\" |
     .machine.network.interfaces[0].interface = \"end0\" |
-    .machine.network.interfaces[0].addresses = [\"$IP/24\"] |
+    .machine.network.interfaces[0].addresses = [\"$IP/$NETWORK_PREFIX\"] |
     .machine.network.interfaces[0].dhcp = false |
     .machine.network.interfaces[0].routes[0].network = \"0.0.0.0/0\" |
-    .machine.network.interfaces[0].routes[0].gateway = \"192.168.3.1\" |
-    .machine.network.nameservers = [\"192.168.3.1\", \"1.1.1.1\"]
+    .machine.network.interfaces[0].routes[0].gateway = \"$NETWORK_GATEWAY\" |
+    .machine.network.nameservers = $NETWORK_NAMESERVERS |
+    .machine.kubelet.nodeIP.validSubnets = $NETWORK_VALID_SUBNETS |
+    .cluster.apiServer.certSANs = $API_SERVER_CERT_SANS
   ")
   fi
 
@@ -166,7 +185,7 @@ yq -o=json '.nodes[]' "$NODES_FILE" | jq -c '.' | while read -r node; do
 
   # Talos 1.12 rejects static machine.network.hostname combined with HostnameConfig auto mode.
   # Drop HostnameConfig docs so generated configs are apply-safe during recovery.
-  yq e 'select(.kind != "HostnameConfig")' "$NODE_DIR/machineconfig.yaml" > "$NODE_DIR/machineconfig.yaml.tmp"
+  yq e 'select(.kind != "HostnameConfig")' "$NODE_DIR/machineconfig.yaml" >"$NODE_DIR/machineconfig.yaml.tmp"
   mv "$NODE_DIR/machineconfig.yaml.tmp" "$NODE_DIR/machineconfig.yaml"
 done
 

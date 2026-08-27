@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-NODES_FILE="nodes.yaml"
-OUTPUT_DIR="output"
+NODES_FILE="${TALOS_NODES_FILE:-nodes.yaml}"
+OUTPUT_DIR="${TALOS_OUTPUT_DIR:-output}"
 TALOSCONFIG="${TALOSCONFIG:-$HOME/.talos/config}"
 TALOS_CONTEXT="${TALOS_CONTEXT:-home-cluster}"
 TALOSCTL_BIN="${TALOSCTL_BIN:-talosctl}"

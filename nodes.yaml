@@ -1,25 +1,42 @@
 cluster_name: "home-cluster"
-endpoint: "https://192.168.3.100:6443"
-vip: 192.168.3.100
+endpoint: "https://kube.homelab.niekvlam.nl:6443"
+vip: 192.168.20.100
+api_server_cert_sans:
+  - kube.homelab.niekvlam.nl
+
+network:
+  prefix: 24
+  gateway: 192.168.20.1
+  nameservers:
+    - 192.168.20.1
+    - 1.1.1.1
+  valid_subnets:
+    - 192.168.20.0/24
+  etcd_advertised_subnets:
+    - 192.168.20.0/24
+
+install:
+  # Official Image Factory schematic used by all four running Talos nodes.
+  image: factory.talos.dev/metal-installer/5199ca37666edc3419ae8e1cfe49bdd89f1b5b2995e0078abaa9d710871b6751:v1.12.8
 
 nodes:
   - hostname: rpi-cp-1
-    ip: 192.168.3.101
+    ip: 192.168.20.101
     role: controlplane
     nodeLabels:
       hardware.niekvlam.nl/pi5-fan: "true"
   - hostname: rpi-w-1
-    ip: 192.168.3.102
+    ip: 192.168.20.102
     role: worker
     nodeLabels:
       hardware.niekvlam.nl/pi5-fan: "true"
   - hostname: rpi-w-2
-    ip: 192.168.3.103
+    ip: 192.168.20.103
     role: worker
     nodeLabels:
       hardware.niekvlam.nl/pi5-fan: "true"
   - hostname: rpi-w-3
-    ip: 192.168.3.104
+    ip: 192.168.20.104
     role: worker
     nodeLabels:
       hardware.niekvlam.nl/pi5-fan: "true"

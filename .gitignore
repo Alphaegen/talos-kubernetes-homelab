@@ -3,6 +3,7 @@ talosconfig
 **/charts/
 kubeconfig
 output
+output-*
 bin/
 id_*
 .DS_Store

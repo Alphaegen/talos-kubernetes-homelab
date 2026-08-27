@@ -164,6 +164,14 @@ monitoring:
   promtail:
     # renovate: datasource=helm depName=promtail registryUrl=https://grafana.github.io/helm-charts versioning=helm
     version: "6.17.1"
+    livenessProbe:
+      httpGet:
+        path: /ready
+        port: http-metrics
+      initialDelaySeconds: 30
+      periodSeconds: 30
+      timeoutSeconds: 3
+      failureThreshold: 10
     extraVolumes:
       - name: positions
         hostPath:

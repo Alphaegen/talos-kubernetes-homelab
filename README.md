@@ -99,14 +99,14 @@ Talos handles node and Kubernetes configuration, while Argo CD manages the platf
 
 ### Cluster topology
 
-The cluster contains one control-plane node and three workers. Talos is configured to install and run from `/dev/nvme0n1`; the repository does not define an SD system disk. On each worker, a Talos `UserVolumeConfig` selects a second NVMe device that is explicitly not the system disk and assigns it to Longhorn. This keeps Kubernetes-managed application data on a separate physical device.
+The cluster contains one control-plane node and three workers. Live Talos volume inventory confirms that all four nodes boot from SD cards: the Talos `STATE` and `EPHEMERAL` partitions are `/dev/mmcblk0p5` and `/dev/mmcblk0p6`. On each worker, a Talos `UserVolumeConfig` selects the separate NVMe device and assigns `/dev/nvme0n1p1` to Longhorn. This keeps Kubernetes-managed application data on a separate physical device.
 
 | Node | Role | Storage responsibility |
 |---|---|---|
-| `rpi-cp-1` | Control plane | Talos system NVMe |
-| `rpi-w-1` | Worker | Talos system NVMe and separate Longhorn NVMe |
-| `rpi-w-2` | Worker | Talos system NVMe and separate Longhorn NVMe |
-| `rpi-w-3` | Worker | Talos system NVMe and separate Longhorn NVMe |
+| `rpi-cp-1` | Control plane | Talos system SD card |
+| `rpi-w-1` | Worker | Talos system SD card and separate Longhorn NVMe |
+| `rpi-w-2` | Worker | Talos system SD card and separate Longhorn NVMe |
+| `rpi-w-3` | Worker | Talos system SD card and separate Longhorn NVMe |
 
 The machine patches also configure kubelet certificate rotation, the kernel modules and mount propagation required by Longhorn, IPv4 and IPv6 pod and service networks, and the worker kubelet image required for iSCSI userland support.
 

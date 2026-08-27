@@ -18,8 +18,7 @@ spec:
     server: {{ .Values.cluster.url | default "https://kubernetes.default.svc" | quote }}
     namespace: bookorbit
   ignoreDifferences:
-    - group: ""
-      kind: PersistentVolumeClaim
+    - kind: PersistentVolumeClaim
       jqPathExpressions:
         - .spec.volumeName
   syncPolicy:

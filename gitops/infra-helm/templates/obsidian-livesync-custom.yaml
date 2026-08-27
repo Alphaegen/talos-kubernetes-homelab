@@ -18,8 +18,7 @@ spec:
     server: {{ .Values.cluster.url | default "https://kubernetes.default.svc" | quote }}
     namespace: obsidian-livesync
   ignoreDifferences:
-    - group: ""
-      kind: PersistentVolumeClaim
+    - kind: PersistentVolumeClaim
       jqPathExpressions:
         - .spec.volumeName
   syncPolicy:

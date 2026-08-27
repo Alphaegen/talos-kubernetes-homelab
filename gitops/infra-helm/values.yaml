@@ -30,17 +30,13 @@ metallb:
   # renovate: datasource=helm depName=metallb registryUrl=https://metallb.github.io/metallb versioning=helm
   version: "0.16.1"
   pools:
-    - name: public
-      addresses:
-        - "192.168.3.110-192.168.3.129"
-      advertisementNodes:
-        - rpi-w-3
     - name: servers
       addresses:
         - "192.168.20.110-192.168.20.129"
       advertisementNodes:
         - rpi-w-1
         - rpi-w-2
+        - rpi-w-3
 
 longhorn:
   enabled: true

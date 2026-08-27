@@ -64,6 +64,14 @@ spec:
             type: ClusterIP
             port: 8080
 
+          startupProbe:
+            httpGet:
+              path: /
+              port: http
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 60
+
           initContainers:
             - name: init-hacs
               image: bash

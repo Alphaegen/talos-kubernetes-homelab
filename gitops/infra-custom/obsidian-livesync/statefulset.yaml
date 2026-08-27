@@ -63,23 +63,31 @@ spec:
             - secretRef:
                 name: obsidian-livesync-credentials
           startupProbe:
-            tcpSocket:
-              port: http
+            exec:
+              command:
+                - /bin/sh
+                - -ec
+                - curl --fail --silent --show-error --user "$COUCHDB_USER:$COUCHDB_PASSWORD" http://127.0.0.1:5984/_up >/dev/null
             periodSeconds: 5
-            timeoutSeconds: 2
+            timeoutSeconds: 3
             failureThreshold: 60
           readinessProbe:
-            tcpSocket:
-              port: http
+            exec:
+              command:
+                - /bin/sh
+                - -ec
+                - curl --fail --silent --show-error --user "$COUCHDB_USER:$COUCHDB_PASSWORD" http://127.0.0.1:5984/_up >/dev/null
             periodSeconds: 10
-            timeoutSeconds: 2
+            timeoutSeconds: 3
             failureThreshold: 3
           livenessProbe:
-            tcpSocket:
-              port: http
-            initialDelaySeconds: 30
+            exec:
+              command:
+                - /bin/sh
+                - -ec
+                - curl --fail --silent --show-error --user "$COUCHDB_USER:$COUCHDB_PASSWORD" http://127.0.0.1:5984/_up >/dev/null
             periodSeconds: 30
-            timeoutSeconds: 2
+            timeoutSeconds: 5
             failureThreshold: 3
           securityContext:
             allowPrivilegeEscalation: false

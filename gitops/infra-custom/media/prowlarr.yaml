@@ -25,6 +25,21 @@ spec:
             - { name: UMASK, value: "002" }
             - name: DOTNET_SYSTEM_NET_DISABLEIPV6
               value: "1"
+          startupProbe:
+            httpGet: { path: /ping, port: http }
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 60
+          readinessProbe:
+            httpGet: { path: /ping, port: http }
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          livenessProbe:
+            httpGet: { path: /ping, port: http }
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
           volumeMounts:
             - { name: config, mountPath: /config }
       volumes:

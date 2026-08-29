@@ -62,27 +62,30 @@ spec:
                   key: POSTGRES_DB
             - name: PGDATA
               value: /var/lib/postgresql/data/pgdata
+          startupProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -ec
+                - psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -tAc 'SELECT 1' >/dev/null
+            periodSeconds: 5
+            timeoutSeconds: 5
+            failureThreshold: 60
           readinessProbe:
             exec:
               command:
-                - pg_isready
-                - -U
-                - bookorbit
-                - -d
-                - bookorbit
-            initialDelaySeconds: 5
+                - /bin/sh
+                - -ec
+                - psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -tAc 'SELECT 1' >/dev/null
             periodSeconds: 10
             timeoutSeconds: 5
-            failureThreshold: 6
+            failureThreshold: 3
           livenessProbe:
             exec:
               command:
-                - pg_isready
-                - -U
-                - bookorbit
-                - -d
-                - bookorbit
-            initialDelaySeconds: 30
+                - /bin/sh
+                - -ec
+                - psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -tAc 'SELECT 1' >/dev/null
             periodSeconds: 30
             timeoutSeconds: 5
             failureThreshold: 3

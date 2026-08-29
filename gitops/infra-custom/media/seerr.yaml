@@ -18,6 +18,13 @@ spec:
       containers:
         - name: seerr
           image: ghcr.io/seerr-team/seerr:v3.4.1
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
           ports:
             - { name: http, containerPort: 5055 }
           env:

@@ -28,6 +28,13 @@ spec:
         - name: profilarr
           image: ghcr.io/dictionarry-hub/profilarr:2.2.0
           imagePullPolicy: IfNotPresent
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
@@ -73,6 +80,13 @@ spec:
         - name: parser
           image: ghcr.io/dictionarry-hub/profilarr-parser:2.2.0
           imagePullPolicy: IfNotPresent
+          resources:
+            requests:
+              cpu: 25m
+              memory: 64Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:

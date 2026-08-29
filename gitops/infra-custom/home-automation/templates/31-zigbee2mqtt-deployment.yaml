@@ -22,6 +22,13 @@ spec:
       initContainers:
         - name: wait-for-slzb
           image: busybox:1.38
+          resources:
+            requests:
+              cpu: 5m
+              memory: 8Mi
+            limits:
+              cpu: 50m
+              memory: 32Mi
           command:
             - /bin/sh
             - -ec
@@ -34,6 +41,13 @@ spec:
               done
         - name: render-configuration
           image: busybox:1.38
+          resources:
+            requests:
+              cpu: 10m
+              memory: 16Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
           command:
             - /bin/sh
             - -ec
@@ -160,6 +174,8 @@ spec:
       containers:
         - name: zigbee2mqtt
           image: {{ .Values.zigbee2mqtt.image | quote }}
+          resources:
+{{ toYaml .Values.zigbee2mqtt.resources | indent 12 }}
           env:
             - name: TZ
               value: {{ .Values.zigbee2mqtt.timezone | quote }}

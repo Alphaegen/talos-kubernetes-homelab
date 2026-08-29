@@ -31,6 +31,13 @@ spec:
         - name: gluetun
           image: qmcgaw/gluetun:v3.41.3
           restartPolicy: Always
+          resources:
+            requests:
+              cpu: 25m
+              memory: 64Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi
           command: ["/bin/sh", "-ec"]
           args:
             - >-
@@ -85,6 +92,13 @@ spec:
             failureThreshold: 6
         - name: configure-qbittorrent-vpn
           image: sxyzy1016/qbittorrent-enhanced-edition:release-5.2.3.10
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
           command: ["/bin/sh", "-ec"]
           args:
             - |
@@ -117,6 +131,13 @@ spec:
       containers:
         - name: qb
           image: sxyzy1016/qbittorrent-enhanced-edition:release-5.2.3.10
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 1500m
+              memory: 1Gi
           ports:
             - { name: http, containerPort: 8080 }
           env:

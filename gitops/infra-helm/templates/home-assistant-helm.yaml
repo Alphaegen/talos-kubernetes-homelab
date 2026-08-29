@@ -57,6 +57,8 @@ spec:
             type: StatefulSet
           image:
             tag: {{ .Values.homeassistant.image.tag | default "" | quote }}
+          resources:
+{{ toYaml .Values.homeassistant.resources | indent 12 }}
           env:
             - name: TZ
               value: {{ .Values.timezone | default "Europe/Amsterdam" | quote }}
@@ -74,8 +76,44 @@ spec:
 
           initContainers:
             - name: init-hacs
-              image: bash
-              command: ["bash", "-c", "cd /config && wget -O - https://get.hacs.xyz | bash -"]
+              image: python:3.14.2-alpine3.23
+              command: ["python", "-c"]
+              args:
+                - |
+                  import hashlib
+                  import json
+                  import pathlib
+                  import shutil
+                  import urllib.request
+                  import zipfile
+
+                  version = "2.0.5"
+                  expected_sha256 = "97be6b824a4f38e683728cc6dd72367f6b8bad0a43428b1b3b987a3087adf413"
+                  hacs_dir = pathlib.Path("/config/custom_components/hacs")
+                  manifest = hacs_dir / "manifest.json"
+
+                  if manifest.exists() and json.loads(manifest.read_text()).get("version") == version:
+                      raise SystemExit(0)
+
+                  archive = pathlib.Path("/tmp/hacs.zip")
+                  urllib.request.urlretrieve(
+                      f"https://github.com/hacs/integration/releases/download/{version}/hacs.zip",
+                      archive,
+                  )
+                  if hashlib.sha256(archive.read_bytes()).hexdigest() != expected_sha256:
+                      raise RuntimeError("HACS archive checksum mismatch")
+
+                  shutil.rmtree(hacs_dir, ignore_errors=True)
+                  hacs_dir.mkdir(parents=True)
+                  with zipfile.ZipFile(archive) as release:
+                      release.extractall(hacs_dir)
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 32Mi
+                limits:
+                  cpu: 200m
+                  memory: 128Mi
               volumeMounts:
                 - mountPath: /config
                   name: home-assistant
@@ -147,7 +185,7 @@ spec:
           dnsPolicy: {{ if .Values.homeassistant.hostNetwork | default false }}ClusterFirstWithHostNet{{ else }}ClusterFirst{{ end }}
 
           serviceMonitor:
-            enabled: {{ .Values.homeassistant.serviceMonitor.enabled | default true }}
+            enabled: {{ .Values.homeassistant.serviceMonitor.enabled }}
             scrapeInterval: {{ .Values.homeassistant.serviceMonitor.scrapeInterval | default "30s" | quote }}
             labels:
               release: {{ .Values.homeassistant.serviceMonitor.release | default "prometheus" | quote }}

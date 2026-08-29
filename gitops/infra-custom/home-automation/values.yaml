@@ -11,6 +11,13 @@ slzb:
 
 mqtt:
   image: eclipse-mosquitto:2.0.22
+  resources:
+    requests:
+      cpu: 20m
+      memory: 32Mi
+    limits:
+      cpu: 200m
+      memory: 128Mi
   persistence:
     size: 2Gi
   service:
@@ -40,6 +47,13 @@ fallbackSecret:
 
 zigbee2mqtt:
   image: ghcr.io/koenkk/zigbee2mqtt:2.13.0
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
   timezone: Europe/Amsterdam
   persistence:
     size: 5Gi

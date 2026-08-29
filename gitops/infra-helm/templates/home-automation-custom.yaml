@@ -46,6 +46,8 @@ spec:
 
         mqtt:
           image: {{ .Values.homeAutomation.mqtt.image | default "eclipse-mosquitto:2.0.22" | quote }}
+          resources:
+{{ toYaml .Values.homeAutomation.mqtt.resources | indent 12 }}
           persistence:
             size: {{ .Values.homeAutomation.mqtt.persistence.size | default "2Gi" | quote }}
           credentialsSecret:
@@ -72,6 +74,8 @@ spec:
 
         zigbee2mqtt:
           image: {{ .Values.homeAutomation.zigbee2mqtt.image | default "ghcr.io/koenkk/zigbee2mqtt:2.10.1" | quote }}
+          resources:
+{{ toYaml .Values.homeAutomation.zigbee2mqtt.resources | indent 12 }}
           timezone: {{ .Values.timezone | default "Europe/Amsterdam" | quote }}
           persistence:
             size: {{ .Values.homeAutomation.zigbee2mqtt.persistence.size | default "5Gi" | quote }}

@@ -19,6 +19,13 @@ spec:
       initContainers:
         - name: render-config
           image: {{ .Values.mqtt.image | quote }}
+          resources:
+            requests:
+              cpu: 10m
+              memory: 16Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
           command:
             - /bin/sh
             - -ec
@@ -49,6 +56,8 @@ spec:
       containers:
         - name: mosquitto
           image: {{ .Values.mqtt.image | quote }}
+          resources:
+{{ toYaml .Values.mqtt.resources | indent 12 }}
           command:
             - mosquitto
           args:

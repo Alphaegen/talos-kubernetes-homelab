@@ -74,8 +74,18 @@ spec:
             command: ["/bin/sh", "-ec"]
             args:
               - |
+                dashboard_files="$(sed -n 's/^> "\(.*\)"$/\1/p' /etc/grafana/download_dashboards.sh)"
+                downloads_are_valid() {
+                  for dashboard_file in $dashboard_files; do
+                    if [ ! -s "$dashboard_file" ]; then
+                      echo "Downloaded dashboard is empty: $dashboard_file" >&2
+                      return 1
+                    fi
+                  done
+                }
+
                 attempt=1
-                while find /var/lib/grafana/dashboards/default -type f -size 0 | grep -q .; do
+                until downloads_are_valid; do
                   if [ "$attempt" -gt 5 ]; then
                     echo "Dashboard download remained empty after five retries" >&2
                     exit 1

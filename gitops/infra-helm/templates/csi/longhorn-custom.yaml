@@ -1,0 +1,37 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/refs/heads/main/argoproj.io/application_v1alpha1.json
+{{- if .Values.longhorn.enabled }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ include "infra.appName" (dict "root" . "name" "longhorn-custom") }}
+  labels:
+    cluster: {{ .Values.cluster.name | quote }}
+    app: longhorn-custom
+  namespace: {{ .Values.cluster.namespace | quote }}
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+    app.kubernetes.io/part-of: longhorn
+    {{- if .Values.notifications }}
+    {{ toYaml .Values.notifications | indent 4 }}
+    {{- end }}
+spec:
+  project: {{ include "infra.projectName" . }}
+  destination:
+    server: {{ .Values.cluster.url | default "https://kubernetes.default.svc" | quote }}
+    namespace: longhorn-system
+  syncPolicy:
+    {{- if .Values.sync }}
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: false
+    {{- end }}
+    syncOptions:
+      - CreateNamespace=false
+  source:
+    repoURL: {{ .Values.cluster.repoURL | quote }}
+    targetRevision: {{ .Values.cluster.revision | default "main" | quote }}
+    path: gitops/infra-custom/longhorn
+{{- end }}

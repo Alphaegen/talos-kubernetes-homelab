@@ -1,0 +1,181 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: longhorn-and-storage-safety
+  namespace: longhorn-system
+  labels:
+    release: kube-prometheus-stack
+spec:
+  groups:
+    - name: longhorn-health
+      rules:
+        - alert: LonghornMetricsMissing
+          expr: absent(longhorn_node_count_total)
+          for: 10m
+          labels:
+            severity: critical
+          annotations:
+            summary: Longhorn metrics are missing
+            description: Prometheus has not received Longhorn manager metrics for 10 minutes.
+
+        - alert: LonghornManagerUnavailable
+          expr: kube_daemonset_status_number_unavailable{namespace="longhorn-system",daemonset="longhorn-manager"} > 0
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: A Longhorn manager is unavailable
+            description: Longhorn manager is unavailable on one or more storage nodes for 5 minutes.
+
+        - alert: LonghornManagerRestarted
+          expr: sum by (pod) (increase(kube_pod_container_status_restarts_total{namespace="longhorn-system",container="longhorn-manager"}[15m])) > 0
+          labels:
+            severity: critical
+          annotations:
+            summary: Longhorn manager {{ $labels.pod }} restarted
+            description: A manager restart can drop every iSCSI session on its node. Detach and remount affected workloads before allowing restart loops.
+
+        - alert: LonghornCSINodeUnavailable
+          expr: kube_daemonset_status_number_unavailable{namespace="longhorn-system",daemonset="longhorn-csi-plugin"} > 0
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: A Longhorn CSI node plugin is unavailable
+            description: A node cannot reliably attach or detach Longhorn volumes.
+
+        - alert: LonghornNodeNotReady
+          expr: longhorn_node_status{condition="ready"} == 0
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: Longhorn node {{ $labels.node }} is not ready
+            description: Longhorn has considered the storage node unavailable for 5 minutes.
+
+        - alert: LonghornDiskNotReady
+          expr: longhorn_disk_status{condition="ready"} == 0
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: Longhorn disk {{ $labels.disk }} is not ready
+            description: Longhorn cannot use disk {{ $labels.disk }} on {{ $labels.node }}.
+
+        - alert: LonghornVolumeFaulted
+          expr: longhorn_volume_robustness{state="faulted"} == 1
+          for: 2m
+          labels:
+            severity: critical
+          annotations:
+            summary: Longhorn volume {{ $labels.volume }} is faulted
+            description: PVC {{ $labels.pvc_namespace }}/{{ $labels.pvc }} has no usable replica.
+
+        - alert: LonghornVolumeDegraded
+          expr: longhorn_volume_robustness{state="degraded"} == 1
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: Longhorn volume {{ $labels.volume }} is degraded
+            description: PVC {{ $labels.pvc_namespace }}/{{ $labels.pvc }} has lacked its intended replica count for 15 minutes.
+
+        - alert: LonghornVolumeReadOnly
+          expr: longhorn_volume_file_system_read_only == 1
+          for: 1m
+          labels:
+            severity: critical
+          annotations:
+            summary: Longhorn volume {{ $labels.volume }} is read-only
+            description: The filesystem for PVC {{ $labels.pvc_namespace }}/{{ $labels.pvc }} has been remounted read-only.
+
+        - alert: LonghornReplicaError
+          expr: longhorn_engine_replica_mode{mode="ERR"} == 1
+          for: 2m
+          labels:
+            severity: critical
+          annotations:
+            summary: Longhorn replica {{ $labels.replica }} is in error mode
+            description: Engine {{ $labels.engine }} cannot use replica {{ $labels.replica }}.
+
+        - alert: LonghornReplicaRebuildStuck
+          expr: longhorn_engine_rebuild_progress < 100
+          for: 30m
+          labels:
+            severity: warning
+          annotations:
+            summary: Longhorn replica rebuild is taking too long
+            description: Engine {{ $labels.engine }} has rebuilt to only {{ $value }}% after 30 minutes.
+
+        - alert: LonghornBackupFailed
+          expr: longhorn_backup_state == 4
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: Longhorn backup {{ $labels.backup }} failed
+            description: Backup {{ $labels.backup }} for volume {{ $labels.volume }} has remained in error for 5 minutes.
+
+        - alert: LonghornVolumeBackupStale
+          expr: (time() - longhorn_volume_last_backup_at > 108000) and on(volume) longhorn_volume_state{state="attached"} == 1
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: Longhorn backup for {{ $labels.volume }} is stale
+            description: PVC {{ $labels.pvc_namespace }}/{{ $labels.pvc }} has no successful backup newer than 30 hours.
+
+        - alert: LonghornVolumeUsageCritical
+          expr: 100 * longhorn_volume_actual_size_bytes / longhorn_volume_capacity_bytes > 90
+          for: 15m
+          labels:
+            severity: critical
+          annotations:
+            summary: Longhorn volume {{ $labels.volume }} is over 90% allocated
+            description: PVC {{ $labels.pvc_namespace }}/{{ $labels.pvc }} is {{ printf "%.1f" $value }}% allocated.
+
+    - name: storage-restart-circuit-breakers
+      rules:
+        - alert: NodeMemoryHeadroomLow
+          expr: node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes < 0.15
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: Node {{ $labels.instance }} has little memory headroom
+            description: Less than 15% of physical memory has been available for 10 minutes. Rebalance workloads before Talos invokes its OOM controller.
+
+        - alert: NodeMemoryHeadroomCritical
+          expr: node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes < 0.08
+          for: 2m
+          labels:
+            severity: critical
+          annotations:
+            summary: Node {{ $labels.instance }} is close to OOM
+            description: Less than 8% of physical memory is available. Stop repair and backup work and drain persistent workloads from this node.
+
+        - alert: CriticalNodeDaemonRestarted
+          expr: sum by (namespace, pod, container) (increase(kube_pod_container_status_restarts_total{namespace=~"kube-system|longhorn-system",container=~"cilium-agent|longhorn-manager|longhorn-csi-plugin"}[15m])) > 0
+          labels:
+            severity: critical
+          annotations:
+            summary: Critical daemon {{ $labels.namespace }}/{{ $labels.pod }} restarted
+            description: A network or storage daemon restarted. Check attached filesystems for I/O errors before allowing workload restart loops.
+
+        - alert: PersistentWorkloadRestartLoop
+          expr: sum by (namespace, pod) (increase(kube_pod_container_status_restarts_total{namespace=~"bookorbit|home-assistant|home-automation|media|monitoring|obsidian-livesync|longhorn-system"}[15m])) > 3
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: Persistent workload {{ $labels.namespace }}/{{ $labels.pod }} is restart-looping
+            description: The pod restarted more than three times in 15 minutes. Stop automated repair and inspect storage before retrying.
+
+        - alert: PersistentWorkloadStuckTerminating
+          expr: time() - kube_pod_deletion_timestamp{namespace=~"bookorbit|home-assistant|home-automation|media|monitoring|obsidian-livesync|longhorn-system"} > 300
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: Pod {{ $labels.namespace }}/{{ $labels.pod }} is stuck terminating
+            description: The pod has been terminating for over 10 minutes, often indicating a blocked volume detach or container runtime.

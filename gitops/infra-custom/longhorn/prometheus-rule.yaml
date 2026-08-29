@@ -162,6 +162,23 @@ spec:
             summary: Critical daemon {{ $labels.namespace }}/{{ $labels.pod }} restarted
             description: A network or storage daemon restarted. Check attached filesystems for I/O errors before allowing workload restart loops.
 
+        - alert: ArgoApplicationControllerRestarted
+          expr: sum(increase(kube_pod_container_status_restarts_total{namespace="argocd",container="application-controller"}[15m])) > 0
+          labels:
+            severity: critical
+          annotations:
+            summary: Argo CD application controller restarted
+            description: Stop bulk syncs and inspect controller memory plus queued Application operations before retrying reconciliation.
+
+        - alert: ArgoApplicationControllerMemoryHigh
+          expr: container_memory_working_set_bytes{namespace="argocd",container="application-controller",image!=""} / on(namespace, pod, container) kube_pod_container_resource_limits{namespace="argocd",container="application-controller",resource="memory"} > 0.8
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: Argo CD application controller memory is high
+            description: The application controller has used over 80% of its memory limit for 10 minutes. Avoid recursive syncs and inspect queued operations.
+
         - alert: PersistentWorkloadRestartLoop
           expr: sum by (namespace, pod) (increase(kube_pod_container_status_restarts_total{namespace=~"bookorbit|home-assistant|home-automation|media|monitoring|obsidian-livesync|longhorn-system"}[15m])) > 3
           for: 5m

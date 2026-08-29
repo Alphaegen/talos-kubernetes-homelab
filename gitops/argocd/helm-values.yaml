@@ -9,6 +9,18 @@ redis-ha:
 configs:
   params:
     server.insecure: true
+    # Keep a recursive/full-tree sync from reconciling every workload at once.
+    # The controller exceeded its 1 GiB limit while processing 15 concurrent
+    # operations, then repeatedly OOM-killed while resuming the same queue.
+    controller.status.processors: 10
+    controller.operation.processors: 3
+    controller.kubectl.parallelism.limit: 10
+    # Back off aggressively when a live resource cannot converge. This keeps an
+    # immutable-field error from turning into hundreds of writes and pod churn.
+    controller.self.heal.backoff.timeout.seconds: 30
+    controller.self.heal.backoff.factor: 2
+    controller.self.heal.backoff.cap.seconds: 1800
+    controller.sync.timeout.seconds: 900
 
 server:
   replicas: 2
@@ -40,10 +52,10 @@ controller:
   replicas: 1
   resources:
     requests:
-      cpu: 50m
-      memory: 384Mi
+      cpu: 250m
+      memory: 768Mi
     limits:
-      memory: 1Gi
+      memory: 2Gi
   metrics:
     enabled: true
     serviceMonitor:

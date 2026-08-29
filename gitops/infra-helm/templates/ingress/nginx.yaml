@@ -36,6 +36,14 @@ spec:
       releaseName: nginx
       valuesObject:
         controller:
+          admissionWebhooks:
+            # Helm's shared pre/post hook RBAC is unsafe under Argo CD: the
+            # ServiceAccount can be deleted before the certificate Job starts.
+            # Let cert-manager own the serving certificate and CA injection.
+            certManager:
+              enabled: true
+            patch:
+              enabled: false
           service:
             loadBalancerIP: {{ .Values.ingressController.loadBalancerIP | quote }}
             annotations:

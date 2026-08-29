@@ -3,7 +3,8 @@ machine:
   sysfs:
     devices.system.cpu.cpu0.cpufreq.scaling_governor: performance
   sysctls:
-    vm.nr_hugepages: "1024"
+    # Longhorn v2/SPDK is disabled, so keep the full memory pool available.
+    vm.nr_hugepages: "0"
     net.ipv6.conf.all.forwarding: "1"
     net.ipv6.conf.default.forwarding: "1"
     net.ipv6.conf.all.accept_ra: "0"

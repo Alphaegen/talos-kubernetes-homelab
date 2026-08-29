@@ -3,6 +3,15 @@ ipam:
 
 kubeProxyReplacement: true
 
+# Keep the node network in Burstable QoS so memory pressure targets ordinary
+# workloads before it can tear down networking and attached storage sessions.
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    memory: 1Gi
+
 gatewayAPI:
   enabled: true
   gatewayClass:

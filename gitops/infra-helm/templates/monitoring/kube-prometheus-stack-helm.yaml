@@ -54,6 +54,8 @@ spec:
             walCompression: {{ .Values.monitoring.prometheus.prometheusSpec.walCompression }}
             scrapeInterval: {{ .Values.monitoring.prometheus.prometheusSpec.scrapeInterval | quote }}
             enableAdminAPI: {{ .Values.monitoring.prometheus.prometheusSpec.enableAdminAPI }}
+            resources:
+{{ toYaml .Values.monitoring.prometheus.prometheusSpec.resources | indent 14 }}
         alertmanager:
           enabled: {{ .Values.monitoring.alertmanager.enabled }}
         kubeStateMetrics:
@@ -61,4 +63,3 @@ spec:
         nodeExporter:
           enabled: {{ .Values.monitoring.nodeExporter.enabled }}
 {{- end }}
-

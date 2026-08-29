@@ -47,8 +47,22 @@ spec:
           defaultDataPath: /var/mnt/longhorn
           defaultReplicaCount: {{ .Values.longhorn.defaultReplicaCount | default 2 }}
           upgradeChecker: false
-          autoDeletePodWhenVolumeDetachedUnexpectedly: false
-          concurrentReplicaRebuildPerNodeLimit: 1
+          autoDeletePodWhenVolumeDetachedUnexpectedly: true
+          nodeDownPodDeletionPolicy: delete-both-statefulset-and-deployment-pod
+          nodeDrainPolicy: block-if-contains-last-replica
+          concurrentReplicaRebuildPerNodeLimit: {{ .Values.longhorn.concurrentReplicaRebuildPerNodeLimit | default 1 }}
+          concurrentVolumeBackupRestorePerNodeLimit: {{ .Values.longhorn.concurrentVolumeBackupRestorePerNodeLimit | default 1 }}
+          backupConcurrentLimit: {{ .Values.longhorn.backupConcurrentLimit | default 1 }}
+          restoreConcurrentLimit: {{ .Values.longhorn.restoreConcurrentLimit | default 1 }}
+
+        defaultBackupStore:
+          backupTarget: {{ .Values.longhorn.backupTarget | quote }}
+          backupTargetCredentialSecret: ""
+          pollInterval: {{ .Values.longhorn.backupPollInterval | default 300 }}
+
+        longhornManager:
+          resources:
+{{ toYaml .Values.longhorn.managerResources | indent 12 }}
 
         persistence:
           defaultClassReplicaCount: {{ .Values.longhorn.defaultReplicaCount | default 2 }}

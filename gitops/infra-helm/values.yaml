@@ -42,6 +42,19 @@ longhorn:
   enabled: true
   # renovate: datasource=helm depName=longhorn registryUrl=https://charts.longhorn.io versioning=helm
   version: "1.12.1"
+  defaultReplicaCount: 2
+  backupTarget: "nfs://192.168.60.137:/volume1/longhorn-backups"
+  backupPollInterval: 300
+  concurrentReplicaRebuildPerNodeLimit: 1
+  concurrentVolumeBackupRestorePerNodeLimit: 1
+  backupConcurrentLimit: 1
+  restoreConcurrentLimit: 1
+  managerResources:
+    requests:
+      cpu: 50m
+      memory: 256Mi
+    limits:
+      memory: 768Mi
 
 certmanager:
   enabled: true
@@ -85,6 +98,13 @@ monitoring:
       storageClassName: longhorn
       accessModes: ["ReadWriteOnce"]
       size: 10Gi
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 768Mi
     datasources:
       datasources.yaml:
         apiVersion: 1
@@ -109,10 +129,6 @@ monitoring:
           gnetId: 14981
           revision: 2
           datasource: Prometheus
-        loki-overview:
-          gnetId: 14055
-          revision: 6
-          datasource: Loki
         argocd:
           gnetId: 14584
           revision: 1
@@ -133,8 +149,20 @@ monitoring:
       replicas: 1
       persistence:
         enabled: true
-        size: 20Gi
+        size: 40Gi
         storageClassName: longhorn
+        # Enables the Kubernetes retention-policy field; the policies below retain the PVC.
+        enableStatefulSetAutoDeletePVC: true
+        enableStatefulSetRecreationForSizeChange: true
+        whenDeleted: Retain
+        whenScaled: Retain
+      resources:
+        requests:
+          cpu: 200m
+          memory: 384Mi
+        limits:
+          cpu: "1"
+          memory: 1536Mi
     chunksCache:
       enabled: false
     resultsCache:
@@ -215,6 +243,12 @@ monitoring:
       walCompression: true
       scrapeInterval: 30s
       enableAdminAPI: false
+      resources:
+        requests:
+          cpu: 100m
+          memory: 1Gi
+        limits:
+          memory: 1536Mi
 
   alertmanager:
     enabled: true
@@ -240,6 +274,14 @@ homeassistant:
   image:
     tag: ""
 
+  resources:
+    requests:
+      cpu: 200m
+      memory: 512Mi
+    limits:
+      cpu: "2"
+      memory: 2Gi
+
   trusted_proxies:
     - 10.244.0.0/16
 
@@ -252,7 +294,9 @@ homeassistant:
   hostNetwork: false
 
   serviceMonitor:
-    enabled: true
+    # Home Assistant requires a long-lived bearer token for /api/prometheus.
+    # Keep scraping disabled until that token is stored in a Kubernetes Secret.
+    enabled: false
     scrapeInterval: "30s"
     release: "kube-prometheus-stack"
 
@@ -269,6 +313,13 @@ homeAutomation:
 
   mqtt:
     image: eclipse-mosquitto:2.0.22
+    resources:
+      requests:
+        cpu: 20m
+        memory: 32Mi
+      limits:
+        cpu: 200m
+        memory: 128Mi
     persistence:
       size: 2Gi
     credentialsSecret:
@@ -295,6 +346,13 @@ homeAutomation:
 
   zigbee2mqtt:
     image: ghcr.io/koenkk/zigbee2mqtt:2.13.0
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
     persistence:
       size: 5Gi
     config:

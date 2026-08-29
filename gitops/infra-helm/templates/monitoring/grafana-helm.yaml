@@ -54,6 +54,51 @@ spec:
             release: kube-prometheus-stack
           interval: 30s
 
+        resources:
+{{ toYaml .Values.monitoring.grafana.resources | indent 10 }}
+
+        downloadDashboards:
+          resources:
+            requests:
+              cpu: 10m
+              memory: 16Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
+
+        # The chart's generated download script masks curl failures in sed pipelines.
+        # Retry if that leaves an empty dashboard and fail startup rather than loading it.
+        extraInitContainers:
+          - name: validate-downloaded-dashboards
+            image: docker.io/curlimages/curl:8.9.1
+            command: ["/bin/sh", "-ec"]
+            args:
+              - |
+                attempt=1
+                while find /var/lib/grafana/dashboards/default -type f -size 0 | grep -q .; do
+                  if [ "$attempt" -gt 5 ]; then
+                    echo "Dashboard download remained empty after five retries" >&2
+                    exit 1
+                  fi
+                  echo "Retrying empty dashboard download (attempt $attempt/5)"
+                  /bin/sh /etc/grafana/download_dashboards.sh
+                  attempt=$((attempt + 1))
+                  sleep 5
+                done
+            resources:
+              requests:
+                cpu: 10m
+                memory: 16Mi
+              limits:
+                cpu: 100m
+                memory: 64Mi
+            volumeMounts:
+              - name: config
+                mountPath: /etc/grafana/download_dashboards.sh
+                subPath: download_dashboards.sh
+              - name: storage
+                mountPath: /var/lib/grafana
+
         dashboardProviders:
           dashboardproviders.yaml:
             apiVersion: 1
@@ -70,13 +115,26 @@ spec:
 
         # Sidecars to load dashboards & datasources into Grafana
         sidecar:
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
           dashboards:
             enabled: true
+            skipReload: true
             labelValue: "1"
             searchNamespace: ALL
             label: grafana_dashboard
+            env:
+              HEALTH_PORT: "8084"
           datasources:
             enabled: true
+            skipReload: true
+            env:
+              HEALTH_PORT: "8082"
 
         # Your existing settings
         ingress:

@@ -3,7 +3,9 @@ machine:
   sysfs:
     devices.system.cpu.cpu0.cpufreq.scaling_governor: performance
   sysctls:
-    vm.nr_hugepages: "1024"
+    # Longhorn uses the v1 data engine. Reserving 2 GiB for SPDK hugepages
+    # leaves too little memory for Kubernetes and can trigger Talos OOM kills.
+    vm.nr_hugepages: "0"
     net.ipv6.conf.all.forwarding: "1"
     net.ipv6.conf.default.forwarding: "1"
     net.ipv6.conf.all.accept_ra: "0"

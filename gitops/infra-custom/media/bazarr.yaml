@@ -1,0 +1,88 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bazarr
+  namespace: media
+spec:
+  replicas: 1
+  revisionHistoryLimit: 2
+  strategy:
+    type: Recreate
+  selector: { matchLabels: { app: bazarr } }
+  template:
+    metadata:
+      labels: { app: bazarr }
+    spec:
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+      containers:
+        - name: bazarr
+          image: lscr.io/linuxserver/bazarr:v1.6.0-ls362
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+          ports: [{ name: http, containerPort: 6767 }]
+          env:
+            - { name: PUID, value: "1000" }
+            - { name: PGID, value: "1000" }
+            - { name: UMASK, value: "002" }
+            - { name: TZ, value: "Europe/Amsterdam" }
+          startupProbe:
+            httpGet: { path: /, port: http }
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 60
+          readinessProbe:
+            httpGet: { path: /, port: http }
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          livenessProbe:
+            httpGet: { path: /, port: http }
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          volumeMounts:
+            - { name: data, mountPath: /data }
+            - { name: config, mountPath: /config }
+      volumes:
+        - { name: data, persistentVolumeClaim: { claimName: media-shared } }
+        - { name: config, persistentVolumeClaim: { claimName: bazarr-config } }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: bazarr
+  namespace: media
+spec:
+  selector: { app: bazarr }
+  ports:
+    - { name: http, port: 6767, targetPort: http }
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: bazarr
+  namespace: media
+  annotations:
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+    cert-manager.io/cluster-issuer: "letsencrypt-dns"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts: ["bazarr.homelab.niekvlam.nl"]
+      secretName: bazarr-tls
+  rules:
+    - host: bazarr.homelab.niekvlam.nl
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service: { name: bazarr, port: { number: 6767 } }

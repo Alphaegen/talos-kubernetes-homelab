@@ -28,7 +28,7 @@ spec:
                       - rpi-w-3
       containers:
         - name: radarr
-          image: lscr.io/linuxserver/radarr:6.3.0.10514-ls313
+          image: lscr.io/linuxserver/radarr:6.3.0.10514-ls315
           resources:
             requests:
               cpu: 50m

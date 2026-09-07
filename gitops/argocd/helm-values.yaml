@@ -1,7 +1,11 @@
 global:
   domain: argocd.homelab.niekvlam.nl
   image:
-    tag: v3.2.12
+    tag: v3.5.2
+  # Chart 10 enables policies by default. Preserve current connectivity during
+  # the upgrade; enable policies separately after validating cluster traffic.
+  networkPolicy:
+    create: false
 
 redis-ha:
   enabled: true

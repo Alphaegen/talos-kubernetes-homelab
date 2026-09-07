@@ -67,12 +67,12 @@ certmanager:
 sealedsecrets:
   enabled: false
   # renovate: datasource=helm depName=sealed-secrets registryUrl=https://bitnami.github.io/sealed-secrets versioning=helm
-  version: "2.19.2"
+  version: "2.19.3"
 
 ceph:
   enabled: false
   # renovate: datasource=helm depName=rook-ceph registryUrl=https://charts.rook.io/release versioning=helm
-  version: "v1.20.4"
+  version: "v1.20.7"
 
 monitoring:
   enabled: true
@@ -270,7 +270,7 @@ homeassistant:
   enabled: true
   namespace: home-assistant
   # renovate: datasource=helm depName=home-assistant registryUrl=http://pajikos.github.io/home-assistant-helm-chart/ versioning=helm
-  version: "0.3.74"
+  version: "0.3.80"
   image:
     tag: ""
 
@@ -385,7 +385,7 @@ progressiveDelivery:
     enabled: true
     namespace: argo-rollouts
     # renovate: datasource=helm depName=argo-rollouts registryUrl=https://argoproj.github.io/argo-helm versioning=helm
-    version: "2.41.1"
+    version: "2.43.0"
     serviceMonitorLabel: kube-prometheus-stack
 
 media:
@@ -416,14 +416,14 @@ security:
   eso:
     enabled: true
     # renovate: datasource=helm depName=external-secrets registryUrl=https://charts.external-secrets.io versioning=helm
-    version: "2.9.0"
+    version: "2.10.0"
     serviceMonitorLabel: kube-prometheus-stack
     bootstrap: true
 
   kyverno:
     enabled: false
     # renovate: datasource=helm depName=kyverno registryUrl=https://kyverno.github.io/kyverno/ versioning=helm
-    version: "3.8.2"
+    version: "3.9.0"
     # Start in audit to avoid surprise breakages; flip to "enforce" later.
     mode: audit # audit | enforce
     excludeNamespaces:
@@ -437,13 +437,13 @@ security:
   trivy:
     enabled: false
     # renovate: datasource=helm depName=trivy-operator registryUrl=https://aquasecurity.github.io/helm-charts/ versioning=helm
-    version: "0.35.0"
+    version: "0.36.0"
     serviceMonitorLabel: kube-prometheus-stack
 
   tailscale:
     enabled: true
     # renovate: datasource=helm depName=tailscale-operator registryUrl=https://pkgs.tailscale.com/helmcharts versioning=helm
-    version: "1.102.2"
+    version: "1.102.3"
     namespace: tailscale
     repoURL: https://pkgs.tailscale.com/helmcharts
     chart: tailscale-operator

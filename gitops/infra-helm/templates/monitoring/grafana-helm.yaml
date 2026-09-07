@@ -21,6 +21,23 @@ spec:
   destination:
     server: {{ .Values.cluster.url | default "https://kubernetes.default.svc" | quote }}
     namespace: monitoring
+  # Helm generates a fresh initial admin password on each offline render.
+  # Preserve the installed credential and its checksum to avoid restart loops.
+  # Rotate credentials explicitly; do not use adminPassword for rotation while
+  # these fields are ignored.
+  ignoreDifferences:
+    - group: ""
+      kind: Secret
+      name: grafana
+      namespace: monitoring
+      jsonPointers:
+        - /data/admin-password
+    - group: apps
+      kind: Deployment
+      name: grafana
+      namespace: monitoring
+      jsonPointers:
+        - /spec/template/metadata/annotations/checksum~1secret
   syncPolicy:
     {{- if .Values.sync }}
     automated:
@@ -29,6 +46,7 @@ spec:
     {{- end }}
     syncOptions:
       - CreateNamespace=true
+      - RespectIgnoreDifferences=true
   source:
     repoURL: https://grafana.github.io/helm-charts
     chart: grafana

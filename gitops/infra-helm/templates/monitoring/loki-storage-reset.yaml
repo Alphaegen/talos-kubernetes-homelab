@@ -66,6 +66,10 @@ spec:
               # underlying Longhorn volume as well as the Kubernetes objects.
               kubectl patch persistentvolume {{ $reset.persistentVolumeName | quote }} \
                 --type merge -p '{"spec":{"persistentVolumeReclaimPolicy":"Delete"}}'
-              kubectl -n monitoring delete persistentvolumeclaim {{ $reset.claimName | quote }} --wait=true
-              kubectl delete persistentvolume {{ $reset.persistentVolumeName | quote }} --wait=true
+              # Do not use --wait here: kubectl implements it with a list/watch
+              # request, which would broaden this Job's otherwise name-scoped
+              # RBAC. The deletion requests are accepted asynchronously; keep
+              # storageReset enabled until the PV is gone before restoring Loki.
+              kubectl -n monitoring delete persistentvolumeclaim {{ $reset.claimName | quote }} --wait=false
+              kubectl delete persistentvolume {{ $reset.persistentVolumeName | quote }} --wait=false
 {{- end }}

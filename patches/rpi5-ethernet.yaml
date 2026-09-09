@@ -1,0 +1,9 @@
+apiVersion: v1alpha1
+kind: EthernetConfig
+name: end0
+features:
+  tx-tcp-segmentation: false
+  tx-generic-segmentation: false
+rings:
+  rx: 4096
+  tx: 2048

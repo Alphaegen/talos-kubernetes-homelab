@@ -166,6 +166,17 @@ yq -o=json '.nodes[]' "$NODES_FILE" | jq -c '.' | while read -r node; do
     PATCH_ARGS+=(--config-patch @patches/disk.yaml)
   fi
 
+  # Every node in this inventory is a Raspberry Pi 5. Keep its shared Ethernet
+  # mitigation in one document; hostname-specific patches below remain available
+  # for future per-node exceptions.
+  PATCH_ARGS+=(--config-patch @patches/rpi5-ethernet.yaml)
+
+  # Apply an optional hostname-specific Talos patch/configuration document.
+  NODE_PATCH="patches/$HOST.yaml"
+  if [[ -f "$NODE_PATCH" ]]; then
+    PATCH_ARGS+=(--config-patch "@$NODE_PATCH")
+  fi
+
   "$TALOSCTL_BIN" gen config "$CLUSTER_NAME" "$ENDPOINT" \
     --with-secrets "$SECRETS_FILE" \
     --kubernetes-version "$KUBERNETES_VERSION" \

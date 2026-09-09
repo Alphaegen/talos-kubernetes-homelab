@@ -204,7 +204,11 @@ monitoring:
       enabled: true
       claimName: storage-loki-0
       persistentVolumeName: loki-restored-20260829
-      kubectlImage: registry.k8s.io/kubectl:v1.34.4
+      # registry.k8s.io/kubectl is distroless and cannot execute this Job's
+      # shell script. Bump jobName whenever its pod template must change:
+      # Kubernetes Job pod templates are immutable.
+      jobName: loki-storage-reset-v3
+      kubectlImage: alpine/k8s:1.34.4
 
   promtail:
     # renovate: datasource=helm depName=promtail registryUrl=https://grafana.github.io/helm-charts versioning=helm

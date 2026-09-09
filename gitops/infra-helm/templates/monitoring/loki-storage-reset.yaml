@@ -45,7 +45,7 @@ subjects:
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: loki-storage-reset
+  name: {{ $reset.jobName }}
   namespace: monitoring
   annotations:
     argocd.argoproj.io/sync-wave: "3"

@@ -1,0 +1,29 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Cilium's Helm chart contains no CRD documents. These are the unmodified CRD
+# sources from upstream Cilium v1.20.1, managed separately and applied before
+# the Cilium workload declaration.
+resources:
+  - v1.20.1/v2/ciliumbgpadvertisements.yaml
+  - v1.20.1/v2/ciliumbgpclusterconfigs.yaml
+  - v1.20.1/v2/ciliumbgpnodeconfigoverrides.yaml
+  - v1.20.1/v2/ciliumbgpnodeconfigs.yaml
+  - v1.20.1/v2/ciliumbgppeerconfigs.yaml
+  - v1.20.1/v2/ciliumcidrgroups.yaml
+  - v1.20.1/v2/ciliumclusterwideenvoyconfigs.yaml
+  - v1.20.1/v2/ciliumclusterwidenetworkpolicies.yaml
+  - v1.20.1/v2/ciliumegressgatewaypolicies.yaml
+  - v1.20.1/v2/ciliumendpoints.yaml
+  - v1.20.1/v2/ciliumenvoyconfigs.yaml
+  - v1.20.1/v2/ciliumidentities.yaml
+  - v1.20.1/v2/ciliumloadbalancerippools.yaml
+  - v1.20.1/v2/ciliumlocalredirectpolicies.yaml
+  - v1.20.1/v2/ciliumnetworkpolicies.yaml
+  - v1.20.1/v2/ciliumnodeconfigs.yaml
+  - v1.20.1/v2/ciliumnodes.yaml
+  - v1.20.1/v2alpha1/ciliumdatapathplugins.yaml
+  - v1.20.1/v2alpha1/ciliumendpointslices.yaml
+  - v1.20.1/v2alpha1/ciliumgatewayclassconfigs.yaml
+  - v1.20.1/v2alpha1/ciliuml2announcementpolicies.yaml
+  - v1.20.1/v2alpha1/ciliumpodippools.yaml

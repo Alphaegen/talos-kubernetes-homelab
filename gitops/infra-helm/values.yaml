@@ -201,7 +201,7 @@ monitoring:
     # fresh PVC. Do not use this to reset a different volume without updating
     # both names from the live cluster.
     storageReset:
-      enabled: true
+      enabled: false
       claimName: storage-loki-0
       persistentVolumeName: loki-restored-20260829
       # registry.k8s.io/kubectl is distroless and cannot execute this Job's

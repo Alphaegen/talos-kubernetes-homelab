@@ -3,6 +3,26 @@ ipam:
 
 kubeProxyReplacement: true
 
+# Preserve the established overlay and automatic interface/MTU discovery.
+routingMode: tunnel
+tunnelProtocol: vxlan
+MTU: 0
+devices: ""
+
+bpf:
+  masquerade: false
+
+policyEnforcementMode: default
+
+# Preserve compatibility with the initial Cilium installation throughout the
+# approved adjacent-version upgrade path.
+upgradeCompatibility: "1.18"
+
+# Limit the networking rollout to one node at a time.
+updateStrategy:
+  rollingUpdate:
+    maxUnavailable: 1
+
 # Keep the node network in Burstable QoS so memory pressure targets ordinary
 # workloads before it can tear down networking and attached storage sessions.
 resources:
@@ -17,6 +37,14 @@ gatewayAPI:
   gatewayClass:
     # Use explicit true so GatewayClass is created even when CRDs are installed after Cilium.
     create: "true"
+
+envoy:
+  updateStrategy:
+    rollingUpdate:
+      maxUnavailable: 1
+
+operator:
+  replicas: 2
 
 securityContext:
   capabilities:

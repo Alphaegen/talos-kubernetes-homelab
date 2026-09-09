@@ -25,7 +25,7 @@ machine:
   # - <load_balancer_ip>
   kubelet:
     # Talos slim kubelet image can miss iSCSI userland support; use fat image for storage workloads.
-    image: ghcr.io/siderolabs/kubelet:v1.34.4-fat
+    image: ghcr.io/siderolabs/kubelet:v1.35.8-fat
     extraMounts:
       - destination: /var/lib/longhorn
         type: bind

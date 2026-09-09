@@ -17,7 +17,7 @@ network:
 
 install:
   # Official Image Factory schematic used by all four running Talos nodes.
-  image: factory.talos.dev/metal-installer/5199ca37666edc3419ae8e1cfe49bdd89f1b5b2995e0078abaa9d710871b6751:v1.12.8
+  image: factory.talos.dev/metal-installer/5199ca37666edc3419ae8e1cfe49bdd89f1b5b2995e0078abaa9d710871b6751@sha256:d813ab448c5910181c0bed2df8e700e871f241c4bf362309f282e2c1236d9fe2
 
 nodes:
   - hostname: rpi-cp-1

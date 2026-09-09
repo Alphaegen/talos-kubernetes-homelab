@@ -1,0 +1,71 @@
+{{- if and .Values.monitoring.enabled (.Values.monitoring.loki.storageReset.enabled | default false) }}
+{{- $reset := .Values.monitoring.loki.storageReset }}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: loki-storage-reset
+  namespace: monitoring
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "infra.appName" (dict "root" . "name" "loki-storage-reset") }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+rules:
+  # This role is deliberately restricted to the restored Loki PV named below.
+  - apiGroups: [""]
+    resources: ["persistentvolumes"]
+    resourceNames: [{{ $reset.persistentVolumeName | quote }}]
+    verbs: ["get", "patch", "delete"]
+  - apiGroups: [""]
+    resources: ["persistentvolumeclaims"]
+    resourceNames: [{{ $reset.claimName | quote }}]
+    verbs: ["get", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "infra.appName" (dict "root" . "name" "loki-storage-reset") }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ include "infra.appName" (dict "root" . "name" "loki-storage-reset") }}
+subjects:
+  - kind: ServiceAccount
+    name: loki-storage-reset
+    namespace: monitoring
+---
+# This is intentionally a regular Job, not an Argo CD hook: its completed status
+# makes the reset idempotent while storageReset.enabled remains true.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: loki-storage-reset
+  namespace: monitoring
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+spec:
+  backoffLimit: 3
+  template:
+    spec:
+      serviceAccountName: loki-storage-reset
+      restartPolicy: Never
+      containers:
+        - name: reset
+          image: {{ $reset.kubectlImage | quote }}
+          command: ["/bin/sh", "-ec"]
+          args:
+            - |
+              # Loki is held at zero replicas while this reset is enabled.
+              # Change the restored PV from Retain so deleting it removes the
+              # underlying Longhorn volume as well as the Kubernetes objects.
+              kubectl patch persistentvolume {{ $reset.persistentVolumeName | quote }} \
+                --type merge -p '{"spec":{"persistentVolumeReclaimPolicy":"Delete"}}'
+              kubectl -n monitoring delete persistentvolumeclaim {{ $reset.claimName | quote }} --wait=true
+              kubectl delete persistentvolume {{ $reset.persistentVolumeName | quote }} --wait=true
+{{- end }}

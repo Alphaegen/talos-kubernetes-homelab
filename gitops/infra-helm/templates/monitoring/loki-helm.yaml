@@ -22,7 +22,7 @@ spec:
     server: {{ .Values.cluster.url | default "https://kubernetes.default.svc" | quote }}
     namespace: monitoring
   syncPolicy:
-    {{- if .Values.sync }}
+    {{- if and .Values.sync (not (.Values.monitoring.loki.storageReset.enabled | default false)) }}
     automated:
       prune: true
       selfHeal: true
@@ -43,7 +43,11 @@ spec:
       values: |-
         # top-level chart keys
         deploymentMode: {{ .Values.monitoring.loki.deploymentMode | default "SingleBinary" | quote }}
-{{- with .Values.monitoring.loki.singleBinary }}
+{{- $singleBinary := deepCopy .Values.monitoring.loki.singleBinary }}
+{{- if .Values.monitoring.loki.storageReset.enabled | default false }}
+{{- $_ := set $singleBinary "replicas" 0 }}
+{{- end }}
+{{- with $singleBinary }}
         singleBinary:
 {{ toYaml . | indent 10 }}
 {{- end }}
@@ -80,7 +84,7 @@ spec:
         loki:
 {{ toYaml (omit .Values.monitoring.loki
             "version" "gateway" "singleBinary" "deploymentMode"
-            "chunksCache" "resultsCache" "canary") | indent 10 }}
+            "chunksCache" "resultsCache" "canary" "storageReset") | indent 10 }}
 
 {{- with .Values.monitoring.loki.gateway }}
         # gateway is a sibling of 'loki:'

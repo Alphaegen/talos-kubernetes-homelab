@@ -390,7 +390,7 @@ progressiveDelivery:
     enabled: true
     namespace: argo-rollouts
     # renovate: datasource=helm depName=argo-rollouts registryUrl=https://argoproj.github.io/argo-helm versioning=helm
-    version: "2.43.0"
+    version: "2.43.1"
     serviceMonitorLabel: kube-prometheus-stack
 
 media:

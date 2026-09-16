@@ -25,6 +25,7 @@ spec:
       selfHeal: true
     {{- end }}
     syncOptions:
+      - FailOnSharedResource=true
       # The source contains and owns the Namespace manifest.
       - CreateNamespace=false
       - SkipDryRunOnMissingResource=true

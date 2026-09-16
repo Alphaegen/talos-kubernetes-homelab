@@ -27,6 +27,7 @@ spec:
       selfHeal: true
     {{- end }}
     syncOptions:
+      - FailOnSharedResource=true
       - CreateNamespace=true
       # ServiceMonitor may be discovered before the monitoring CRDs finish
       # their independently automated first sync. Argo CD will retry it.

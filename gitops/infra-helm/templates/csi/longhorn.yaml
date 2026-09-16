@@ -27,6 +27,7 @@ spec:
       selfHeal: true
     {{- end }}
     syncOptions:
+      - FailOnSharedResource=true
       - CreateNamespace=true
       # The bundled ServiceMonitor/PrometheusRule can be encountered while the
       # monitoring Application is still establishing its CRDs.

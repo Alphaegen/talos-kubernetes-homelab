@@ -26,6 +26,7 @@ spec:
       selfHeal: true
     {{- end }}
     syncOptions:
+      - FailOnSharedResource=true
       - CreateNamespace=false
   source:
     repoURL: {{ .Values.cluster.repoURL | quote }}

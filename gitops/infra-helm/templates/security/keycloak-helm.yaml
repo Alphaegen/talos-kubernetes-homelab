@@ -22,6 +22,7 @@ spec:
       selfHeal: true
     {{- end }}
     syncOptions:
+      - FailOnSharedResource=true
       - CreateNamespace=true
       - SkipDryRunOnMissingResource=true
   source:

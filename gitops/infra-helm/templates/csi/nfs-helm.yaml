@@ -23,6 +23,7 @@ spec:
       selfHeal: true
     {{- end }}
     syncOptions:
+      - FailOnSharedResource=true
       - CreateNamespace=true
   source:
     repoURL: https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner/

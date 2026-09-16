@@ -10,8 +10,8 @@ metadata:
     app: home-automation
   namespace: {{ .Values.cluster.namespace | quote }}
   annotations:
-    # Deploy after core infra (ingress/cert-manager/security bootstrap).
-    argocd.argoproj.io/sync-wave: "16"
+    # Stage 2: stateful workload after storage and secret foundations.
+    argocd.argoproj.io/sync-wave: "2"
 spec:
   project: {{ include "infra.projectName" . }}
   destination:
@@ -24,7 +24,9 @@ spec:
       selfHeal: true
     {{- end }}
     syncOptions:
-      - CreateNamespace=true
+      # The chart contains and owns the Namespace manifest.
+      - CreateNamespace=false
+      - SkipDryRunOnMissingResource=true
   source:
     repoURL: {{ .Values.cluster.repoURL | quote }}
     targetRevision: {{ .Values.cluster.revision | default "main" | quote }}

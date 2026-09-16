@@ -10,8 +10,8 @@ metadata:
   finalizers:
     - resources-finalizer.argocd.argoproj.io
   annotations:
-    # Apply after Keycloak is up
-    argocd.argoproj.io/sync-wave: "11"
+    # Stage 2: optional identity integrations. Keycloak remains disabled by default.
+    argocd.argoproj.io/sync-wave: "2"
 spec:
   project: {{ include "infra.projectName" . }}
   destination:
@@ -23,6 +23,9 @@ spec:
       prune: true
       selfHeal: true
     {{- end }}
+    syncOptions:
+      - CreateNamespace=false
+      - SkipDryRunOnMissingResource=true
   source:
     repoURL: {{ .Values.cluster.repoURL | quote }}
     targetRevision: {{ .Values.cluster.revision | default "main" | quote }}

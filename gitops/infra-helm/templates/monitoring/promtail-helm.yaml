@@ -11,7 +11,8 @@ metadata:
   finalizers:
     - resources-finalizer.argocd.argoproj.io
   annotations:
-    argocd.argoproj.io/sync-wave: "2"
+    # Stage 1: monitoring service after the monitoring namespace foundation.
+    argocd.argoproj.io/sync-wave: "1"
     app.kubernetes.io/part-of: monitoring
     {{- if .Values.notifications }}
     {{ toYaml .Values.notifications | indent 4 }}
@@ -28,12 +29,8 @@ spec:
       selfHeal: true
     {{- end }}
     syncOptions:
-      - CreateNamespace=true
-    managedNamespaceMetadata:
-      labels:
-        pod-security.kubernetes.io/enforce: privileged
-        pod-security.kubernetes.io/warn: privileged
-        pod-security.kubernetes.io/audit: privileged
+      # kube-prometheus-stack is the sole owner/creator of monitoring namespace metadata.
+      - CreateNamespace=false
   source:
     repoURL: https://grafana.github.io/helm-charts
     chart: promtail
@@ -43,4 +40,3 @@ spec:
       values: |
 {{ toYaml .Values.monitoring.promtail | indent 8 }}
 {{- end }}
-

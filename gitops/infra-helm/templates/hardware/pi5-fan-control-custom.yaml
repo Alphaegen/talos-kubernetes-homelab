@@ -11,7 +11,8 @@ metadata:
   finalizers:
     - resources-finalizer.argocd.argoproj.io
   annotations:
-    argocd.argoproj.io/sync-wave: "2"
+    # Stage 1: stateless platform add-on.
+    argocd.argoproj.io/sync-wave: "1"
     app.kubernetes.io/part-of: infrastructure
 spec:
   project: {{ include "infra.projectName" . }}

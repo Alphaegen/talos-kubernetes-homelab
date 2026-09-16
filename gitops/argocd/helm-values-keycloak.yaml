@@ -1,0 +1,19 @@
+# Dormant Argo CD-owned values for the optional Keycloak integration.
+#
+# This file is intentionally not referenced by kustomization.yaml while
+# security.keycloak.enabled=false. Merge this `configs.cm` block into
+# helm-values.yaml (or add it as an additional Helm values file) as part of a
+# reviewed Keycloak enablement. The Keycloak integration Application owns only
+# its ExternalSecret; it must not own argocd-cm or argocd-secret.
+configs:
+  cm:
+    url: https://argocd.homelab.niekvlam.nl
+    oidc.config: |
+      name: Keycloak
+      issuer: https://keycloak.homelab.niekvlam.nl/realms/homelab
+      clientID: $oidc.keycloak.clientID
+      clientSecret: $oidc.keycloak.clientSecret
+      requestedScopes: ["openid", "profile", "email", "groups"]
+      requestedIDTokenClaims:
+        groups:
+          essential: true

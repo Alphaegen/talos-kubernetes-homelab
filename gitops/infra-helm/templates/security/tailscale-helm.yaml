@@ -8,7 +8,9 @@ metadata:
     app: tailscale
   namespace: {{ .Values.cluster.namespace | quote }}
   annotations:
-    argocd.argoproj.io/sync-wave: "14"
+    # Stage 1: the credential ExternalSecret is owned by the stage-0 External
+    # Secrets Application. The operator and Connector stay together here.
+    argocd.argoproj.io/sync-wave: "1"
 spec:
   project: {{ include "infra.projectName" . }}
   destination:
@@ -22,10 +24,40 @@ spec:
     {{- end }}
     syncOptions:
       - CreateNamespace=true
-  source:
-    repoURL: {{ .Values.security.tailscale.repoURL | default "https://pkgs.tailscale.com/helmcharts" | quote }}
-    chart: {{ .Values.security.tailscale.chart | default "tailscale-operator" | quote }}
-    targetRevision: {{ .Values.security.tailscale.version | quote }}
-    helm:
-      releaseName: tailscale-operator
+    managedNamespaceMetadata:
+      labels:
+        # Connector proxies need privileged init/container settings for forwarding.
+        pod-security.kubernetes.io/enforce: privileged
+        pod-security.kubernetes.io/warn: privileged
+        pod-security.kubernetes.io/audit: privileged
+  sources:
+    - repoURL: {{ .Values.security.tailscale.repoURL | default "https://pkgs.tailscale.com/helmcharts" | quote }}
+      chart: {{ .Values.security.tailscale.chart | default "tailscale-operator" | quote }}
+      targetRevision: {{ .Values.security.tailscale.version | quote }}
+      helm:
+        releaseName: tailscale-operator
+    - repoURL: {{ .Values.cluster.repoURL | quote }}
+      targetRevision: {{ .Values.cluster.revision | default "main" | quote }}
+      path: gitops/infra-custom/tailscale
+      helm:
+        releaseName: tailscale-custom
+        values: |
+          connector:
+            enabled: {{ .Values.security.tailscale.connector.enabled | default false }}
+            name: {{ .Values.security.tailscale.connector.name | default "home-lan" | quote }}
+            hostnamePrefix: {{ .Values.security.tailscale.connector.hostnamePrefix | default "home-lan" | quote }}
+            replicas: {{ .Values.security.tailscale.connector.replicas | default 1 }}
+            {{- if .Values.security.tailscale.connector.tags }}
+            tags:
+            {{- range .Values.security.tailscale.connector.tags }}
+              - {{ . | quote }}
+            {{- end }}
+            {{- end }}
+            subnetRouter:
+              advertiseRoutes:
+              {{- range (.Values.security.tailscale.connector.subnetRouter.advertiseRoutes | default (list)) }}
+                - {{ . | quote }}
+              {{- end }}
+            exitNode:
+              enabled: {{ .Values.security.tailscale.connector.exitNode.enabled | default false }}
 {{- end }}

@@ -9,7 +9,8 @@ metadata:
     app: kube-prometheus-stack
   namespace: {{ .Values.cluster.namespace | quote }}
   annotations:
-    argocd.argoproj.io/sync-wave: "2"
+    # Stage 0: establish monitoring CRDs before add-ons publish monitors/rules.
+    argocd.argoproj.io/sync-wave: "0"
     app.kubernetes.io/part-of: monitoring
     {{- if .Values.notifications }}
     {{ toYaml .Values.notifications | indent 4 }}

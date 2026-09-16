@@ -9,6 +9,7 @@ metadata:
     cluster: {{ .Values.cluster.name | quote }}
     app: nfs-provisioner
   annotations:
+    # Stage 1: storage add-on after bootstrap foundations.
     argocd.argoproj.io/sync-wave: "1"
 spec:
   project: {{ include "infra.projectName" . }}

@@ -9,7 +9,8 @@ metadata:
     app: grafana
   namespace: {{ .Values.cluster.namespace | quote }}
   annotations:
-    argocd.argoproj.io/sync-wave: "2"
+    # Stage 1: monitoring service after the stage-0 CRD provider.
+    argocd.argoproj.io/sync-wave: "1"
     app.kubernetes.io/part-of: monitoring
     {{- if .Values.notifications }}
     {{ toYaml .Values.notifications | indent 4 }}
@@ -43,8 +44,10 @@ spec:
       selfHeal: true
     {{- end }}
     syncOptions:
-      - CreateNamespace=true
+      # kube-prometheus-stack is the sole owner/creator of monitoring namespace metadata.
+      - CreateNamespace=false
       - RespectIgnoreDifferences=true
+      - SkipDryRunOnMissingResource=true
   source:
     repoURL: https://grafana.github.io/helm-charts
     chart: grafana
@@ -63,6 +66,30 @@ spec:
         grafana.ini:
           metrics:
             enabled: true
+          {{- if and .Values.security.enabled .Values.security.keycloak.enabled }}
+          server:
+            root_url: {{ printf "https://grafana.%s.nl" .Values.cluster.name | quote }}
+          auth.generic_oauth:
+            enabled: true
+            name: Keycloak
+            allow_sign_up: true
+            client_id: $__file{/etc/secrets/oidc/client-id}
+            client_secret: $__file{/etc/secrets/oidc/client-secret}
+            scopes: openid profile email groups
+            auth_url: {{ printf "https://keycloak.%s.nl/realms/homelab/protocol/openid-connect/auth" .Values.cluster.name | quote }}
+            token_url: {{ printf "https://keycloak.%s.nl/realms/homelab/protocol/openid-connect/token" .Values.cluster.name | quote }}
+            api_url: {{ printf "https://keycloak.%s.nl/realms/homelab/protocol/openid-connect/userinfo" .Values.cluster.name | quote }}
+            login_attribute_path: preferred_username
+            groups_attribute_path: "contains(groups[*], 'grafana-admin') && 'Admin' || 'Viewer'"
+          {{- end }}
+
+        {{- if and .Values.security.enabled .Values.security.keycloak.enabled }}
+        extraSecretMounts:
+          - name: oidc-secret
+            secretName: grafana-oidc-secret
+            mountPath: /etc/secrets/oidc
+            readOnly: true
+        {{- end }}
 
         serviceMonitor:
           enabled: true

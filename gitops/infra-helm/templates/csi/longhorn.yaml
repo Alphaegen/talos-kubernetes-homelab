@@ -9,7 +9,8 @@ metadata:
     app: longhorn
   namespace: {{ .Values.cluster.namespace | quote }}
   annotations:
-    argocd.argoproj.io/sync-wave: "1"
+    # Stage 0: storage provider and its CRD-backed configuration.
+    argocd.argoproj.io/sync-wave: "0"
     app.kubernetes.io/part-of: longhorn
     {{- if .Values.notifications }}
     {{ toYaml .Values.notifications | indent 4 }}
@@ -27,57 +28,65 @@ spec:
     {{- end }}
     syncOptions:
       - CreateNamespace=true
+      # The bundled ServiceMonitor/PrometheusRule can be encountered while the
+      # monitoring Application is still establishing its CRDs.
+      - SkipDryRunOnMissingResource=true
     managedNamespaceMetadata:
       labels:
         pod-security.kubernetes.io/enforce: privileged
         pod-security.kubernetes.io/warn: privileged
         pod-security.kubernetes.io/audit: privileged
-  source:
-    repoURL: https://charts.longhorn.io
-    chart: longhorn
-    targetRevision: {{ .Values.longhorn.version | quote }}
-    helm:
-      releaseName: longhorn
-      values: |
-        preUpgradeChecker:
-          jobEnabled: false
-          upgradeVersionCheck: false
+  # Deliberately no resources finalizer: deleting the Application must not
+  # cascade into the storage control plane or its stateful resources.
+  sources:
+    - repoURL: https://charts.longhorn.io
+      chart: longhorn
+      targetRevision: {{ .Values.longhorn.version | quote }}
+      helm:
+        releaseName: longhorn
+        values: |
+          preUpgradeChecker:
+            jobEnabled: false
+            upgradeVersionCheck: false
 
-        defaultSettings:
-          defaultDataPath: /var/mnt/longhorn
-          defaultReplicaCount: {{ .Values.longhorn.defaultReplicaCount | default 2 }}
-          upgradeChecker: false
-          autoDeletePodWhenVolumeDetachedUnexpectedly: true
-          nodeDownPodDeletionPolicy: delete-both-statefulset-and-deployment-pod
-          nodeDrainPolicy: block-if-contains-last-replica
-          concurrentReplicaRebuildPerNodeLimit: {{ .Values.longhorn.concurrentReplicaRebuildPerNodeLimit | default 1 }}
-          concurrentVolumeBackupRestorePerNodeLimit: {{ .Values.longhorn.concurrentVolumeBackupRestorePerNodeLimit | default 1 }}
-          backupConcurrentLimit: {{ .Values.longhorn.backupConcurrentLimit | default 1 }}
-          restoreConcurrentLimit: {{ .Values.longhorn.restoreConcurrentLimit | default 1 }}
+          defaultSettings:
+            defaultDataPath: /var/mnt/longhorn
+            defaultReplicaCount: {{ .Values.longhorn.defaultReplicaCount | default 2 }}
+            upgradeChecker: false
+            autoDeletePodWhenVolumeDetachedUnexpectedly: true
+            nodeDownPodDeletionPolicy: delete-both-statefulset-and-deployment-pod
+            nodeDrainPolicy: block-if-contains-last-replica
+            concurrentReplicaRebuildPerNodeLimit: {{ .Values.longhorn.concurrentReplicaRebuildPerNodeLimit | default 1 }}
+            concurrentVolumeBackupRestorePerNodeLimit: {{ .Values.longhorn.concurrentVolumeBackupRestorePerNodeLimit | default 1 }}
+            backupConcurrentLimit: {{ .Values.longhorn.backupConcurrentLimit | default 1 }}
+            restoreConcurrentLimit: {{ .Values.longhorn.restoreConcurrentLimit | default 1 }}
 
-        defaultBackupStore:
-          backupTarget: {{ .Values.longhorn.backupTarget | quote }}
-          backupTargetCredentialSecret: ""
-          pollInterval: {{ .Values.longhorn.backupPollInterval | default 300 }}
+          defaultBackupStore:
+            backupTarget: {{ .Values.longhorn.backupTarget | quote }}
+            backupTargetCredentialSecret: ""
+            pollInterval: {{ .Values.longhorn.backupPollInterval | default 300 }}
 
-        longhornManager:
-          resources:
-{{ toYaml .Values.longhorn.managerResources | indent 12 }}
+          longhornManager:
+            resources:
+{{ toYaml .Values.longhorn.managerResources | indent 14 }}
 
-        persistence:
-          defaultClassReplicaCount: {{ .Values.longhorn.defaultReplicaCount | default 2 }}
+          persistence:
+            defaultClassReplicaCount: {{ .Values.longhorn.defaultReplicaCount | default 2 }}
 
-        service:
-          ui:
-            type: ClusterIP
+          service:
+            ui:
+              type: ClusterIP
 
-        ingress:
-          enabled: true
-          ingressClassName: nginx
-          host: longhorn.{{ .Values.cluster.name }}.nl
-          tls: true
-          tlsSecret: longhorn-tls-secret
-          annotations:
-            cert-manager.io/cluster-issuer: "letsencrypt-dns"
-            nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+          ingress:
+            enabled: true
+            ingressClassName: nginx
+            host: longhorn.{{ .Values.cluster.name }}.nl
+            tls: true
+            tlsSecret: longhorn-tls-secret
+            annotations:
+              cert-manager.io/cluster-issuer: "letsencrypt-dns"
+              nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    - repoURL: {{ .Values.cluster.repoURL | quote }}
+      targetRevision: {{ .Values.cluster.revision | default "main" | quote }}
+      path: gitops/infra-custom/longhorn
 {{- end }}

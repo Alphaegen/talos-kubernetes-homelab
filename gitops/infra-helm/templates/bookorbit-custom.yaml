@@ -9,7 +9,8 @@ metadata:
     cluster: {{ .Values.cluster.name | quote }}
     app: bookorbit
   annotations:
-    argocd.argoproj.io/sync-wave: "15"
+    # Stage 2: stateful workload after bootstrap foundations.
+    argocd.argoproj.io/sync-wave: "2"
 spec:
   project: {{ include "infra.projectName" . }}
   destination:
@@ -26,8 +27,10 @@ spec:
       selfHeal: true
     {{- end }}
     syncOptions:
-      - CreateNamespace=true
+      # The source contains and owns the Namespace manifest.
+      - CreateNamespace=false
       - RespectIgnoreDifferences=true
+      - SkipDryRunOnMissingResource=true
   source:
     repoURL: {{ .Values.cluster.repoURL | quote }}
     targetRevision: {{ .Values.cluster.revision | default "main" | quote }}

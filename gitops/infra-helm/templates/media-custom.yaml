@@ -9,8 +9,8 @@ metadata:
     cluster: {{ .Values.cluster.name | quote }}
     app: media
   annotations:
-    # after provisioner is up
-    argocd.argoproj.io/sync-wave: "15"
+    # Stage 2: stateful workload after the stage-1 NFS provisioner.
+    argocd.argoproj.io/sync-wave: "2"
 spec:
   project: {{ include "infra.projectName" . }}
   destination:
@@ -30,6 +30,7 @@ spec:
       - CreateNamespace=true
       - PruneLast=true
       - RespectIgnoreDifferences=true
+      - SkipDryRunOnMissingResource=true
     managedNamespaceMetadata:
       labels:
         # Gluetun needs NET_ADMIN and /dev/net/tun.

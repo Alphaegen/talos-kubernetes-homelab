@@ -5,6 +5,8 @@ kind: L2Advertisement
 metadata:
   name: {{ .name | quote }}
   namespace: {{ $.Values.namespace | default "metallb-system" | quote }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
 spec:
   ipAddressPools:
   {{- range .ipAddressPools }}

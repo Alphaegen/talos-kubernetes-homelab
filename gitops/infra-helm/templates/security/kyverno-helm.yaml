@@ -27,18 +27,28 @@ spec:
     syncOptions:
       - CreateNamespace=true
       - ServerSideApply=true
-  source:
-    repoURL: https://kyverno.github.io/kyverno
-    chart: kyverno
-    targetRevision: {{ .Values.security.kyverno.version | quote }}
-    helm:
-      releaseName: kyverno
-      values: |
-        admissionController:
-          replicas: 2
-        backgroundController:
-          replicas: 1
-        reportsController:
-          replicas: 1
+  sources:
+    - repoURL: https://kyverno.github.io/kyverno
+      chart: kyverno
+      targetRevision: {{ .Values.security.kyverno.version | quote }}
+      helm:
+        releaseName: kyverno
+        values: |
+          admissionController:
+            replicas: 2
+          backgroundController:
+            replicas: 1
+          reportsController:
+            replicas: 1
+    - repoURL: {{ .Values.cluster.repoURL | quote }}
+      targetRevision: {{ .Values.cluster.revision | default "main" | quote }}
+      path: gitops/infra-custom/kyverno
+      helm:
+        releaseName: kyverno-policies
+        values: |-
+          mode: {{ .Values.security.kyverno.mode | default "audit" }}
+          excludeNamespaces:
+          {{- range $ns := .Values.security.kyverno.excludeNamespaces }}
+            - {{ $ns }}
+          {{- end }}
 {{- end }}
-

@@ -9,6 +9,7 @@ metadata:
     app: cert-manager
   namespace: {{ .Values.cluster.namespace | quote }}
   annotations:
+    # Stage 0: API providers and other bootstrap foundations.
     argocd.argoproj.io/sync-wave: "0"
     app.kubernetes.io/part-of: cert-manager
     {{- if .Values.notifications }}
@@ -27,24 +28,38 @@ spec:
     {{- end }}
     syncOptions:
       - CreateNamespace=true
+      # ServiceMonitor may be discovered before the monitoring CRDs finish
+      # their independently automated first sync. Argo CD will retry it.
+      - SkipDryRunOnMissingResource=true
     managedNamespaceMetadata:
       labels:
         pod-security.kubernetes.io/enforce: privileged
         pod-security.kubernetes.io/audit: privileged
         pod-security.kubernetes.io/warn: privileged
-  source:
-    repoURL: https://charts.jetstack.io
-    chart: cert-manager
-    targetRevision: {{ .Values.certmanager.version | quote }}
-    helm:
-      version: v3
-      releaseName: cert-manager
-      values: |
-        installCRDs: true  # or crds.enabled: true on newer charts
-        prometheus:
-          enabled: true
-          servicemonitor:
+  # Keep the controller/CRDs and the ClusterIssuer in one Application so Argo
+  # CD can order the CRD before the custom resource during a single sync.
+  sources:
+    - repoURL: https://charts.jetstack.io
+      chart: cert-manager
+      targetRevision: {{ .Values.certmanager.version | quote }}
+      helm:
+        version: v3
+        releaseName: cert-manager
+        values: |
+          installCRDs: true  # or crds.enabled: true on newer charts
+          prometheus:
+            enabled: true
+            servicemonitor:
               enabled: true
               labels:
                 release: kube-prometheus-stack
+    - repoURL: {{ .Values.cluster.repoURL | quote }}
+      path: gitops/infra-custom/cert-manager
+      targetRevision: {{ .Values.cluster.revision | default "main" | quote }}
+      helm:
+        version: v3
+        releaseName: cert-manager-custom
+        values: |
+          email: {{ .Values.certmanager.acme.email }}
+          server: {{ .Values.certmanager.acme.server }}
 {{- end }}

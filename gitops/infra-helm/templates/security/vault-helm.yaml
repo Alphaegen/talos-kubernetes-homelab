@@ -8,7 +8,8 @@ metadata:
     app: vault
   namespace: {{ .Values.cluster.namespace | quote }}
   annotations:
-    argocd.argoproj.io/sync-wave: "10"
+    # Stage 1: optional stateful platform service after storage foundations.
+    argocd.argoproj.io/sync-wave: "1"
 spec:
   project: {{ include "infra.projectName" . }}
   destination:

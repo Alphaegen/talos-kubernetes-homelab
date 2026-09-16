@@ -9,7 +9,8 @@ metadata:
     cluster: {{ .Values.cluster.name | quote }}
     app: home-assistant
   annotations:
-    argocd.argoproj.io/sync-wave: "0"
+    # Stage 2: workload; its PVC depends on the stage-0 Longhorn provider.
+    argocd.argoproj.io/sync-wave: "2"
     app.kubernetes.io/part-of: smarthome
     {{- if .Values.notifications }}
     {{ toYaml .Values.notifications | indent 4 }}
@@ -38,6 +39,7 @@ spec:
       - CreateNamespace=true
       - ServerSideApply=true
       - RespectIgnoreDifferences=true
+      - SkipDryRunOnMissingResource=true
     managedNamespaceMetadata:
       labels:
         # Only needed if you plan to mount USB devices and run privileged

@@ -3,6 +3,9 @@ apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
   name: baseline-security
+  annotations:
+    # The Kyverno controller/CRDs are wave 0 in the same Application.
+    argocd.argoproj.io/sync-wave: "1"
 spec:
   validationFailureAction: {{ ternary "Enforce" "Audit" (eq .Values.mode "enforce") }}
   background: true

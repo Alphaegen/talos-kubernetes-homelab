@@ -7,6 +7,9 @@ apiVersion: tailscale.com/v1alpha1
 kind: Connector
 metadata:
   name: {{ .Values.connector.name }}
+  annotations:
+    # The Tailscale operator/CRDs are wave 0 in the same Application.
+    argocd.argoproj.io/sync-wave: "1"
 spec:
   hostnamePrefix: {{ .Values.connector.hostnamePrefix | quote }}
   replicas: {{ .Values.connector.replicas }}

@@ -11,8 +11,8 @@ metadata:
   finalizers:
     - resources-finalizer.argocd.argoproj.io
   annotations:
-    # Deploy after monitoring/home-automation so smoke targets mostly exist.
-    argocd.argoproj.io/sync-wave: "18"
+    # Stage 2: validation workload after bootstrap foundations.
+    argocd.argoproj.io/sync-wave: "2"
 spec:
   project: {{ include "infra.projectName" . }}
   destination:
@@ -25,7 +25,9 @@ spec:
       selfHeal: true
     {{- end }}
     syncOptions:
-      - CreateNamespace=true
+      # The source contains and owns the Namespace manifest.
+      - CreateNamespace=false
+      - SkipDryRunOnMissingResource=true
   source:
     repoURL: {{ .Values.cluster.repoURL | quote }}
     targetRevision: {{ .Values.cluster.revision | default "main" | quote }}

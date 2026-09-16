@@ -9,6 +9,7 @@ metadata:
     app: metallb
   namespace: {{ .Values.cluster.namespace | quote }}
   annotations:
+    # Stage 0: load-balancer controller and its CRD-backed configuration.
     argocd.argoproj.io/sync-wave: "0"
     app.kubernetes.io/part-of: metallb
     {{- if .Values.notifications }}
@@ -32,78 +33,48 @@ spec:
         pod-security.kubernetes.io/enforce: privileged
         pod-security.kubernetes.io/audit: privileged
         pod-security.kubernetes.io/warn: privileged
-  source:
-    repoURL: https://metallb.github.io/metallb
-    chart: metallb
-    targetRevision: {{ .Values.metallb.version | quote }}
-    helm:
-      version: v3
-      releaseName: metallb
-      values: |
-        prometheus:
-          serviceMonitor:
-            enabled: false
-        frr-k8s:
+  sources:
+    - repoURL: https://metallb.github.io/metallb
+      chart: metallb
+      targetRevision: {{ .Values.metallb.version | quote }}
+      helm:
+        version: v3
+        releaseName: metallb
+        values: |
           prometheus:
             serviceMonitor:
               enabled: false
----
-# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/refs/heads/main/argoproj.io/application_v1alpha1.json
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: {{ include "infra.appName" (dict "root" . "name" "metallb-config") }}
-  labels:
-    cluster: {{ .Values.cluster.name | quote }}
-    app: metallb-config
-  namespace: {{ .Values.cluster.namespace | quote }}
-  annotations:
-    argocd.argoproj.io/sync-wave: "1"
-    app.kubernetes.io/part-of: metallb
-    {{- if .Values.notifications }}
-    {{ toYaml .Values.notifications | indent 4 }}
-    {{- end }}
-spec:
-  project: {{ include "infra.projectName" . }}
-  destination:
-    server: {{ .Values.cluster.url | default "https://kubernetes.default.svc" | quote }}
-    namespace: metallb-system
-  syncPolicy:
-    {{- if .Values.sync }}
-    automated:
-      prune: true
-      selfHeal: true
-    {{- end }}
-    syncOptions:
-      - CreateNamespace=true
-  source:
-    repoURL: {{ .Values.cluster.repoURL | quote }}
-    path: gitops/infra-custom/metallb
-    targetRevision: {{ .Values.cluster.revision | default "main" | quote }}
-    helm:
-      releaseName: metallb-config
-      values: |
-        namespace: metallb-system
-        ipAddressPools:
-        {{- range .Values.metallb.pools }}
-          - name: {{ .name }}
-            addresses:
-            {{- range .addresses }}
-              - {{ . }}
-            {{- end }}
-        {{- end }}
-        l2Advertisements:
-        {{- range .Values.metallb.pools }}
-          - name: {{ .name }}
-            ipAddressPools:
-              - {{ .name }}
-            nodeSelectors:
-              - matchExpressions:
-                  - key: kubernetes.io/hostname
-                    operator: In
-                    values:
-                    {{- range .advertisementNodes }}
-                      - {{ . }}
-                    {{- end }}
+          frr-k8s:
+            prometheus:
+              serviceMonitor:
+                enabled: false
+    - repoURL: {{ .Values.cluster.repoURL | quote }}
+      path: gitops/infra-custom/metallb
+      targetRevision: {{ .Values.cluster.revision | default "main" | quote }}
+      helm:
+        releaseName: metallb-config
+        values: |
+          namespace: metallb-system
+          ipAddressPools:
+          {{- range .Values.metallb.pools }}
+            - name: {{ .name }}
+              addresses:
+              {{- range .addresses }}
+                - {{ . }}
+              {{- end }}
           {{- end }}
+          l2Advertisements:
+          {{- range .Values.metallb.pools }}
+            - name: {{ .name }}
+              ipAddressPools:
+                - {{ .name }}
+              nodeSelectors:
+                - matchExpressions:
+                    - key: kubernetes.io/hostname
+                      operator: In
+                      values:
+                      {{- range .advertisementNodes }}
+                        - {{ . }}
+                      {{- end }}
+            {{- end }}
 {{- end }}

@@ -59,7 +59,7 @@ longhorn:
 certmanager:
   enabled: true
   # renovate: datasource=helm depName=cert-manager registryUrl=https://charts.jetstack.io versioning=helm
-  version: "v1.21.1"
+  version: "v1.21.2"
   acme:
     email: vlam4695+homelab@gmail.com
     server: "https://acme-v02.api.letsencrypt.org/directory"
@@ -67,7 +67,7 @@ certmanager:
 sealedsecrets:
   enabled: false
   # renovate: datasource=helm depName=sealed-secrets registryUrl=https://bitnami.github.io/sealed-secrets versioning=helm
-  version: "2.19.3"
+  version: "2.20.0"
 
 ceph:
   enabled: false
@@ -241,7 +241,7 @@ monitoring:
 
   prometheus:
     # renovate: datasource=helm depName=kube-prometheus-stack registryUrl=https://prometheus-community.github.io/helm-charts versioning=helm
-    version: "90.0.0"
+    version: "90.2.0"
     prometheusSpec:
       retention: 30d
       retentionSize: 20GiB
@@ -275,7 +275,7 @@ homeassistant:
   enabled: true
   namespace: home-assistant
   # renovate: datasource=helm depName=home-assistant registryUrl=http://pajikos.github.io/home-assistant-helm-chart/ versioning=helm
-  version: "0.3.80"
+  version: "0.3.81"
   image:
     tag: ""
 
@@ -428,7 +428,7 @@ security:
   kyverno:
     enabled: false
     # renovate: datasource=helm depName=kyverno registryUrl=https://kyverno.github.io/kyverno/ versioning=helm
-    version: "3.9.0"
+    version: "3.9.1"
     # Start in audit to avoid surprise breakages; flip to "enforce" later.
     mode: audit # audit | enforce
     excludeNamespaces:

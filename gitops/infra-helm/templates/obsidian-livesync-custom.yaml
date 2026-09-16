@@ -5,8 +5,6 @@ kind: Application
 metadata:
   name: {{ include "infra.appName" (dict "root" . "name" "obsidian-livesync") }}
   namespace: {{ .Values.cluster.namespace | quote }}
-  finalizers:
-    - resources-finalizer.argocd.argoproj.io
   labels:
     cluster: {{ .Values.cluster.name | quote }}
     app: obsidian-livesync

@@ -9,8 +9,6 @@ metadata:
     cluster: {{ .Values.cluster.name | quote }}
     app: home-automation
   namespace: {{ .Values.cluster.namespace | quote }}
-  finalizers:
-    - resources-finalizer.argocd.argoproj.io
   annotations:
     # Deploy after core infra (ingress/cert-manager/security bootstrap).
     argocd.argoproj.io/sync-wave: "16"

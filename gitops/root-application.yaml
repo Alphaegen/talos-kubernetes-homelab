@@ -1,0 +1,26 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/refs/heads/main/argoproj.io/application_v1alpha1.json
+# This is the handoff point after the manual Argo CD installation and bootstrap
+# credential steps. It deliberately remains in the built-in project: the
+# homelab AppProject is rendered by the chart it reconciles.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: homelab-root
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: homelab
+spec:
+  project: default
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+  source:
+    repoURL: https://github.com/Alphaegen/talos-kubernetes-homelab.git
+    targetRevision: main
+    path: gitops/infra-helm
+    helm:
+      releaseName: infra-apps

@@ -91,9 +91,22 @@ The Talos patches set the CNI to `none` and disable kube-proxy. Install Cilium b
 ./cilium/enable-gateway-api.sh
 ```
 
-The helper installs the selected Gateway API CRDs, renders Cilium through Kustomize and Helm, restarts the Cilium components, and creates the shared Gateway. Set `INSTALL_TLSROUTE=true` when the experimental TLSRoute CRD is required.
+The helper installs the pinned Gateway API v1.6.1 Standard CRD bundle only. It
+does not render, apply, or restart Cilium. Cilium changes use the reviewed
+Kustomize renderer and an explicitly reviewed `kubectl apply` manifest; the
+Experimental Gateway API bundle is not part of this bootstrap path.
 
-### 5. Bootstrap Argo CD
+Render and review the pinned Cilium manifest, then install it before continuing
+with Argo CD:
+
+```bash
+kustomize build --enable-helm cilium
+kubectl apply --server-side -f <reviewed-cilium-manifest.yaml>
+```
+
+Wait until Cilium is healthy and cluster networking works before proceeding.
+
+### 5. Bootstrap Argo CD manually
 
 Render Argo CD locally:
 
@@ -107,27 +120,44 @@ Apply the reviewed output:
 kustomize build --enable-helm gitops/argocd | kubectl apply --server-side -f -
 ```
 
-The repository credential can then be supplied through the External Secrets integration. The External Secrets 1Password service-account token is introduced with:
+Argo CD remains a manual installation and upgrade boundary. It is intentionally
+not managed by the root Application in this phase.
+
+### 6. Supply the initial bootstrap credential
+
+The platform retrieves its repository and application credentials through
+External Secrets. Before creating the root Application, supply the initial
+1Password service-account token that lets External Secrets retrieve those
+credentials:
 
 ```bash
+kubectl create namespace external-secrets
 ./gitops/infra-custom/external-secrets/scripts/bootstrap_onepassword_service_account_token.sh
 ```
 
-### 6. Hand reconciliation to Argo CD
+This command is the only bootstrap secret material introduced outside Git; do
+not store the token in this repository. Confirm the secret exists before the
+root Application is created. The namespace creation is needed because the
+External Secrets controller itself is reconciled only after the root handoff.
 
-Render the platform Application chart:
+### 7. Hand reconciliation to Argo CD
+
+The committed [`root Application`](../gitops/root-application.yaml) reconciles
+the existing `gitops/infra-helm` Application-generator chart. It uses Argo CD's
+built-in `default` project only long enough to create the chart-managed
+`homelab.niekvlam` AppProject. That AppProject is rendered at sync wave `-1`,
+before its child Applications, and limits those Applications to this cluster
+and the repositories used by the chart.
+
+Review and apply the root Application:
 
 ```bash
-helm template infra-apps gitops/infra-helm
+kubectl apply --server-side -f gitops/root-application.yaml
 ```
 
-Apply the reviewed Applications:
-
-```bash
-helm template infra-apps gitops/infra-helm | kubectl apply -f -
-```
-
-Argo CD then creates and reconciles the enabled platform and workload Applications.
+Argo CD then creates the AppProject and reconciles the enabled platform and
+workload Applications. Subsequent changes flow from Git through this existing
+App-of-Apps hierarchy; do not separately apply the rendered child Applications.
 
 ## Local validation
 
@@ -136,6 +166,12 @@ Run the relevant render before committing a change:
 ```bash
 helm template infra-apps gitops/infra-helm
 kustomize build --enable-helm gitops/argocd
+```
+
+The root Application is a plain Kubernetes manifest and can be checked with:
+
+```bash
+kubectl apply --dry-run=client -f gitops/root-application.yaml
 ```
 
 Custom charts under `gitops/infra-custom` can be rendered individually with their corresponding values. Review both source changes and rendered resources, particularly when Renovate updates a Helm chart or container image.

@@ -203,8 +203,24 @@ monitoring:
         port: http-metrics
       initialDelaySeconds: 30
       periodSeconds: 30
+      # A Pi NIC recovery can briefly delay a node-to-pod probe.  Keep the
+      # recovery signal, but do not restart Promtail on a momentary stall.
+      timeoutSeconds: 5
+      failureThreshold: 6
+    readinessProbe:
+      httpGet:
+        path: /ready
+        port: http-metrics
+      initialDelaySeconds: 10
+      periodSeconds: 10
       timeoutSeconds: 3
-      failureThreshold: 10
+      failureThreshold: 5
+    resources:
+      requests:
+        cpu: 50m
+        memory: 96Mi
+      limits:
+        memory: 192Mi
     extraVolumes:
       - name: positions
         hostPath:

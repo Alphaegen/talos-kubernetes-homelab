@@ -50,7 +50,7 @@ spec:
             - name: IFACE
               value: end0
             - name: GATEWAY
-              value: 192.168.3.1
+              value: 192.168.20.1
             - name: CHECK_INTERVAL_SECONDS
               value: "5"
             - name: FAIL_THRESHOLD
@@ -59,6 +59,8 @@ spec:
               value: "2"
             - name: RESET_COOLDOWN_SECONDS
               value: "15"
+            - name: KUBEPRISM_PORT
+              value: "7445"
           command:
             - /bin/sh
             - -ceu
@@ -70,6 +72,7 @@ spec:
               threshold="${FAIL_THRESHOLD}"
               reset_pause="${LINK_RESET_PAUSE_SECONDS}"
               cooldown="${RESET_COOLDOWN_SECONDS}"
+              kubeprism_port="${KUBEPRISM_PORT}"
               node="${NODE_NAME:-unknown}"
 
               log_event() {
@@ -93,6 +96,11 @@ spec:
                   nsenter -t 1 -n ip link set dev "${iface}" down || true
                   sleep "${reset_pause}"
                   nsenter -t 1 -n ip link set dev "${iface}" up || true
+                  # A recovered NIC can leave kubelet's long-lived connection
+                  # to the local kubeprism proxy half-open.  Drop it so kubelet
+                  # reconnects instead of keeping the node NotReady.
+                  nsenter -t 1 -n ss -K dst 127.0.0.1 dport = "${kubeprism_port}" || true
+                  log_event kubeprism_sockets_reset "dropped stale kubelet kubeprism sockets"
                   fails=0
                   sleep "${cooldown}"
                 fi

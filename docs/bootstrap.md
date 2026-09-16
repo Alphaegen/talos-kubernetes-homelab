@@ -10,10 +10,13 @@ This document covers the bootstrap boundary that exists before Argo CD can recon
 - `helm`
 - `yq`
 - `jq`
+- 1Password CLI (`op`) for the External Secrets bootstrap token
 - access to the selected Talos installer image
 - an external location for Talos secrets and client configuration
 
 The expected `talosctl` version is pinned in [`.tool-versions`](../.tool-versions).
+Single-control-plane backup, disk identity, A/B rollback, and etcd restoration
+are documented in [`control-plane-recovery.md`](control-plane-recovery.md).
 
 ## Bootstrap sequence
 

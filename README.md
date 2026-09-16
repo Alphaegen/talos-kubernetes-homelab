@@ -108,6 +108,12 @@ The cluster contains one control-plane node and three workers. Live Talos volume
 | `rpi-w-2` | Worker | Talos system SD card and separate Longhorn NVMe |
 | `rpi-w-3` | Worker | Talos system SD card and separate Longhorn NVMe |
 
+The control-plane NVMe has an unmounted historical `u-longhorn` partition but
+is not registered with Longhorn and hosts no active replicas. It is preserved
+and excluded from Talos install/recovery targets. See
+[`docs/control-plane-recovery.md`](docs/control-plane-recovery.md) for the exact
+disk identity and recovery safeguards.
+
 The machine patches also configure kubelet certificate rotation, the kernel modules and mount propagation required by Longhorn, IPv4 and IPv6 pod and service networks, and the worker kubelet image required for iSCSI userland support.
 
 ### GitOps reconciliation
@@ -238,5 +244,5 @@ Argo CD reports drift and reconciliation state, while Git retains the reviewed c
 - Add repeatable repository validation and secret scanning for public changes.
 - Document Longhorn and application-data restore procedures.
 - Evaluate Kyverno in audit mode and measure the resource cost of Trivy Operator before enabling either component.
-- Improve control-plane recovery documentation and test the recovery workflow.
+- Test the documented control-plane recovery workflow on spare SD media.
 - Separate remaining environment-specific configuration through clearer overlays and reusable examples.

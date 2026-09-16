@@ -2,7 +2,9 @@
 
 ## Enable Gateway API
 
-This repo now includes a helper script to enable Cilium Gateway API support and create a shared Gateway used by app `HTTPRoute` resources.
+This repo includes a helper that installs the Gateway API prerequisite used by
+Cilium. Cilium itself is rendered and applied separately through the reviewed
+Kustomize-to-`kubectl apply` upgrade procedure.
 
 Run from `cluster/`:
 
@@ -12,16 +14,15 @@ Run from `cluster/`:
 
 What it does:
 
-1. Installs required Gateway API CRDs (v1.4.1): `GatewayClass`, `Gateway`, `HTTPRoute`, `ReferenceGrant`, `GRPCRoute`.
-2. Applies `cluster/cilium/` (Helm via Kustomize), including `gatewayAPI.enabled=true`.
-3. Restarts Cilium operator/agents.
-4. Applies shared Gateway manifest at `cilium/gateway-api/cilium-gateway.yaml`.
+It installs the pinned Gateway API **v1.6.1 Standard** bundle, including the
+existing Gateway/HTTPRoute APIs and the required BackendTLSPolicy, ListenerSet,
+TCPRoute, TLSRoute, and UDPRoute CRDs. It intentionally does not install the
+Experimental bundle, mutate Cilium, restart Cilium, or repair Gateway routes.
 
-Optional TLSRoute CRD install:
-
-```bash
-INSTALL_TLSROUTE=true ./cilium/enable-gateway-api.sh
-```
+For a Cilium upgrade, first apply this prerequisite and verify Gateway and
+HTTPRoute conditions. Then render `cilium/` with `kustomize build --enable-helm`,
+review the diff and server-side dry-run, run the target Cilium preflight, and
+apply that same reviewed manifest with `kubectl apply -f`.
 
 ## Shared Gateway
 

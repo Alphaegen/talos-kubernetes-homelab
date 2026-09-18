@@ -30,57 +30,15 @@ spec:
       - FailOnSharedResource=true
       # kube-prometheus-stack is the sole owner/creator of monitoring namespace metadata.
       - CreateNamespace=false
-  source:
-    repoURL: https://grafana.github.io/helm-charts
-    chart: loki
-    targetRevision: {{ .Values.monitoring.loki.version | quote }}
-    helm:
-      releaseName: loki
-      values: |-
-        # top-level chart keys
-        deploymentMode: {{ .Values.monitoring.loki.deploymentMode | default "SingleBinary" | quote }}
-{{- with .Values.monitoring.loki.singleBinary }}
-        singleBinary:
-{{ toYaml . | indent 10 }}
-{{- end }}
-
-        # make sure scalable modes are OFF
-        simpleScalable:
-          replicas: 0
-          backend:
-            replicas: 0
-          read:
-            replicas: 0
-          write:
-            replicas: 0
-        backend:
-          replicas: 0
-        read:
-          replicas: 0
-        write:
-          replicas: 0
-{{- with .Values.monitoring.loki.chunksCache }}
-        chunksCache:
-{{ toYaml . | indent 10 }}
-{{- end }}
-{{- with .Values.monitoring.loki.resultsCache }}
-        resultsCache:
-{{ toYaml . | indent 10 }}
-{{- end }}
-{{- with .Values.monitoring.loki.canary }}
-        canary:
-{{ toYaml . | indent 10 }}
-{{- end }}
-
-        # main Loki config block
-        loki:
-{{ toYaml (omit .Values.monitoring.loki
-            "version" "gateway" "singleBinary" "deploymentMode"
-            "chunksCache" "resultsCache" "canary") | indent 10 }}
-
-{{- with .Values.monitoring.loki.gateway }}
-        # gateway is a sibling of 'loki:'
-        gateway:
-{{ toYaml . | indent 10 }}
-{{- end }}
+  sources:
+    - repoURL: https://grafana.github.io/helm-charts
+      chart: loki
+      targetRevision: {{ .Values.monitoring.loki.version | quote }}
+      helm:
+        releaseName: loki
+        valueFiles:
+          - $values/gitops/infra-custom/monitoring/loki-values.yaml
+    - repoURL: {{ .Values.cluster.repoURL | quote }}
+      targetRevision: {{ .Values.cluster.revision | default "main" | quote }}
+      ref: values
 {{- end }}

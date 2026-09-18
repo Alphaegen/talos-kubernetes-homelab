@@ -56,10 +56,10 @@ argocd:
 
 integrations:
   certManager:
-    enabled: false
+    enabled: true
 
   tailscale:
-    enabled: false
+    enabled: true
     namespace: tailscale
     secretStoreRef:
       kind: ClusterSecretStore

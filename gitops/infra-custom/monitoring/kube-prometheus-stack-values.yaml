@@ -1,0 +1,18 @@
+grafana:
+  enabled: false
+  forceDeployDashboards: true
+  defaultDashboardsEnabled: true
+prometheus:
+  enabled: true
+  prometheusSpec:
+    retention: 30d
+    retentionSize: 20GiB
+    walCompression: true
+    scrapeInterval: 30s
+    enableAdminAPI: false
+    resources:
+      requests: {cpu: 100m, memory: 1Gi}
+      limits: {memory: 1536Mi}
+alertmanager: {enabled: true}
+kubeStateMetrics: {enabled: true}
+nodeExporter: {enabled: true}

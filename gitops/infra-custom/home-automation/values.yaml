@@ -40,6 +40,11 @@ mqttExternalSecret:
     usernameProperty: ""
     passwordProperty: ""
 
+# Set by the Application wiring. Keep the service configuration authoritative
+# here while avoiding an ExternalSecret when its provider is disabled.
+externalSecrets:
+  enabled: true
+
 fallbackSecret:
   enabled: false
   username: ""

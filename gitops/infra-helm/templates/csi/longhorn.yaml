@@ -45,49 +45,12 @@ spec:
       targetRevision: {{ .Values.longhorn.version | quote }}
       helm:
         releaseName: longhorn
-        values: |
-          preUpgradeChecker:
-            jobEnabled: false
-            upgradeVersionCheck: false
-
-          defaultSettings:
-            defaultDataPath: /var/mnt/longhorn
-            defaultReplicaCount: {{ .Values.longhorn.defaultReplicaCount | default 2 }}
-            upgradeChecker: false
-            autoDeletePodWhenVolumeDetachedUnexpectedly: true
-            nodeDownPodDeletionPolicy: delete-both-statefulset-and-deployment-pod
-            nodeDrainPolicy: block-if-contains-last-replica
-            concurrentReplicaRebuildPerNodeLimit: {{ .Values.longhorn.concurrentReplicaRebuildPerNodeLimit | default 1 }}
-            concurrentVolumeBackupRestorePerNodeLimit: {{ .Values.longhorn.concurrentVolumeBackupRestorePerNodeLimit | default 1 }}
-            backupConcurrentLimit: {{ .Values.longhorn.backupConcurrentLimit | default 1 }}
-            restoreConcurrentLimit: {{ .Values.longhorn.restoreConcurrentLimit | default 1 }}
-
-          defaultBackupStore:
-            backupTarget: {{ .Values.longhorn.backupTarget | quote }}
-            backupTargetCredentialSecret: ""
-            pollInterval: {{ .Values.longhorn.backupPollInterval | default 300 }}
-
-          longhornManager:
-            resources:
-{{ toYaml .Values.longhorn.managerResources | indent 14 }}
-
-          persistence:
-            defaultClassReplicaCount: {{ .Values.longhorn.defaultReplicaCount | default 2 }}
-
-          service:
-            ui:
-              type: ClusterIP
-
-          ingress:
-            enabled: true
-            ingressClassName: nginx
-            host: longhorn.{{ .Values.cluster.name }}.nl
-            tls: true
-            tlsSecret: longhorn-tls-secret
-            annotations:
-              cert-manager.io/cluster-issuer: "letsencrypt-dns"
-              nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+        valueFiles:
+          - $values/gitops/infra-custom/longhorn/values.yaml
     - repoURL: {{ .Values.cluster.repoURL | quote }}
       targetRevision: {{ .Values.cluster.revision | default "main" | quote }}
       path: gitops/infra-custom/longhorn
+    - repoURL: {{ .Values.cluster.repoURL | quote }}
+      targetRevision: {{ .Values.cluster.revision | default "main" | quote }}
+      ref: values
 {{- end }}

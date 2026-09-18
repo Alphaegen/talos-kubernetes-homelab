@@ -22,7 +22,7 @@
     "managerFilePatterns": [
       "/(^|/)gitops/infra-helm/values\\.ya?ml$/",
       "/(^|/)gitops/argocd/helm-values\\.ya?ml$/",
-      "/(^|/)gitops/infra-custom/.+/values\\.ya?ml$/"
+      "/(^|/)gitops/infra-custom/.+/(?:values|[^/]+-values)\\.ya?ml$/"
     ]
   },
   "kubernetes": {

@@ -35,31 +35,15 @@ spec:
         pod-security.kubernetes.io/enforce: privileged
         pod-security.kubernetes.io/warn: privileged
         pod-security.kubernetes.io/audit: privileged
-  source:
-    repoURL: https://prometheus-community.github.io/helm-charts
-    chart: kube-prometheus-stack
-    targetRevision: {{ .Values.monitoring.prometheus.version | quote }}
-    helm:
-      releaseName: kube-prometheus-stack
-      values: |
-        grafana:
-          enabled: false
-          forceDeployDashboards: true
-          defaultDashboardsEnabled: true
-        prometheus:
-          enabled: true
-          prometheusSpec:
-            retention: {{ .Values.monitoring.prometheus.prometheusSpec.retention | quote }}
-            retentionSize: {{ .Values.monitoring.prometheus.prometheusSpec.retentionSize | quote }}
-            walCompression: {{ .Values.monitoring.prometheus.prometheusSpec.walCompression }}
-            scrapeInterval: {{ .Values.monitoring.prometheus.prometheusSpec.scrapeInterval | quote }}
-            enableAdminAPI: {{ .Values.monitoring.prometheus.prometheusSpec.enableAdminAPI }}
-            resources:
-{{ toYaml .Values.monitoring.prometheus.prometheusSpec.resources | indent 14 }}
-        alertmanager:
-          enabled: {{ .Values.monitoring.alertmanager.enabled }}
-        kubeStateMetrics:
-          enabled: {{ .Values.monitoring.kubeStateMetrics.enabled }}
-        nodeExporter:
-          enabled: {{ .Values.monitoring.nodeExporter.enabled }}
+  sources:
+    - repoURL: https://prometheus-community.github.io/helm-charts
+      chart: kube-prometheus-stack
+      targetRevision: {{ .Values.monitoring.prometheus.version | quote }}
+      helm:
+        releaseName: kube-prometheus-stack
+        valueFiles:
+          - $values/gitops/infra-custom/monitoring/kube-prometheus-stack-values.yaml
+    - repoURL: {{ .Values.cluster.repoURL | quote }}
+      targetRevision: {{ .Values.cluster.revision | default "main" | quote }}
+      ref: values
 {{- end }}

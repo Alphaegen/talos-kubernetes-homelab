@@ -49,162 +49,48 @@ spec:
       - CreateNamespace=false
       - RespectIgnoreDifferences=true
       - SkipDryRunOnMissingResource=true
-  source:
-    repoURL: https://grafana.github.io/helm-charts
-    chart: grafana
-    targetRevision: {{ .Values.monitoring.grafana.version | quote }}
-    helm:
-      releaseName: grafana
-      values: |-
-        replicas: {{ .Values.monitoring.grafana.replicas | default 1 }}
-
-        {{- with .Values.monitoring.grafana.deploymentStrategy }}
-        deploymentStrategy:
-{{ toYaml . | indent 10 }}
-        {{- end }}
-
-        # Expose Grafana metrics so Prometheus can scrape them
-        grafana.ini:
-          metrics:
-            enabled: true
+  sources:
+    - repoURL: https://grafana.github.io/helm-charts
+      chart: grafana
+      targetRevision: {{ .Values.monitoring.grafana.version | quote }}
+      helm:
+        releaseName: grafana
+        valueFiles:
+          - $values/gitops/infra-custom/monitoring/grafana-values.yaml
+        # Keycloak integration is cross-service wiring; service runtime values
+        # live beside Grafana. Dashboard assembly remains centralized below.
+        values: |-
           {{- if and .Values.security.enabled .Values.security.keycloak.enabled }}
-          server:
-            root_url: {{ printf "https://grafana.%s.nl" .Values.cluster.name | quote }}
-          auth.generic_oauth:
-            enabled: true
-            name: Keycloak
-            allow_sign_up: true
-            client_id: $__file{/etc/secrets/oidc/client-id}
-            client_secret: $__file{/etc/secrets/oidc/client-secret}
-            scopes: openid profile email groups
-            auth_url: {{ printf "https://keycloak.%s.nl/realms/homelab/protocol/openid-connect/auth" .Values.cluster.name | quote }}
-            token_url: {{ printf "https://keycloak.%s.nl/realms/homelab/protocol/openid-connect/token" .Values.cluster.name | quote }}
-            api_url: {{ printf "https://keycloak.%s.nl/realms/homelab/protocol/openid-connect/userinfo" .Values.cluster.name | quote }}
-            login_attribute_path: preferred_username
-            groups_attribute_path: "contains(groups[*], 'grafana-admin') && 'Admin' || 'Viewer'"
+          grafana.ini:
+            server:
+              root_url: {{ printf "https://grafana.%s.nl" .Values.cluster.name | quote }}
+            auth.generic_oauth:
+              enabled: true
+              name: Keycloak
+              allow_sign_up: true
+              client_id: $__file{/etc/secrets/oidc/client-id}
+              client_secret: $__file{/etc/secrets/oidc/client-secret}
+              scopes: openid profile email groups
+              auth_url: {{ printf "https://keycloak.%s.nl/realms/homelab/protocol/openid-connect/auth" .Values.cluster.name | quote }}
+              token_url: {{ printf "https://keycloak.%s.nl/realms/homelab/protocol/openid-connect/token" .Values.cluster.name | quote }}
+              api_url: {{ printf "https://keycloak.%s.nl/realms/homelab/protocol/openid-connect/userinfo" .Values.cluster.name | quote }}
+              login_attribute_path: preferred_username
+              groups_attribute_path: "contains(groups[*], 'grafana-admin') && 'Admin' || 'Viewer'"
+          extraSecretMounts:
+            - name: oidc-secret
+              secretName: grafana-oidc-secret
+              mountPath: /etc/secrets/oidc
+              readOnly: true
           {{- end }}
-
-        {{- if and .Values.security.enabled .Values.security.keycloak.enabled }}
-        extraSecretMounts:
-          - name: oidc-secret
-            secretName: grafana-oidc-secret
-            mountPath: /etc/secrets/oidc
-            readOnly: true
-        {{- end }}
-
-        serviceMonitor:
-          enabled: true
-          labels:
-            release: kube-prometheus-stack
-          interval: 30s
-
-        resources:
-{{ toYaml .Values.monitoring.grafana.resources | indent 10 }}
-
-        downloadDashboards:
-          resources:
-            requests:
-              cpu: 10m
-              memory: 16Mi
-            limits:
-              cpu: 100m
-              memory: 64Mi
-
-        # The chart's generated download script masks curl failures in sed pipelines.
-        # Retry if that leaves an empty dashboard and fail startup rather than loading it.
-        extraInitContainers:
-          - name: validate-downloaded-dashboards
-            image: docker.io/curlimages/curl:8.9.1
-            command: ["/bin/sh", "-ec"]
-            args:
-              - |
-                dashboard_files="$(sed -n 's/^> "\(.*\)"$/\1/p' /etc/grafana/download_dashboards.sh)"
-                downloads_are_valid() {
-                  for dashboard_file in $dashboard_files; do
-                    if [ ! -s "$dashboard_file" ]; then
-                      echo "Downloaded dashboard is empty: $dashboard_file" >&2
-                      return 1
-                    fi
-                  done
-                }
-
-                attempt=1
-                until downloads_are_valid; do
-                  if [ "$attempt" -gt 5 ]; then
-                    echo "Dashboard download remained empty after five retries" >&2
-                    exit 1
-                  fi
-                  echo "Retrying empty dashboard download (attempt $attempt/5)"
-                  /bin/sh /etc/grafana/download_dashboards.sh
-                  attempt=$((attempt + 1))
-                  sleep 5
-                done
-            resources:
-              requests:
-                cpu: 10m
-                memory: 16Mi
-              limits:
-                cpu: 100m
-                memory: 64Mi
-            volumeMounts:
-              - name: config
-                mountPath: /etc/grafana/download_dashboards.sh
-                subPath: download_dashboards.sh
-              - name: storage
-                mountPath: /var/lib/grafana
-
-        dashboardProviders:
-          dashboardproviders.yaml:
-            apiVersion: 1
-            providers:
-              - name: 'default'
-                orgId: 1
-                folder: ''
-                type: file
-                disableDeletion: false
-                allowUiUpdates: true
-                editable: true
-                options:
-                  path: /var/lib/grafana/dashboards/default
-
-        # Sidecars to load dashboards & datasources into Grafana
-        sidecar:
-          resources:
-            requests:
-              cpu: 10m
-              memory: 64Mi
-            limits:
-              cpu: 200m
-              memory: 256Mi
           dashboards:
-            enabled: true
-            skipReload: true
-            labelValue: "1"
-            searchNamespace: ALL
-            label: grafana_dashboard
-            env:
-              HEALTH_PORT: "8084"
-          datasources:
-            enabled: true
-            skipReload: true
-            env:
-              HEALTH_PORT: "8082"
-
-        # Your existing settings
-        ingress:
-{{ toYaml .Values.monitoring.grafana.ingress | indent 10 }}
-{{- with .Values.monitoring.grafana.persistence }}
-        persistence:
-{{ toYaml . | indent 10 }}
-{{- end }}
-        datasources:
-{{ toYaml .Values.monitoring.grafana.datasources | indent 10 }}
-        dashboards:
-{{- $dashboards := deepCopy (.Values.monitoring.grafana.dashboards | default dict) }}
-{{- $defaultDashboards := get $dashboards "default" | default dict }}
-{{- range .Values.monitoring.grafana.dashboardFiles }}
-{{- $_ := set $defaultDashboards .name (dict "json" ($.Files.Get .path)) }}
-{{- end }}
-{{- $_ := set $dashboards "default" $defaultDashboards }}
-{{ toYaml $dashboards | indent 10 }}
+          {{- $dashboards := deepCopy (.Values.monitoring.grafana.dashboards | default dict) }}
+          {{- $defaultDashboards := get $dashboards "default" | default dict }}
+          {{- range .Values.monitoring.grafana.dashboardFiles }}
+          {{- $_ := set $defaultDashboards .name (dict "json" ($.Files.Get .path)) }}
+          {{- end }}
+          {{- $_ := set $dashboards "default" $defaultDashboards }}
+{{ toYaml $dashboards | indent 12 }}
+    - repoURL: {{ .Values.cluster.repoURL | quote }}
+      targetRevision: {{ .Values.cluster.revision | default "main" | quote }}
+      ref: values
 {{- end }}

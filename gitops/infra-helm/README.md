@@ -32,6 +32,21 @@ Recommended flow:
 
 ## Bootstrap Stages And Boundaries
 
+## Application Wiring And Service Values
+
+`infra-helm` is the Application wiring layer: it keeps enablement, exact chart
+versions, bootstrap stage, and shared repository/cluster metadata. Upstream
+Helm values belong beside the owning service under `gitops/infra-custom`.
+Applications consume those files through a Git `ref: values` source and a
+`$values/.../values.yaml` entry; an existing custom-resource source stays in
+the same Application when it is part of that controller's ownership boundary.
+
+Use a multi-source Application for a controller and its CRs, or for an
+upstream chart with repository-hosted values. Keep separate Applications for
+unrelated services, even when they share a bootstrap stage. `FailOnSharedResource=true`
+is deliberately present on every child Application: ownership conflicts must
+fail visibly rather than silently transferring resources between Applications.
+
 The root chart uses only three child-Application waves:
 
 - `0`: API providers and cluster foundations (storage, networking, ingress,

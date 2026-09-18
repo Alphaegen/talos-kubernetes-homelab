@@ -42,23 +42,6 @@ spec:
       path: gitops/infra-custom/tailscale
       helm:
         releaseName: tailscale-custom
-        values: |
-          connector:
-            enabled: {{ .Values.security.tailscale.connector.enabled | default false }}
-            name: {{ .Values.security.tailscale.connector.name | default "home-lan" | quote }}
-            hostnamePrefix: {{ .Values.security.tailscale.connector.hostnamePrefix | default "home-lan" | quote }}
-            replicas: {{ .Values.security.tailscale.connector.replicas | default 1 }}
-            {{- if .Values.security.tailscale.connector.tags }}
-            tags:
-            {{- range .Values.security.tailscale.connector.tags }}
-              - {{ . | quote }}
-            {{- end }}
-            {{- end }}
-            subnetRouter:
-              advertiseRoutes:
-              {{- range (.Values.security.tailscale.connector.subnetRouter.advertiseRoutes | default (list)) }}
-                - {{ . | quote }}
-              {{- end }}
-            exitNode:
-              enabled: {{ .Values.security.tailscale.connector.exitNode.enabled | default false }}
+        valueFiles:
+          - values.yaml
 {{- end }}

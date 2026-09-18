@@ -41,41 +41,16 @@ spec:
       helm:
         version: v3
         releaseName: metallb
-        values: |
-          prometheus:
-            serviceMonitor:
-              enabled: false
-          frr-k8s:
-            prometheus:
-              serviceMonitor:
-                enabled: false
+        valueFiles:
+          - $values/gitops/infra-custom/metallb/upstream-values.yaml
     - repoURL: {{ .Values.cluster.repoURL | quote }}
       path: gitops/infra-custom/metallb
       targetRevision: {{ .Values.cluster.revision | default "main" | quote }}
       helm:
         releaseName: metallb-config
-        values: |
-          namespace: metallb-system
-          ipAddressPools:
-          {{- range .Values.metallb.pools }}
-            - name: {{ .name }}
-              addresses:
-              {{- range .addresses }}
-                - {{ . }}
-              {{- end }}
-          {{- end }}
-          l2Advertisements:
-          {{- range .Values.metallb.pools }}
-            - name: {{ .name }}
-              ipAddressPools:
-                - {{ .name }}
-              nodeSelectors:
-                - matchExpressions:
-                    - key: kubernetes.io/hostname
-                      operator: In
-                      values:
-                      {{- range .advertisementNodes }}
-                        - {{ . }}
-                      {{- end }}
-            {{- end }}
+        valueFiles:
+          - values.yaml
+    - repoURL: {{ .Values.cluster.repoURL | quote }}
+      targetRevision: {{ .Values.cluster.revision | default "main" | quote }}
+      ref: values
 {{- end }}

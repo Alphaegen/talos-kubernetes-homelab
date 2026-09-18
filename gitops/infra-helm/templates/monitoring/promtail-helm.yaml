@@ -32,12 +32,15 @@ spec:
       - FailOnSharedResource=true
       # kube-prometheus-stack is the sole owner/creator of monitoring namespace metadata.
       - CreateNamespace=false
-  source:
-    repoURL: https://grafana.github.io/helm-charts
-    chart: promtail
-    targetRevision: {{ .Values.monitoring.promtail.version | default "6.15.5" | quote }}
-    helm:
-      releaseName: promtail
-      values: |
-{{ toYaml .Values.monitoring.promtail | indent 8 }}
+  sources:
+    - repoURL: https://grafana.github.io/helm-charts
+      chart: promtail
+      targetRevision: {{ .Values.monitoring.promtail.version | quote }}
+      helm:
+        releaseName: promtail
+        valueFiles:
+          - $values/gitops/infra-custom/monitoring/promtail-values.yaml
+    - repoURL: {{ .Values.cluster.repoURL | quote }}
+      targetRevision: {{ .Values.cluster.revision | default "main" | quote }}
+      ref: values
 {{- end }}

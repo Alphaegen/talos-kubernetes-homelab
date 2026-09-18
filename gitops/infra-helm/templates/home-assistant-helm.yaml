@@ -19,7 +19,7 @@ spec:
   project: {{ include "infra.projectName" . }}
   destination:
     server: {{ .Values.cluster.url | default "https://kubernetes.default.svc" | quote }}
-    namespace: {{ .Values.homeassistant.namespace | default "home-assistant" | quote }}
+    namespace: home-assistant
   ignoreDifferences:
     - group: apps
       kind: StatefulSet
@@ -53,166 +53,12 @@ spec:
       targetRevision: {{ .Values.homeassistant.version | quote }}
       helm:
         releaseName: home-assistant
-        values: |
-          controller:
-            type: StatefulSet
-          image:
-            tag: {{ .Values.homeassistant.image.tag | default "" | quote }}
-          resources:
-{{ toYaml .Values.homeassistant.resources | indent 12 }}
-          env:
-            - name: TZ
-              value: {{ .Values.timezone | default "Europe/Amsterdam" | quote }}
-          service:
-            type: ClusterIP
-            port: 8080
-
-          startupProbe:
-            httpGet:
-              path: /
-              port: http
-            periodSeconds: 5
-            timeoutSeconds: 3
-            failureThreshold: 60
-
-          initContainers:
-            - name: init-hacs
-              image: python:3.14.2-alpine3.23
-              command: ["python", "-c"]
-              args:
-                - |
-                  import hashlib
-                  import json
-                  import pathlib
-                  import shutil
-                  import urllib.request
-                  import zipfile
-
-                  version = "2.0.5"
-                  expected_sha256 = "97be6b824a4f38e683728cc6dd72367f6b8bad0a43428b1b3b987a3087adf413"
-                  hacs_dir = pathlib.Path("/config/custom_components/hacs")
-                  manifest = hacs_dir / "manifest.json"
-
-                  if manifest.exists() and json.loads(manifest.read_text()).get("version") == version:
-                      raise SystemExit(0)
-
-                  archive = pathlib.Path("/tmp/hacs.zip")
-                  urllib.request.urlretrieve(
-                      f"https://github.com/hacs/integration/releases/download/{version}/hacs.zip",
-                      archive,
-                  )
-                  if hashlib.sha256(archive.read_bytes()).hexdigest() != expected_sha256:
-                      raise RuntimeError("HACS archive checksum mismatch")
-
-                  shutil.rmtree(hacs_dir, ignore_errors=True)
-                  hacs_dir.mkdir(parents=True)
-                  with zipfile.ZipFile(archive) as release:
-                      release.extractall(hacs_dir)
-              resources:
-                requests:
-                  cpu: 10m
-                  memory: 32Mi
-                limits:
-                  cpu: 200m
-                  memory: 128Mi
-              volumeMounts:
-                - mountPath: /config
-                  name: home-assistant
-
-
-          configuration:
-            # Enable or disable the configuration setup for Home Assistant
-            enabled: true
-            # Force init will merge the current configuration file with the default configuration on every start
-            # This is useful when you want to ensure that the configuration file is always up to date
-            forceInit: true
-            # List of trusted proxies in the format of CIDR notation in a case of using a reverse proxy
-            # Here is the list of the most common private IP ranges, use your list of possible trusted proxies, usually, it's the IP of the reverse proxy
-            trusted_proxies:
-              {{- range .Values.homeassistant.trusted_proxies }}
-              - {{ . }}
-              {{- end }}
-            # Editing templateConfig allows you to customize the configuration.yaml file
-            # You can use Go template functions to customize the configuration
-            templateConfig: |-
-              # Loads default set of integrations. Do not remove.
-              default_config:
-
-              homeassistant:
-                packages: !include_dir_named packages
-
-              {{- if .Values.ingressController.enabled }}
-              http:
-                use_x_forwarded_for: true
-                trusted_proxies:
-                  {{- range .Values.homeassistant.trusted_proxies }}
-                  - {{ . }}
-                  {{- end }}
-              {{- end}}
-              # Load frontend themes from the themes folder
-              frontend:
-                themes: !include_dir_merge_named themes
-
-              automation: !include automations.yaml
-              script: !include scripts.yaml
-              scene: !include scenes.yaml
-
-          ingress:
-            enabled: true
-            className: {{ .Values.ingressController.class | default "nginx" | quote }}
-            annotations:
-              nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
-              cert-manager.io/cluster-issuer: "letsencrypt-dns"
-            hosts:
-              - host: home-assistant.{{ .Values.cluster.name }}.nl
-                paths:
-                  - path: /
-                    pathType: Prefix
-            tls:
-              - hosts:
-                  - home-assistant.{{ .Values.cluster.name }}.nl
-                secretName: home-assistant-tls
-
-          persistence:
-            enabled: true
-            storageClass: {{ .Values.homeassistant.storage.storageClassName | default "longhorn" | quote }}
-            accessMode: ReadWriteOnce
-            size: {{ .Values.homeassistant.storage.size | default "10Gi" | quote }}
-            # alternatively, bind an existing claim:
-            # existingClaim: {{ .Values.homeassistant.storage.existingClaim | default "" | quote }}
-
-          # Enable ONLY if you rely on mDNS/UPnP discovery from the host network
-          hostNetwork: {{ .Values.homeassistant.hostNetwork | default false }}
-          dnsPolicy: {{ if .Values.homeassistant.hostNetwork | default false }}ClusterFirstWithHostNet{{ else }}ClusterFirst{{ end }}
-
-          serviceMonitor:
-            enabled: {{ .Values.homeassistant.serviceMonitor.enabled }}
-            scrapeInterval: {{ .Values.homeassistant.serviceMonitor.scrapeInterval | default "30s" | quote }}
-            labels:
-              release: {{ .Values.homeassistant.serviceMonitor.release | default "prometheus" | quote }}
-
-          additionalVolumes:
-            - name: home-assistant-packages
-              configMap:
-                name: home-assistant-packages
-
-          additionalMounts:
-            - mountPath: /config/packages
-              name: home-assistant-packages
-              readOnly: true
-
-          # USB passthrough example (e.g., Zigbee stick). Requires privileged:
-          # securityContext:
-          #   privileged: true
-          # additionalVolumes:
-          #   - hostPath:
-          #       path: /dev/serial/by-id/<your-usb-device>
-          #       type: CharDevice
-          #     name: usb
-          # additionalMounts:
-          #   - mountPath: /dev/ttyACM0
-          #     name: usb
+        valueFiles:
+          - $values/gitops/infra-custom/home-assistant/helm-values.yaml
     - repoURL: {{ .Values.cluster.repoURL | quote }}
       targetRevision: {{ .Values.cluster.revision | default "main" | quote }}
       path: gitops/infra-custom/home-assistant
+    - repoURL: {{ .Values.cluster.repoURL | quote }}
+      targetRevision: {{ .Values.cluster.revision | default "main" | quote }}
+      ref: values
 {{- end }}

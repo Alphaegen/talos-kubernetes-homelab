@@ -66,5 +66,5 @@ Sample config file:
 
 - Mosquitto is intentionally exposed only as `ClusterIP`.
 - Zigbee2MQTT is configured for remote network adapter mode (`tcp://...:6638`), with no USB passthrough/privileged host device mapping.
-- IP allowlisting is optional; leave `homeAutomation.zigbee2mqtt.ingress.whitelistSourceRange` empty to disable it.
-- If you use oauth2-proxy, configure `homeAutomation.zigbee2mqtt.ingress.auth.url` and `homeAutomation.zigbee2mqtt.ingress.auth.signin`, then set `homeAutomation.zigbee2mqtt.ingress.auth.enabled=true`.
+- IP allowlisting is optional; leave `zigbee2mqtt.ingress.whitelistSourceRange` in `values.yaml` empty to disable it.
+- If you use oauth2-proxy, configure `zigbee2mqtt.ingress.auth.url` and `zigbee2mqtt.ingress.auth.signin` in `values.yaml`, then set `zigbee2mqtt.ingress.auth.enabled=true`.

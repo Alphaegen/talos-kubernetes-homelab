@@ -1,0 +1,35 @@
+preUpgradeChecker:
+  jobEnabled: false
+  upgradeVersionCheck: false
+defaultSettings:
+  defaultDataPath: /var/mnt/longhorn
+  defaultReplicaCount: 2
+  upgradeChecker: false
+  autoDeletePodWhenVolumeDetachedUnexpectedly: true
+  nodeDownPodDeletionPolicy: delete-both-statefulset-and-deployment-pod
+  nodeDrainPolicy: block-if-contains-last-replica
+  concurrentReplicaRebuildPerNodeLimit: 1
+  concurrentVolumeBackupRestorePerNodeLimit: 1
+  backupConcurrentLimit: 1
+  restoreConcurrentLimit: 1
+defaultBackupStore:
+  backupTarget: "nfs://192.168.60.137:/volume1/longhorn-backups"
+  backupTargetCredentialSecret: ""
+  pollInterval: 300
+longhornManager:
+  resources:
+    requests: {cpu: 50m, memory: 256Mi}
+    limits: {memory: 768Mi}
+persistence:
+  defaultClassReplicaCount: 2
+service:
+  ui: {type: ClusterIP}
+ingress:
+  enabled: true
+  ingressClassName: nginx
+  host: longhorn.homelab.niekvlam.nl
+  tls: true
+  tlsSecret: longhorn-tls-secret
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-dns
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"

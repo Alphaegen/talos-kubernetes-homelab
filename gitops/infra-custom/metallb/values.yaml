@@ -1,5 +1,15 @@
 namespace: metallb-system
 
-ipAddressPools: []
+ipAddressPools:
+  - name: servers
+    addresses:
+      - "192.168.20.110-192.168.20.129"
 
-l2Advertisements: []
+l2Advertisements:
+  - name: servers
+    ipAddressPools: [servers]
+    nodeSelectors:
+      - matchExpressions:
+          - key: kubernetes.io/hostname
+            operator: In
+            values: [rpi-w-1, rpi-w-2, rpi-w-3]

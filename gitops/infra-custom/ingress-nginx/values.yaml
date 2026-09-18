@@ -1,0 +1,10 @@
+controller:
+  admissionWebhooks:
+    certManager:
+      enabled: true
+    patch:
+      enabled: false
+  service:
+    loadBalancerIP: "192.168.20.110"
+    annotations:
+      metallb.io/address-pool: servers

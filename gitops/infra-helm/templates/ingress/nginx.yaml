@@ -29,25 +29,16 @@ spec:
     syncOptions:
       - FailOnSharedResource=true
       - CreateNamespace=true
-  source:
-    repoURL: https://kubernetes.github.io/ingress-nginx
-    chart: ingress-nginx
-    targetRevision: {{ .Values.ingressController.version | quote }}
-    helm:
-      version: v3
-      releaseName: nginx
-      valuesObject:
-        controller:
-          admissionWebhooks:
-            # Helm's shared pre/post hook RBAC is unsafe under Argo CD: the
-            # ServiceAccount can be deleted before the certificate Job starts.
-            # Let cert-manager own the serving certificate and CA injection.
-            certManager:
-              enabled: true
-            patch:
-              enabled: false
-          service:
-            loadBalancerIP: {{ .Values.ingressController.loadBalancerIP | quote }}
-            annotations:
-              metallb.io/address-pool: {{ .Values.ingressController.addressPool | quote }}
+  sources:
+    - repoURL: https://kubernetes.github.io/ingress-nginx
+      chart: ingress-nginx
+      targetRevision: {{ .Values.ingressController.version | quote }}
+      helm:
+        version: v3
+        releaseName: nginx
+        valueFiles:
+          - $values/gitops/infra-custom/ingress-nginx/values.yaml
+    - repoURL: {{ .Values.cluster.repoURL | quote }}
+      targetRevision: {{ .Values.cluster.revision | default "main" | quote }}
+      ref: values
 {{- end }}

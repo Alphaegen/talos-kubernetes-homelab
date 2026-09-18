@@ -24,8 +24,6 @@ obsidianLiveSync:
 ingressController:
   enabled: true
   class: nginx
-  loadBalancerIP: "192.168.20.110"
-  addressPool: servers
   # renovate: datasource=helm depName=ingress-nginx registryUrl=https://kubernetes.github.io/ingress-nginx versioning=helm
   version: "4.15.1"
 
@@ -33,40 +31,16 @@ metallb:
   enabled: true
   # renovate: datasource=helm depName=metallb registryUrl=https://metallb.github.io/metallb versioning=helm
   version: "0.16.1"
-  pools:
-    - name: servers
-      addresses:
-        - "192.168.20.110-192.168.20.129"
-      advertisementNodes:
-        - rpi-w-1
-        - rpi-w-2
-        - rpi-w-3
 
 longhorn:
   enabled: true
   # renovate: datasource=helm depName=longhorn registryUrl=https://charts.longhorn.io versioning=helm
   version: "1.12.1"
-  defaultReplicaCount: 2
-  backupTarget: "nfs://192.168.60.137:/volume1/longhorn-backups"
-  backupPollInterval: 300
-  concurrentReplicaRebuildPerNodeLimit: 1
-  concurrentVolumeBackupRestorePerNodeLimit: 1
-  backupConcurrentLimit: 1
-  restoreConcurrentLimit: 1
-  managerResources:
-    requests:
-      cpu: 50m
-      memory: 256Mi
-    limits:
-      memory: 768Mi
 
 certmanager:
   enabled: true
   # renovate: datasource=helm depName=cert-manager registryUrl=https://charts.jetstack.io versioning=helm
   version: "v1.21.2"
-  acme:
-    email: vlam4695+homelab@gmail.com
-    server: "https://acme-v02.api.letsencrypt.org/directory"
 
 sealedsecrets:
   enabled: false
@@ -83,46 +57,6 @@ monitoring:
   grafana:
     # renovate: datasource=helm depName=grafana registryUrl=https://grafana.github.io/helm-charts versioning=helm
     version: "10.5.15"
-    replicas: 1
-    deploymentStrategy:
-      type: Recreate
-    ingress:
-      enabled: true
-      ingressClassName: nginx
-      annotations:
-        nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
-        cert-manager.io/cluster-issuer: letsencrypt-dns
-      hosts: ["grafana.homelab.niekvlam.nl"]
-      tls:
-        - secretName: grafana-tls
-          hosts: ["grafana.homelab.niekvlam.nl"]
-    persistence:
-      enabled: true
-      type: pvc
-      storageClassName: longhorn
-      accessModes: ["ReadWriteOnce"]
-      size: 10Gi
-    resources:
-      requests:
-        cpu: 100m
-        memory: 256Mi
-      limits:
-        cpu: 500m
-        memory: 768Mi
-    datasources:
-      datasources.yaml:
-        apiVersion: 1
-        datasources:
-          - name: Prometheus
-            type: prometheus
-            uid: prometheus
-            url: http://kube-prometheus-stack-prometheus.monitoring.svc:9090
-            access: proxy
-            isDefault: true
-          - name: Loki
-            type: loki
-            uid: loki
-            url: http://loki-gateway.monitoring.svc:80
     dashboards:
       default:
         node-exporter:
@@ -148,140 +82,14 @@ monitoring:
   loki:
     # renovate: datasource=helm depName=loki registryUrl=https://grafana.github.io/helm-charts versioning=helm
     version: "7.3.0"
-    deploymentMode: SingleBinary
-    singleBinary:
-      replicas: 1
-      persistence:
-        enabled: true
-        size: 40Gi
-        storageClassName: longhorn
-        # Enables the Kubernetes retention-policy field; the policies below retain the PVC.
-        enableStatefulSetAutoDeletePVC: true
-        enableStatefulSetRecreationForSizeChange: true
-        whenDeleted: Retain
-        whenScaled: Retain
-      resources:
-        requests:
-          cpu: 200m
-          memory: 384Mi
-        limits:
-          cpu: "1"
-          memory: 1536Mi
-    chunksCache:
-      enabled: false
-    resultsCache:
-      enabled: false
-
-    auth_enabled: false
-    commonConfig:
-      replication_factor: 1
-    storage:
-      type: filesystem
-    limits_config:
-      # Retention is enforced by the compactor below.
-      retention_period: 168h # 7d
-      allow_structured_metadata: false
-    compactor:
-      retention_enabled: true
-      delete_request_store: filesystem
-      working_directory: /var/loki/compactor
-    schemaConfig:
-      configs:
-        - from: 2020-10-24
-          store: boltdb-shipper
-          object_store: filesystem
-          schema: v13
-          index:
-            prefix: loki_index_
-            period: 24h
-
-    gateway:
-      enabled: true
 
   promtail:
     # renovate: datasource=helm depName=promtail registryUrl=https://grafana.github.io/helm-charts versioning=helm
     version: "6.17.1"
-    livenessProbe:
-      httpGet:
-        path: /ready
-        port: http-metrics
-      initialDelaySeconds: 30
-      periodSeconds: 30
-      # A Pi NIC recovery can briefly delay a node-to-pod probe.  Keep the
-      # recovery signal, but do not restart Promtail on a momentary stall.
-      timeoutSeconds: 5
-      failureThreshold: 6
-    readinessProbe:
-      httpGet:
-        path: /ready
-        port: http-metrics
-      initialDelaySeconds: 10
-      periodSeconds: 10
-      timeoutSeconds: 3
-      failureThreshold: 5
-    resources:
-      requests:
-        cpu: 50m
-        memory: 96Mi
-      limits:
-        memory: 192Mi
-    extraVolumes:
-      - name: positions
-        hostPath:
-          path: /var/lib/promtail
-          type: DirectoryOrCreate
-    extraVolumeMounts:
-      - name: positions
-        mountPath: /var/lib/promtail
-        readOnly: false
-    config:
-      positions:
-        filename: /var/lib/promtail/positions.yaml
-      clients:
-        - url: http://loki-gateway.monitoring.svc:80/loki/api/v1/push
-      snippets:
-        pipelineStages:
-          - cri: {}
-          - match:
-              selector: '{app="cp-link-watchdog"}'
-              stages:
-                - logfmt:
-                    mapping:
-                      event:
-                      node:
-                      iface:
-                      gateway:
-                      fails:
-                      threshold:
-                - labels:
-                    event:
-                    node:
-                    iface:
-                    gateway:
 
   prometheus:
     # renovate: datasource=helm depName=kube-prometheus-stack registryUrl=https://prometheus-community.github.io/helm-charts versioning=helm
     version: "91.4.1"
-    prometheusSpec:
-      retention: 30d
-      retentionSize: 20GiB
-      walCompression: true
-      scrapeInterval: 30s
-      enableAdminAPI: false
-      resources:
-        requests:
-          cpu: 100m
-          memory: 1Gi
-        limits:
-          memory: 1536Mi
-
-  alertmanager:
-    enabled: true
-
-  kubeStateMetrics:
-    enabled: true
-  nodeExporter:
-    enabled: true
 
 networkWatchdog:
   enabled: true
@@ -293,110 +101,11 @@ pi5FanControl:
 
 homeassistant:
   enabled: true
-  namespace: home-assistant
   # renovate: datasource=helm depName=home-assistant registryUrl=http://pajikos.github.io/home-assistant-helm-chart/ versioning=helm
   version: "0.3.81"
-  image:
-    tag: ""
-
-  resources:
-    requests:
-      cpu: 200m
-      memory: 512Mi
-    limits:
-      cpu: "2"
-      memory: 2Gi
-
-  trusted_proxies:
-    - 10.244.0.0/16
-
-  storage:
-    storageClassName: longhorn
-    size: "20Gi"
-    existingClaim: ""
-
-  # Use host networking only if you NEED local discovery via mDNS/UPnP
-  hostNetwork: false
-
-  serviceMonitor:
-    # Home Assistant requires a long-lived bearer token for /api/prometheus.
-    # Keep scraping disabled until that token is stored in a Kubernetes Secret.
-    enabled: false
-    scrapeInterval: "30s"
-    release: "kube-prometheus-stack"
 
 homeAutomation:
   enabled: true
-  namespace: home-automation
-  storageClassName: longhorn
-
-  slzb:
-    ip: 192.168.30.232
-    port: 6638
-    adapter: zstack
-    baudrate: 115200
-
-  mqtt:
-    image: eclipse-mosquitto:2.0.22
-    resources:
-      requests:
-        cpu: 20m
-        memory: 32Mi
-      limits:
-        cpu: 200m
-        memory: 128Mi
-    persistence:
-      size: 2Gi
-    credentialsSecret:
-      name: mqtt-credentials
-      usernameKey: username
-      passwordKey: password
-
-  mqttExternalSecret:
-    enabled: true
-    refreshInterval: 1h
-    secretStoreRef:
-      kind: ClusterSecretStore
-      name: onepassword
-    remoteRef:
-      usernameKey: mqtt-zigbee/username
-      passwordKey: mqtt-zigbee/password
-      usernameProperty: ""
-      passwordProperty: ""
-
-  fallbackSecret:
-    enabled: false
-    username: ""
-    password: ""
-
-  zigbee2mqtt:
-    image: ghcr.io/koenkk/zigbee2mqtt:2.14.1
-    resources:
-      requests:
-        cpu: 50m
-        memory: 128Mi
-      limits:
-        cpu: 500m
-        memory: 512Mi
-    persistence:
-      size: 5Gi
-    config:
-      baseTopic: zigbee2mqtt
-      logLevel: info
-      permitJoin: false
-      homeAssistantEnabled: true
-      frontendEnabled: true
-    ingress:
-      enabled: true
-      className: nginx
-      host: zigbee2mqtt.homelab.niekvlam.nl
-      tlsSecretName: zigbee2mqtt-tls
-      certIssuer: letsencrypt-dns
-      whitelistSourceRange: ""
-      auth:
-        enabled: false
-        url: "http://oauth2-proxy.home-assistant.svc.cluster.local:4180/oauth2/auth"
-        signin: "https://home-assistant.homelab.niekvlam.nl/oauth2/start?rd=$escaped_request_uri"
 
 platformSmoke:
   enabled: true
@@ -472,26 +181,3 @@ security:
     namespace: tailscale
     repoURL: https://pkgs.tailscale.com/helmcharts
     chart: tailscale-operator
-    connector:
-      enabled: true
-      name: home-lan
-      hostnamePrefix: home-lan
-      replicas: 1
-      tags:
-        - tag:home-lan-router
-      subnetRouter:
-        advertiseRoutes:
-          - 192.168.3.0/24
-      exitNode:
-        enabled: true
-    externalSecret:
-      enabled: true
-      refreshInterval: 1h
-      secretStoreRef:
-        kind: ClusterSecretStore
-        name: onepassword
-      remoteRef:
-        clientIdKey: tailscale-operator/client_id
-        clientSecretKey: tailscale-operator/client_secret
-        clientIdProperty: ""
-        clientSecretProperty: ""

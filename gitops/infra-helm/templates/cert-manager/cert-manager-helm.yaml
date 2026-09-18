@@ -46,21 +46,17 @@ spec:
       helm:
         version: v3
         releaseName: cert-manager
-        values: |
-          installCRDs: true  # or crds.enabled: true on newer charts
-          prometheus:
-            enabled: true
-            servicemonitor:
-              enabled: true
-              labels:
-                release: kube-prometheus-stack
+        valueFiles:
+          - $values/gitops/infra-custom/cert-manager/upstream-values.yaml
     - repoURL: {{ .Values.cluster.repoURL | quote }}
       path: gitops/infra-custom/cert-manager
       targetRevision: {{ .Values.cluster.revision | default "main" | quote }}
       helm:
         version: v3
         releaseName: cert-manager-custom
-        values: |
-          email: {{ .Values.certmanager.acme.email }}
-          server: {{ .Values.certmanager.acme.server }}
+        valueFiles:
+          - values.yaml
+    - repoURL: {{ .Values.cluster.repoURL | quote }}
+      targetRevision: {{ .Values.cluster.revision | default "main" | quote }}
+      ref: values
 {{- end }}

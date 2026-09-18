@@ -117,6 +117,10 @@ Render Argo CD locally:
 kustomize build --enable-helm gitops/argocd
 ```
 
+`gitops/argocd/charts` is an ignored Helm download cache, not committed bootstrap
+input. A clean checkout can render this kustomization because Helm retrieves the
+pinned chart dependency during rendering; no vendored chart directory is required.
+
 Apply the reviewed output:
 
 ```bash

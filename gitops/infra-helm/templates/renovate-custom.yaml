@@ -1,0 +1,34 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/refs/heads/main/argoproj.io/application_v1alpha1.json
+{{- if .Values.renovate.enabled }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ include "infra.appName" (dict "root" . "name" "renovate") }}
+  namespace: {{ .Values.cluster.namespace | quote }}
+  labels:
+    cluster: {{ .Values.cluster.name | quote }}
+    app: renovate
+  annotations:
+    # External Secrets and its ClusterSecretStore are installed in wave 0.
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  project: {{ include "infra.projectName" . }}
+  destination:
+    server: {{ .Values.cluster.url | default "https://kubernetes.default.svc" | quote }}
+    namespace: {{ .Values.renovate.namespace | default "renovate" | quote }}
+  syncPolicy:
+    {{- if .Values.sync }}
+    automated:
+      prune: true
+      selfHeal: true
+    {{- end }}
+    syncOptions:
+      - FailOnSharedResource=true
+      # The Kustomization owns the Namespace manifest.
+      - CreateNamespace=false
+      - SkipDryRunOnMissingResource=true
+  source:
+    repoURL: {{ .Values.cluster.repoURL | quote }}
+    targetRevision: {{ .Values.cluster.revision | default "main" | quote }}
+    path: gitops/infra-custom/renovate
+{{- end }}

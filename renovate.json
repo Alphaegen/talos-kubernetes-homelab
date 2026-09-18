@@ -4,6 +4,7 @@
     "config:recommended"
   ],
   "dependencyDashboardApproval": false,
+  "prCreation": "immediate",
   "customManagers": [
     {
       "customType": "regex",
@@ -20,6 +21,7 @@
   "helm-values": {
     "managerFilePatterns": [
       "/(^|/)gitops/infra-helm/values\\.ya?ml$/",
+      "/(^|/)gitops/argocd/helm-values\\.ya?ml$/",
       "/(^|/)gitops/infra-custom/.+/values\\.ya?ml$/"
     ]
   },

@@ -11,6 +11,10 @@ cluster:
 
 sync: true
 
+renovate:
+  enabled: true
+  namespace: renovate
+
 bookorbit:
   enabled: true
 

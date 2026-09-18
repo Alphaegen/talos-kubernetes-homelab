@@ -99,7 +99,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: trawl
-          image: ghcr.io/germondai/trawl:1.6.1
+          image: ghcr.io/germondai/trawl:1.6.2
           env:
             - { name: HOME, value: /tmp }
             - { name: REDIS_URL, value: redis://trawl-redis:6379 }

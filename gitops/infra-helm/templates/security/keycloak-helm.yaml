@@ -28,7 +28,7 @@ spec:
   source:
     repoURL: https://charts.bitnami.com/bitnami
     chart: keycloak
-    targetRevision: {{ .Values.security.keycloak.version | default "22.x.x" | quote }}
+    targetRevision: {{ .Values.security.keycloak.version | quote }}
     helm:
       values: |
         production: true

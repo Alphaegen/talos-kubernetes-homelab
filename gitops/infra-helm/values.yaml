@@ -138,7 +138,9 @@ security:
   keycloak:
     enabled: false
     # The Bitnami keycloak chart is kept configurable because upstream packaging has changed over time.
-    version: "22.x.x"
+    # Pin even disabled charts so enabling one cannot unexpectedly select a release.
+    # renovate: datasource=helm depName=keycloak registryUrl=https://charts.bitnami.com/bitnami versioning=helm
+    version: "22.0.0"
 
   vault:
     enabled: false
@@ -146,6 +148,8 @@ security:
     version: "0.34.1"
     host: vault.homelab.niekvlam.nl
     storageSize: 10Gi
+    unsealer:
+      image: curlimages/curl:8.5.0
 
   eso:
     enabled: true

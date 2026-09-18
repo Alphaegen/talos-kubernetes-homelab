@@ -73,7 +73,7 @@ spec:
               readOnly: true
           extraContainers:
             - name: vault-unsealer
-              image: curlimages/curl:8.5.0
+              image: {{ .Values.security.vault.unsealer.image | quote }}
               imagePullPolicy: IfNotPresent
               env:
                 - name: VAULT_ADDR

@@ -1,6 +1,8 @@
 global:
   domain: argocd.homelab.niekvlam.nl
   image:
+    # Explicit chart default lets the Helm-values Renovate manager pair it with tag.
+    repository: quay.io/argoproj/argocd
     tag: v3.5.2
   # Chart 10 enables policies by default. Preserve current connectivity during
   # the upgrade; enable policies separately after validating cluster traffic.

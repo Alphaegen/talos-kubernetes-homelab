@@ -295,7 +295,7 @@ homeassistant:
   enabled: true
   namespace: home-assistant
   # renovate: datasource=helm depName=home-assistant registryUrl=http://pajikos.github.io/home-assistant-helm-chart/ versioning=helm
-  version: "0.3.81"
+  version: "0.3.82"
   image:
     tag: ""
 
@@ -410,7 +410,7 @@ progressiveDelivery:
     enabled: true
     namespace: argo-rollouts
     # renovate: datasource=helm depName=argo-rollouts registryUrl=https://argoproj.github.io/argo-helm versioning=helm
-    version: "2.43.1"
+    version: "2.43.2"
     serviceMonitorLabel: kube-prometheus-stack
 
 media:
@@ -468,7 +468,7 @@ security:
   tailscale:
     enabled: true
     # renovate: datasource=helm depName=tailscale-operator registryUrl=https://pkgs.tailscale.com/helmcharts versioning=helm
-    version: "1.102.3"
+    version: "1.102.4"
     namespace: tailscale
     repoURL: https://pkgs.tailscale.com/helmcharts
     chart: tailscale-operator

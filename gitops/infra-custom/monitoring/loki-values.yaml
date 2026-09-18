@@ -4,7 +4,6 @@ singleBinary:
   persistence:
     enabled: true
     size: 40Gi
-    storageClass: longhorn
     enableStatefulSetAutoDeletePVC: true
     enableStatefulSetRecreationForSizeChange: true
     whenDeleted: Retain

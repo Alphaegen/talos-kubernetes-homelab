@@ -149,7 +149,7 @@ security:
     host: vault.homelab.niekvlam.nl
     storageSize: 10Gi
     unsealer:
-      image: curlimages/curl:8.5.0
+      image: curlimages/curl:8.22.0
 
   eso:
     enabled: true

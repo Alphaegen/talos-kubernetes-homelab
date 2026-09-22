@@ -34,7 +34,7 @@ downloadDashboards:
 # Retry if that leaves an empty dashboard and fail startup rather than loading it.
 extraInitContainers:
   - name: validate-downloaded-dashboards
-    image: docker.io/curlimages/curl:8.9.1
+    image: docker.io/curlimages/curl:8.22.0
     command: ["/bin/sh", "-ec"]
     args:
       - |

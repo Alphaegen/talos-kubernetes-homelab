@@ -89,7 +89,7 @@ monitoring:
 
   prometheus:
     # renovate: datasource=helm depName=kube-prometheus-stack registryUrl=https://prometheus-community.github.io/helm-charts versioning=helm
-    version: "91.4.1"
+    version: "91.5.0"
 
 networkWatchdog:
   enabled: true
@@ -102,7 +102,7 @@ pi5FanControl:
 homeassistant:
   enabled: true
   # renovate: datasource=helm depName=home-assistant registryUrl=http://pajikos.github.io/home-assistant-helm-chart/ versioning=helm
-  version: "0.3.81"
+  version: "0.3.82"
 
 homeAutomation:
   enabled: true
@@ -119,7 +119,7 @@ progressiveDelivery:
     enabled: true
     namespace: argo-rollouts
     # renovate: datasource=helm depName=argo-rollouts registryUrl=https://argoproj.github.io/argo-helm versioning=helm
-    version: "2.43.1"
+    version: "2.43.2"
     serviceMonitorLabel: kube-prometheus-stack
 
 media:
@@ -140,7 +140,7 @@ security:
     # The Bitnami keycloak chart is kept configurable because upstream packaging has changed over time.
     # Pin even disabled charts so enabling one cannot unexpectedly select a release.
     # renovate: datasource=helm depName=keycloak registryUrl=https://charts.bitnami.com/bitnami versioning=helm
-    version: "22.0.0"
+    version: "22.2.6"
 
   vault:
     enabled: false
@@ -154,7 +154,7 @@ security:
   eso:
     enabled: true
     # renovate: datasource=helm depName=external-secrets registryUrl=https://charts.external-secrets.io versioning=helm
-    version: "2.10.0"
+    version: "2.11.0"
     serviceMonitorLabel: kube-prometheus-stack
     bootstrap: true
 
@@ -181,7 +181,7 @@ security:
   tailscale:
     enabled: true
     # renovate: datasource=helm depName=tailscale-operator registryUrl=https://pkgs.tailscale.com/helmcharts versioning=helm
-    version: "1.102.3"
+    version: "1.102.4"
     namespace: tailscale
     repoURL: https://pkgs.tailscale.com/helmcharts
     chart: tailscale-operator

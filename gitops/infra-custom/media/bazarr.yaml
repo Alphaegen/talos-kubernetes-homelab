@@ -18,7 +18,7 @@ spec:
         fsGroupChangePolicy: OnRootMismatch
       containers:
         - name: bazarr
-          image: lscr.io/linuxserver/bazarr:v1.6.1-ls364
+          image: lscr.io/linuxserver/bazarr:v1.6.1-ls365
           resources:
             requests:
               cpu: 50m

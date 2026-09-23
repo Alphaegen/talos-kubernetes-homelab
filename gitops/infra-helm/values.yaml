@@ -140,7 +140,7 @@ security:
     # The Bitnami keycloak chart is kept configurable because upstream packaging has changed over time.
     # Pin even disabled charts so enabling one cannot unexpectedly select a release.
     # renovate: datasource=helm depName=keycloak registryUrl=https://charts.bitnami.com/bitnami versioning=helm
-    version: "22.2.6"
+    version: "25.2.0"
 
   vault:
     enabled: false

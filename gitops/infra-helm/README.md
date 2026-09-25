@@ -72,7 +72,7 @@ Resource ownership is intentionally singular:
 - `homelab-cert-manager-helm` owns the `cert-manager` namespace metadata, the
   cert-manager chart, and its `ClusterIssuer`.
 - `homelab-kube-prometheus-stack` owns the `monitoring` namespace metadata and
-  monitoring CRDs. Grafana, Loki, and Promtail do not create or manage that
+  monitoring CRDs. Grafana, Loki, and Alloy do not create or manage that
   namespace.
 - `homelab-external-secrets` owns the External Secrets operator, SecretStores,
   and bootstrap credential `ExternalSecret` resources for cert-manager and

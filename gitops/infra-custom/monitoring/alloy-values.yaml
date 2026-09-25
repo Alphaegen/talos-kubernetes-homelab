@@ -86,6 +86,8 @@ alloy:
       loki.source.file "kubernetes_pods" {
         targets    = discovery.relabel.kubernetes_pods.output
         forward_to = [loki.process.kubernetes_pods.receiver]
+        // One-time import of Promtail's offsets; ignored once Alloy's own positions file exists.
+        legacy_positions_file = "/var/lib/promtail/positions.yaml"
 
         file_match {
           enabled = true
@@ -126,8 +128,6 @@ alloy:
         endpoint {
           url = "http://loki-gateway.monitoring.svc:80/loki/api/v1/push"
         }
-        // Canary-only (10B-1): tells Alloy streams apart from Promtail's. Removed at cutover (10B-2).
-        external_labels = {collector = "alloy"}
       }
   storagePath: /var/lib/alloy
   enableReporting: false
@@ -140,7 +140,10 @@ alloy:
       - name: storage
         mountPath: /var/lib/alloy
         readOnly: false
-  # Pod log files are root-only; same hardening as Promtail.
+      - name: promtail-positions
+        mountPath: /var/lib/promtail
+        readOnly: true
+  # Pod log files are root-only; otherwise locked down.
   securityContext:
     runAsUser: 0
     runAsGroup: 0
@@ -152,8 +155,6 @@ alloy:
     limits: {memory: 320Mi}
 controller:
   type: daemonset
-  # Canary-only (10B-1): run on rpi-cp-1 next to Promtail. Removed at cutover (10B-2).
-  nodeSelector: {kubernetes.io/hostname: rpi-cp-1}
   tolerations:
     - {key: node-role.kubernetes.io/control-plane, operator: Exists, effect: NoSchedule}
   volumes:
@@ -162,8 +163,11 @@ controller:
         hostPath: {path: /var/log/pods}
       - name: storage
         hostPath: {path: /var/lib/alloy, type: DirectoryOrCreate}
+      # Promtail's old positions, read by legacy_positions_file; DirectoryOrCreate so a node without it still schedules.
+      - name: promtail-positions
+        hostPath: {path: /var/lib/promtail, type: DirectoryOrCreate}
 # Only what discovery.kubernetes role "pod" needs (chart default also grants secrets/configmaps etc.).
-# The chart needs both lists non-empty; nodes read mirrors Promtail's ClusterRole.
+# The chart needs both lists non-empty; the read-only nodes rule fills clusterRules.
 rbac:
   rules:
     - {apiGroups: [""], resources: [pods], verbs: [get, list, watch]}

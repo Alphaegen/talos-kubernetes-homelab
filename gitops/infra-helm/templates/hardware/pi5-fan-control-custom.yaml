@@ -20,11 +20,7 @@ spec:
     server: {{ .Values.cluster.url | default "https://kubernetes.default.svc" | quote }}
     namespace: {{ .Values.pi5FanControl.namespace | default "pi5-fan-control" | quote }}
   syncPolicy:
-    {{- if .Values.sync }}
-    automated:
-      prune: true
-      selfHeal: true
-    {{- end }}
+    {{- include "infra.syncPolicy" . | nindent 4 }}
     syncOptions:
       - FailOnSharedResource=true
       - CreateNamespace=false

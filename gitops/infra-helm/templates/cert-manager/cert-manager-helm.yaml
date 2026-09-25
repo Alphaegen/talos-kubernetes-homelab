@@ -21,16 +21,13 @@ spec:
     server: {{ .Values.cluster.url | default "https://kubernetes.default.svc" | quote }}
     namespace: cert-manager
   syncPolicy:
-    {{- if .Values.sync }}
-    automated:
-      prune: true
-      selfHeal: true
-    {{- end }}
+    {{- include "infra.syncPolicy" . | nindent 4 }}
     syncOptions:
       - FailOnSharedResource=true
       - CreateNamespace=true
       # ServiceMonitor may be discovered before the monitoring CRDs finish
-      # their independently automated first sync. Argo CD will retry it.
+      # their independently automated first sync. The shared sync retry policy
+      # re-attempts it.
       - SkipDryRunOnMissingResource=true
     managedNamespaceMetadata:
       labels:

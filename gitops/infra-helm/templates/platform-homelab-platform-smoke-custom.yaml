@@ -19,11 +19,7 @@ spec:
     server: {{ .Values.cluster.url | default "https://kubernetes.default.svc" | quote }}
     namespace: {{ .Values.platformSmoke.namespace | default "homelab-platform" | quote }}
   syncPolicy:
-    {{- if .Values.sync }}
-    automated:
-      prune: true
-      selfHeal: true
-    {{- end }}
+    {{- include "infra.syncPolicy" . | nindent 4 }}
     syncOptions:
       - FailOnSharedResource=true
       # The source contains and owns the Namespace manifest.

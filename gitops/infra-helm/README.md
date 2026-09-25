@@ -60,7 +60,10 @@ auto-syncing child Applications are not a readiness scheduler. CRD-backed
 configuration that belongs to an operator is therefore kept in the same
 multi-source Application as that operator where practical. Cross-Application
 custom resources use `SkipDryRunOnMissingResource=true` where the provider may
-still be converging; automated sync then retries them. Within a combined
+still be converging; the shared `retry` policy (`infra.syncPolicy` in
+`templates/_helpers.tpl`, also set on the root Application) then re-attempts
+the failed sync with backoff for about an hour. Once retries are exhausted, that
+revision stays failed until a new commit or a manual sync. Within a combined
 operator Application, its own CRD-backed resources use only waves `1`/`2` after
 the chart's default wave `0` (for example, SecretStores before ExternalSecrets).
 

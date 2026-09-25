@@ -21,11 +21,7 @@ spec:
       jqPathExpressions:
         - .spec.volumeName
   syncPolicy:
-    {{- if .Values.sync }}
-    automated:
-      prune: true
-      selfHeal: true
-    {{- end }}
+    {{- include "infra.syncPolicy" . | nindent 4 }}
     syncOptions:
       - FailOnSharedResource=true
       - CreateNamespace=true

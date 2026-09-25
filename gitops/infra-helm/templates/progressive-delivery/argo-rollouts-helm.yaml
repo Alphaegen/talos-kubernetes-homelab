@@ -18,11 +18,7 @@ spec:
     server: {{ .Values.cluster.url | default "https://kubernetes.default.svc" | quote }}
     namespace: {{ .Values.progressiveDelivery.argoRollouts.namespace | default "argo-rollouts" | quote }}
   syncPolicy:
-    {{- if .Values.sync }}
-    automated:
-      prune: true
-      selfHeal: true
-    {{- end }}
+    {{- include "infra.syncPolicy" . | nindent 4 }}
     syncOptions:
       - FailOnSharedResource=true
       - CreateNamespace=true

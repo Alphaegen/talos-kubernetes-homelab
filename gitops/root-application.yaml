@@ -18,6 +18,13 @@ spec:
     automated:
       prune: true
       selfHeal: true
+    # Keep in sync with infra.syncPolicy in gitops/infra-helm/templates/_helpers.tpl.
+    retry:
+      limit: 10
+      backoff:
+        duration: 30s
+        factor: 2
+        maxDuration: 10m
     syncOptions:
       - FailOnSharedResource=true
   source:

@@ -2,10 +2,12 @@
 # This is the handoff point after the manual Argo CD installation and bootstrap
 # credential steps. It deliberately remains in the built-in project: the
 # homelab AppProject is rendered by the chart it reconciles.
+# The name must stay `app-of-apps`: the child Applications and AppProject are
+# tracked under that name, and a root with any other name conflicts with it.
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: homelab-root
+  name: app-of-apps
   namespace: argocd
   labels:
     app.kubernetes.io/part-of: homelab

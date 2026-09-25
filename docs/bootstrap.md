@@ -166,6 +166,11 @@ Argo CD then creates the AppProject and reconciles the enabled platform and
 workload Applications. Subsequent changes flow from Git through this existing
 App-of-Apps hierarchy; do not separately apply the rendered child Applications.
 
+The root Application is named `app-of-apps` and is not reconciled by itself:
+re-apply `gitops/root-application.yaml` after changing it. Do not create a
+second root Application under another name; both would claim the same child
+Applications and fail with `SharedResourceWarning`.
+
 ## Local validation
 
 Run the relevant render before committing a change:

@@ -108,6 +108,50 @@
         "ghcr.io/alphaegen/homelab-platform-smoke"
       ],
       "enabled": false
+    },
+    {
+      "description": "Cilium is applied by hand, not by Argo CD; keep it out of the routine groups above",
+      "matchFileNames": [
+        "cilium/**"
+      ],
+      "groupName": "Cilium (manual apply)",
+      "groupSlug": "cilium-manual-apply",
+      "addLabels": [
+        "manual-apply"
+      ],
+      "prBodyNotes": [
+        "> [!WARNING]\n> **Manual apply.** Merging does NOT deploy Cilium. Follow `cilium/README.md` (Gateway API prerequisite, render, diff, preflight, apply) and refresh `cilium/crds/` from the matching upstream tag per `cilium/crds/SOURCE.md`."
+      ]
+    },
+    {
+      "description": "Argo CD is applied by hand; keep chart and image in one PR, including major updates",
+      "matchFileNames": [
+        "gitops/argocd/**"
+      ],
+      "groupName": "Argo CD (manual apply)",
+      "groupSlug": "argocd-manual-apply",
+      "separateMajorMinor": false,
+      "addLabels": [
+        "manual-apply"
+      ],
+      "prBodyNotes": [
+        "> [!WARNING]\n> **Manual apply.** Merging does NOT upgrade Argo CD. Keep `global.image.tag` equal to the chart appVersion, then apply per `docs/bootstrap.md` (Bootstrap Argo CD manually)."
+      ]
+    },
+    {
+      "description": "Talos is upgraded by hand; move the talosctl CLI and the etcd-backup talosctl image together",
+      "matchDepNames": [
+        "talosctl",
+        "ghcr.io/siderolabs/talosctl"
+      ],
+      "groupName": "Talos (manual apply)",
+      "groupSlug": "talos-manual-apply",
+      "addLabels": [
+        "manual-apply"
+      ],
+      "prBodyNotes": [
+        "> [!WARNING]\n> **Manual apply.** Merge only after the nodes run this Talos version (`docs/control-plane-recovery.md`, Upgrade command pattern). Merging does NOT upgrade Talos, but Argo CD will roll out the etcd-backup talosctl image."
+      ]
     }
   ],
   "rangeStrategy": "pin",

@@ -48,6 +48,10 @@ spec:
               image: ghcr.io/siderolabs/talosctl:v1.13.10@sha256:3116f64c97ddffb53bd3c5bf87c8614d99f04df4326177dbbb7702b5087f0e4d
               imagePullPolicy: IfNotPresent
               args:
+                # The injected talosconfig sets only the talos.default endpoint,
+                # so name the etcd node explicitly (rpi-cp-1, see nodes.yaml).
+                - --nodes
+                - 192.168.20.101
                 - etcd
                 - snapshot
                 - /backup/.incoming-etcd.snapshot

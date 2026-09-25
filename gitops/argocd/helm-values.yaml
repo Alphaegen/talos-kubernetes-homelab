@@ -9,8 +9,10 @@ global:
   networkPolicy:
     create: false
 
+# Memory-constrained Pi cluster: use the chart's standalone Redis cache and one
+# replica per component instead of the HA topology (3 Redis + 3 HAProxy pods).
 redis-ha:
-  enabled: true
+  enabled: false
 
 configs:
   params:
@@ -29,7 +31,7 @@ configs:
     controller.sync.timeout.seconds: 900
 
 server:
-  replicas: 2
+  replicas: 1
   resources:
     requests:
       cpu: 25m
@@ -71,7 +73,7 @@ controller:
         release: kube-prometheus-stack
 
 repoServer:
-  replicas: 2
+  replicas: 1
   resources:
     requests:
       cpu: 25m
@@ -80,16 +82,6 @@ repoServer:
       memory: 512Mi
   nodeSelector:
     kubernetes.io/os: linux
-  affinity:
-    nodeAffinity:
-      requiredDuringSchedulingIgnoredDuringExecution:
-        nodeSelectorTerms:
-          - matchExpressions:
-              - key: kubernetes.io/hostname
-                operator: In
-                values:
-                  - rpi-w-2
-                  - rpi-w-3
   metrics:
     enabled: true
     serviceMonitor:
@@ -99,7 +91,7 @@ repoServer:
         release: kube-prometheus-stack
 
 applicationSet:
-  replicas: 2
+  replicas: 1
   resources:
     requests:
       cpu: 25m

@@ -7,6 +7,13 @@ The two Noctua NF-A8 5V fans remain the continuous, independent baseline
 cooling system. The small HAT fans are supplemental cooling for elevated CPU
 temperatures only.
 
+The DaemonSet schedules only on ARM64 nodes that carry the opt-in
+`hardware.niekvlam.nl/pi5-fan: "true"` label, which `nodes.yaml` sets through
+`nodeLabels`. All four nodes (`rpi-cp-1`, `rpi-w-1`, `rpi-w-2`, and `rpi-w-3`)
+are currently labeled; the catch-all toleration also lets it run on the
+control-plane node. The rollout sections below record the original `rpi-w-2`
+canary and the later expansion to the remaining nodes.
+
 ## Why this workaround exists
 
 Talos detects `cooling_fan`, the `pwm-fan` driver, and the RP1 PWM platform
@@ -177,14 +184,20 @@ after it is explicitly labeled.
 
 Adjust the curve by editing the DaemonSet environment values and reviewing the
 Kustomize render. To disable the controller, set `pi5FanControl.enabled: false`
-and remove the opt-in `nodeLabels` entry from `nodes.yaml`. Remove the persistent
-label from the live canary machine configuration; the Kubernetes label will then
-be reconciled away:
+and remove the opt-in `nodeLabels` entries from `nodes.yaml`. Remove the
+persistent label from the live machine configuration of every labeled node; the
+Kubernetes label will then be reconciled away:
 
 ```bash
-talosctl -n 192.168.3.103 patch machineconfig \
-  --patch '{"machine":{"nodeLabels":{"hardware.niekvlam.nl/pi5-fan":null}}}'
+for ip in 192.168.20.101 192.168.20.102 192.168.20.103 192.168.20.104; do
+  talosctl -n "$ip" patch machineconfig \
+    --patch '{"machine":{"nodeLabels":{"hardware.niekvlam.nl/pi5-fan":null}}}'
+done
 ```
+
+To exclude a single node instead, remove only that node's `nodeLabels` entry
+from `nodes.yaml` and patch only that node's label to `null`; the DaemonSet
+controller then removes the pod from that node.
 
 Graceful termination intentionally programs 100% before unmapping the BAR. An
 abrupt process or node failure can leave the last PWM duty programmed. Keep the

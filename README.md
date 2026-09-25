@@ -15,7 +15,7 @@ This repository contains the configuration for a four-node Kubernetes homelab ru
 | External secrets | External Secrets Operator authenticates to 1Password and creates Kubernetes Secrets |
 | Automated certificates | cert-manager issues Let's Encrypt certificates through Cloudflare DNS-01 |
 | Metrics and logs | Prometheus, Alertmanager, Grafana, Loki, and Promtail |
-| Supplemental node cooling | Opt-in Raspberry Pi 5 RP1 PWM fan controller with one-node canary rollout |
+| Supplemental node cooling | Opt-in Raspberry Pi 5 RP1 PWM fan controller on all four nodes, rolled out after a one-node canary |
 | Progressive delivery | Argo Rollouts canaries with analysis steps against a dedicated smoke-test workload |
 | Dependency maintenance | Renovate groups Helm chart and container-image updates into reviewable pull requests |
 | Persistent workloads | Home Assistant, Zigbee2MQTT, media services, BookOrbit, and Obsidian LiveSync |
@@ -168,7 +168,7 @@ Prometheus collects cluster and application metrics with a 30-day retention targ
 
 Loki runs in single-binary mode with Longhorn-backed filesystem storage and seven-day retention. Promtail collects node and container logs and applies additional parsing to the control-plane link watchdog.
 
-The opt-in `pi5-fan-control` node agent supplies high-temperature cooling from the Waveshare HAT fans while the external Noctua fans provide continuous baseline airflow. It is canary-labeled only on `rpi-w-2`; direct RP1 register access is isolated in a dedicated privileged namespace until Talos provides native RP1 PWM support.
+The opt-in `pi5-fan-control` node agent supplies high-temperature cooling from the Waveshare HAT fans while the external Noctua fans provide continuous baseline airflow. It runs on all four Pi 5 nodes, including the control plane, through the `hardware.niekvlam.nl/pi5-fan` node label set in `nodes.yaml`; direct RP1 register access is isolated in a dedicated privileged namespace until Talos provides native RP1 PWM support.
 
 Grafana is provisioned with Prometheus and Loki data sources, upstream component dashboards, and repository-managed dashboards for control-plane link stability and the platform smoke-test workload. The `cp-link-watchdog` DaemonSet records network-link events. `homelab-platform-smoke` exposes health checks and metrics used by the rollout analysis and dashboards.
 

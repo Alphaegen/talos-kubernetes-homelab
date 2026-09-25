@@ -13,6 +13,13 @@ prometheus:
     resources:
       requests: {cpu: 100m, memory: 1Gi}
       limits: {memory: 1536Mi}
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: longhorn
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests: {storage: 25Gi}
 alertmanager: {enabled: true}
 kubeStateMetrics: {enabled: true}
 nodeExporter: {enabled: true}

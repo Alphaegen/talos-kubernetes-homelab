@@ -20,6 +20,15 @@ machine:
     hostDNS:
       enabled: false
       forwardKubeDNSToHost: false
+    # Lets the etcd-backup CronJob (gitops/infra-custom/etcd-backup) take etcd
+    # snapshots through a Talos ServiceAccount; only the etcd backup role and
+    # only in that namespace.
+    kubernetesTalosAPIAccess:
+      enabled: true
+      allowedRoles:
+        - os:etcd:backup
+      allowedKubernetesNamespaces:
+        - etcd-backup
 
 cluster:
   network:

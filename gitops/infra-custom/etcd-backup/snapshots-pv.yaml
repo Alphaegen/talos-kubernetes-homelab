@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: etcd-backup-snapshots
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+  labels:
+    app.kubernetes.io/name: etcd-backup
+    app.kubernetes.io/part-of: homelab
+spec:
+  capacity:
+    storage: 20Gi
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""
+  mountOptions:
+    - nfsvers=4.1
+  nfs:
+    server: nas.niekvlam.nl
+    # Dedicated share; must not be the Longhorn backup target or media storage.
+    path: /volume1/etcd-backups

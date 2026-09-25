@@ -20,6 +20,57 @@ prometheus:
           accessModes: ["ReadWriteOnce"]
           resources:
             requests: {storage: 25Gi}
-alertmanager: {enabled: true}
+alertmanager:
+  enabled: true
+  alertmanagerSpec:
+    # From 1Password via monitoring/alertmanager/externalsecret.yaml.
+    secrets: [alertmanager-notifications]
+  # Chart 91.5.0 default config, with ntfy as the default receiver.
+  config:
+    global:
+      resolve_timeout: 5m
+    inhibit_rules:
+      - source_matchers: ['severity = critical']
+        target_matchers: ['severity =~ warning|info']
+        equal: ['namespace', 'alertname']
+      - source_matchers: ['severity = warning']
+        target_matchers: ['severity = info']
+        equal: ['namespace', 'alertname']
+      - source_matchers: ['alertname = InfoInhibitor']
+        target_matchers: ['severity = info']
+        equal: ['namespace']
+      - target_matchers: ['alertname = InfoInhibitor']
+    route:
+      group_by: ['namespace']
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 12h
+      receiver: ntfy
+      routes:
+        - receiver: 'null'
+          matchers: ['alertname = "Watchdog"']
+    receivers:
+      - name: 'null'
+      - name: ntfy
+        webhook_configs:
+          - url_file: /etc/alertmanager/secrets/alertmanager-notifications/NTFY_URL
+            send_resolved: true
+            # ntfy rejects templated messages over its size limit (4 KiB default).
+            max_alerts: 5
+            http_config:
+              authorization:
+                type: Bearer
+                credentials_file: /etc/alertmanager/secrets/alertmanager-notifications/NTFY_TOKEN
+              # ntfy's built-in template renders the Alertmanager webhook JSON.
+              http_headers:
+                X-Template: {values: [alertmanager]}
+    templates:
+      - '/etc/alertmanager/config/*.tmpl'
 kubeStateMetrics: {enabled: true}
 nodeExporter: {enabled: true}
+# Talos + Cilium: kube-proxy is replaced by Cilium, and Talos binds the
+# controller-manager, scheduler and etcd metrics to localhost.
+kubeProxy: {enabled: false}
+kubeControllerManager: {enabled: false}
+kubeScheduler: {enabled: false}
+kubeEtcd: {enabled: false}

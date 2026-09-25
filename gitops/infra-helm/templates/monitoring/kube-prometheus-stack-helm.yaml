@@ -30,6 +30,8 @@ spec:
       - FailOnSharedResource=true
       - CreateNamespace=true
       - ServerSideApply=true
+      # The ExternalSecret CRD comes from the separate external-secrets app.
+      - SkipDryRunOnMissingResource=true
     managedNamespaceMetadata:
       labels:
         pod-security.kubernetes.io/enforce: privileged
@@ -43,6 +45,9 @@ spec:
         releaseName: kube-prometheus-stack
         valueFiles:
           - $values/gitops/infra-custom/monitoring/kube-prometheus-stack-values.yaml
+    - repoURL: {{ .Values.cluster.repoURL | quote }}
+      targetRevision: {{ .Values.cluster.revision | default "main" | quote }}
+      path: gitops/infra-custom/monitoring/alertmanager
     - repoURL: {{ .Values.cluster.repoURL | quote }}
       targetRevision: {{ .Values.cluster.revision | default "main" | quote }}
       ref: values

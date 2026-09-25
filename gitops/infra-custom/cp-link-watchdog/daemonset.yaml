@@ -38,7 +38,7 @@ spec:
           effect: NoSchedule
       containers:
         - name: watchdog
-          image: ghcr.io/nicolaka/netshoot:latest
+          image: ghcr.io/nicolaka/netshoot:v0.15@sha256:47b907d662d139d1e2f22bfe14f4efca1e3f1feed283572f47c970c780c03b61
           imagePullPolicy: IfNotPresent
           securityContext:
             privileged: true

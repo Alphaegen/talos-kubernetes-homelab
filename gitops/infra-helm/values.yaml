@@ -18,6 +18,10 @@ renovate:
 bookorbit:
   enabled: true
 
+# Nightly etcd snapshots to the NAS; needs the Talos controlplane patch applied.
+etcdBackup:
+  enabled: true
+
 obsidianLiveSync:
   enabled: true
 

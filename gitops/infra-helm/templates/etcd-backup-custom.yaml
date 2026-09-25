@@ -1,0 +1,32 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/refs/heads/main/argoproj.io/application_v1alpha1.json
+{{- if .Values.etcdBackup.enabled }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ include "infra.appName" (dict "root" . "name" "etcd-backup") }}
+  namespace: {{ .Values.cluster.namespace | quote }}
+  labels:
+    cluster: {{ .Values.cluster.name | quote }}
+    app: etcd-backup
+  annotations:
+    # Stage 2: stateful NAS-backed job after bootstrap foundations.
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  project: {{ include "infra.projectName" . }}
+  destination:
+    server: {{ .Values.cluster.url | default "https://kubernetes.default.svc" | quote }}
+    namespace: etcd-backup
+  syncPolicy:
+    {{- include "infra.syncPolicy" . | nindent 4 }}
+    syncOptions:
+      - FailOnSharedResource=true
+      # The Kustomization owns the Namespace manifest.
+      - CreateNamespace=false
+      # The talos.dev ServiceAccount CRD only exists once the control-plane
+      # Talos patch (kubernetesTalosAPIAccess) is applied.
+      - SkipDryRunOnMissingResource=true
+  source:
+    repoURL: {{ .Values.cluster.repoURL | quote }}
+    targetRevision: {{ .Values.cluster.revision | default "main" | quote }}
+    path: gitops/infra-custom/etcd-backup
+{{- end }}

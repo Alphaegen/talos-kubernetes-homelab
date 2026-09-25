@@ -1,0 +1,171 @@
+crds: {create: false}
+alloy:
+  # Base generated with `alloy convert --source-format=promtail` from the rendered Promtail config.
+  configMap:
+    content: |
+      discovery.kubernetes "kubernetes_pods" {
+        role = "pod"
+
+        // Only watch pods on this node (HOSTNAME = spec.nodeName, injected by the chart).
+        selectors {
+          role  = "pod"
+          field = "spec.nodeName=" + coalesce(sys.env("HOSTNAME"), constants.hostname)
+        }
+      }
+
+      discovery.relabel "kubernetes_pods" {
+        targets = discovery.kubernetes.kubernetes_pods.targets
+
+        rule {
+          source_labels = ["__meta_kubernetes_pod_controller_name"]
+          regex         = "([0-9a-z-.]+?)(-[0-9a-f]{8,10})?"
+          target_label  = "__tmp_controller_name"
+        }
+
+        rule {
+          source_labels = ["__meta_kubernetes_pod_label_app_kubernetes_io_name", "__meta_kubernetes_pod_label_app", "__tmp_controller_name", "__meta_kubernetes_pod_name"]
+          regex         = "^;*([^;]+)(;.*)?$"
+          target_label  = "app"
+        }
+
+        rule {
+          source_labels = ["__meta_kubernetes_pod_label_app_kubernetes_io_instance", "__meta_kubernetes_pod_label_instance"]
+          regex         = "^;*([^;]+)(;.*)?$"
+          target_label  = "instance"
+        }
+
+        rule {
+          source_labels = ["__meta_kubernetes_pod_label_app_kubernetes_io_component", "__meta_kubernetes_pod_label_component"]
+          regex         = "^;*([^;]+)(;.*)?$"
+          target_label  = "component"
+        }
+
+        rule {
+          source_labels = ["__meta_kubernetes_pod_node_name"]
+          target_label  = "node_name"
+        }
+
+        rule {
+          source_labels = ["__meta_kubernetes_namespace"]
+          target_label  = "namespace"
+        }
+
+        rule {
+          source_labels = ["namespace", "app"]
+          separator     = "/"
+          target_label  = "job"
+        }
+
+        rule {
+          source_labels = ["__meta_kubernetes_pod_name"]
+          target_label  = "pod"
+        }
+
+        rule {
+          source_labels = ["__meta_kubernetes_pod_container_name"]
+          target_label  = "container"
+        }
+
+        rule {
+          source_labels = ["__meta_kubernetes_pod_uid", "__meta_kubernetes_pod_container_name"]
+          separator     = "/"
+          target_label  = "__path__"
+          replacement   = "/var/log/pods/*$1/*.log"
+        }
+
+        rule {
+          source_labels = ["__meta_kubernetes_pod_annotationpresent_kubernetes_io_config_hash", "__meta_kubernetes_pod_annotation_kubernetes_io_config_hash", "__meta_kubernetes_pod_container_name"]
+          separator     = "/"
+          regex         = "true/(.*)"
+          target_label  = "__path__"
+          replacement   = "/var/log/pods/*$1/*.log"
+        }
+      }
+
+      // Positions are kept under --storage.path (hostPath /var/lib/alloy).
+      loki.source.file "kubernetes_pods" {
+        targets    = discovery.relabel.kubernetes_pods.output
+        forward_to = [loki.process.kubernetes_pods.receiver]
+
+        file_match {
+          enabled = true
+        }
+      }
+
+      loki.process "kubernetes_pods" {
+        forward_to = [loki.write.default.receiver]
+
+        stage.cri { }
+
+        stage.match {
+          selector = "{app=\"cp-link-watchdog\"}"
+
+          stage.logfmt {
+            mapping = {
+              event     = "",
+              fails     = "",
+              gateway   = "",
+              iface     = "",
+              node      = "",
+              threshold = "",
+            }
+          }
+
+          stage.labels {
+            values = {
+              event   = null,
+              gateway = null,
+              iface   = null,
+              node    = null,
+            }
+          }
+        }
+      }
+
+      loki.write "default" {
+        endpoint {
+          url = "http://loki-gateway.monitoring.svc:80/loki/api/v1/push"
+        }
+        // Canary-only (10B-1): tells Alloy streams apart from Promtail's. Removed at cutover (10B-2).
+        external_labels = {collector = "alloy"}
+      }
+  storagePath: /var/lib/alloy
+  enableReporting: false
+  mounts:
+    varlog: false
+    extra:
+      - name: pods
+        mountPath: /var/log/pods
+        readOnly: true
+      - name: storage
+        mountPath: /var/lib/alloy
+        readOnly: false
+  # Pod log files are root-only; same hardening as Promtail.
+  securityContext:
+    runAsUser: 0
+    runAsGroup: 0
+    readOnlyRootFilesystem: true
+    allowPrivilegeEscalation: false
+    capabilities: {drop: [ALL]}
+  resources:
+    requests: {cpu: 50m, memory: 128Mi}
+    limits: {memory: 320Mi}
+controller:
+  type: daemonset
+  # Canary-only (10B-1): run on rpi-cp-1 next to Promtail. Removed at cutover (10B-2).
+  nodeSelector: {kubernetes.io/hostname: rpi-cp-1}
+  tolerations:
+    - {key: node-role.kubernetes.io/control-plane, operator: Exists, effect: NoSchedule}
+  volumes:
+    extra:
+      - name: pods
+        hostPath: {path: /var/log/pods}
+      - name: storage
+        hostPath: {path: /var/lib/alloy, type: DirectoryOrCreate}
+# Only what discovery.kubernetes role "pod" needs (chart default also grants secrets/configmaps etc.).
+# The chart needs both lists non-empty; nodes read mirrors Promtail's ClusterRole.
+rbac:
+  rules:
+    - {apiGroups: [""], resources: [pods], verbs: [get, list, watch]}
+  clusterRules:
+    - {apiGroups: [""], resources: [nodes], verbs: [get, list, watch]}

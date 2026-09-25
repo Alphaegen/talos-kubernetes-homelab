@@ -91,6 +91,10 @@ monitoring:
     # renovate: datasource=helm depName=promtail registryUrl=https://grafana.github.io/helm-charts versioning=helm
     version: "6.17.1"
 
+  alloy:
+    # renovate: datasource=helm depName=alloy registryUrl=https://grafana.github.io/helm-charts versioning=helm
+    version: "1.13.0"
+
   prometheus:
     # renovate: datasource=helm depName=kube-prometheus-stack registryUrl=https://prometheus-community.github.io/helm-charts versioning=helm
     version: "91.5.0"

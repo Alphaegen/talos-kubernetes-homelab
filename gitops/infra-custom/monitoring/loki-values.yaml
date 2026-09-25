@@ -21,13 +21,13 @@ loki:
   auth_enabled: false
   commonConfig: {replication_factor: 1}
   storage: {type: filesystem}
-  limits_config: {retention_period: 168h, allow_structured_metadata: false}
+  limits_config: {retention_period: 168h}
   compactor: {retention_enabled: true, delete_request_store: filesystem, working_directory: /var/loki/compactor}
   schemaConfig:
     configs:
-      - from: 2020-10-24
-        store: boltdb-shipper
+      - from: "2024-04-01"
+        store: tsdb
         object_store: filesystem
         schema: v13
-        index: {prefix: loki_index_, period: 24h}
+        index: {prefix: loki_tsdb_index_, period: 24h}
 gateway: {enabled: true}

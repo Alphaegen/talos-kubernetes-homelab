@@ -15,7 +15,7 @@ metadata:
     argocd.argoproj.io/sync-wave: "1"
     app.kubernetes.io/part-of: cilium-gateway-api
     {{- if .Values.notifications }}
-    {{ toYaml .Values.notifications | indent 4 }}
+    {{- toYaml .Values.notifications | nindent 4 }}
     {{- end }}
 spec:
   project: {{ include "infra.projectName" . }}

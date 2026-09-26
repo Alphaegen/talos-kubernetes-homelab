@@ -13,7 +13,7 @@ metadata:
     argocd.argoproj.io/sync-wave: "0"
     app.kubernetes.io/part-of: longhorn
     {{- if .Values.notifications }}
-    {{ toYaml .Values.notifications | indent 4 }}
+    {{- toYaml .Values.notifications | nindent 4 }}
     {{- end }}
 spec:
   project: {{ include "infra.projectName" . }}

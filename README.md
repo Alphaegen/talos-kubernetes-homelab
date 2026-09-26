@@ -16,7 +16,8 @@ This repository contains the configuration for a four-node Kubernetes homelab ru
 | Persistent storage | Longhorn on dedicated worker NVMe volumes; NFS for large shared datasets |
 | External secrets | External Secrets Operator authenticates to 1Password and creates Kubernetes Secrets |
 | Automated certificates | cert-manager issues Let's Encrypt certificates through Cloudflare DNS-01 |
-| Metrics and logs | Prometheus, Alertmanager, Grafana, Loki, and Grafana Alloy |
+| Metrics and logs | Prometheus, Alertmanager, Grafana, Loki, and Grafana Alloy, including Cilium, Hubble, and MetalLB metrics |
+| Resource management | Requests and memory limits sized from observed usage; PriorityClasses keep home automation running under memory pressure |
 | Supplemental node cooling | Opt-in Raspberry Pi 5 RP1 PWM fan controller on all four nodes, rolled out after a one-node canary |
 | Progressive delivery | Argo Rollouts canaries with analysis steps against a dedicated smoke-test workload |
 | Dependency maintenance | Renovate groups Helm chart, container-image, GitHub Actions, and CI tool updates into reviewable pull requests |
@@ -173,6 +174,12 @@ Prometheus collects cluster and application metrics with a 30-day retention targ
 
 Loki runs in single-binary mode with Longhorn-backed filesystem storage and seven-day retention. Grafana Alloy runs on every node, collects pod logs, and applies additional parsing to the control-plane link watchdog.
 
+Prometheus also scrapes the Cilium agent, operator and Envoy proxy, Hubble flow metrics (DNS, drops, TCP, flows, ports, ICMP, policy verdicts and HTTP), MetalLB, Loki, and Alloy. Hubble metrics carry namespace-level labels and no IP addresses, and only Gateway-relevant Envoy metrics are kept, which keeps the series count small. MetalLB and Loki ship their upstream alert rules, and the Cilium and Hubble dashboards come from the Cilium chart so they match the running version.
+
+### Resource management
+
+Every platform and application container has CPU and memory requests and a memory limit, apart from a few components managed by Longhorn or Talos. Requests come from observed usage (KRR's simple strategy: CPU p95, memory peak plus 15%), and memory limits are roughly twice the request. Platform controllers have no CPU limit, so they are never throttled; applications keep theirs. Two PriorityClasses express what matters most when memory runs short: `homelab-home-critical` for Home Assistant, Zigbee2MQTT and Mosquitto, and `homelab-best-effort` for the media services, which are evicted first and never preempt other pods.
+
 The opt-in `pi5-fan-control` node agent supplies high-temperature cooling from the Waveshare HAT fans while the external Noctua fans provide continuous baseline airflow. It runs on all four Pi 5 nodes, including the control plane, through the `hardware.niekvlam.nl/pi5-fan` node label set in `nodes.yaml`; direct RP1 register access is isolated in a dedicated privileged namespace until Talos provides native RP1 PWM support.
 
 Grafana is provisioned with Prometheus and Loki data sources, upstream component dashboards, and repository-managed dashboards for control-plane link stability and the platform smoke-test workload. The `cp-link-watchdog` DaemonSet records network-link events. `homelab-platform-smoke` exposes health checks and metrics used by the rollout analysis and dashboards.
@@ -248,6 +255,8 @@ The `Validate` workflow runs on every pull request and push to `main`. It uses r
 - **Bootstrap boundary:** Talos, Cilium, and Argo CD have to be installed before GitOps reconciliation can start. Once Argo CD is running, platform and workload changes are made through Git.
 - **Validation scope:** CI proves that every repository-owned source renders and matches its schema, which keeps it fast and free of cluster credentials. Upstream charts pulled straight from their Helm repositories are rendered only by Argo CD, and runtime behaviour is still checked through Argo CD health and the monitoring stack.
 - **Observability footprint:** Prometheus, Grafana, and Loki run with retention and storage sized for the available hardware. Grafana and Loki use single replicas, so they can be unavailable during node or volume recovery.
+- **Metric cardinality:** Hubble metrics are labelled by namespace (and by workload for HTTP only), not by pod or IP address, and Envoy keeps only request, response-code, latency and upstream-health metrics. Per-pod flow detail stays available in Hubble itself. Enabling the Cilium, Hubble, MetalLB, Loki, and Alloy metrics added about 7% to the active series count.
+- **Resource sizing:** Requests track measured usage so the scheduler sees the real load, while memory limits leave room for spikes rather than packing nodes tightly. The trade-off is that the sum of limits still exceeds node memory on some workers; priorities decide which workloads give way first.
 
 ## Roadmap
 

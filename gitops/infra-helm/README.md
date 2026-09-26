@@ -90,7 +90,9 @@ do **not** have the Argo CD resources finalizer. Deleting one of those
 Application objects must not cascade-delete its workloads, PVCs, storage
 controller, or data. This includes Longhorn, Prometheus, Grafana, Loki, Home
 Assistant, Home Automation, media, BookOrbit, Obsidian LiveSync, Vault, and the
-optional Keycloak service.
+optional Keycloak service. `homelab-gateway` has no finalizer either, and its
+shared Gateway also carries `Prune=false`, so neither deleting the Application
+nor removing the manifest from Git removes the only HTTPRoute ingress path.
 
 Stateless agents, controllers, and validation workloads keep the resources
 finalizer where it already existed, so deleting their Application continues to

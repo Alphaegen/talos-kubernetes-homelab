@@ -1,0 +1,15 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: homelab-wildcard-tls
+  namespace: kube-system
+  labels:
+    app.kubernetes.io/name: cilium-gateway
+    app.kubernetes.io/part-of: cilium-gateway-api
+spec:
+  secretName: homelab-wildcard-tls
+  issuerRef:
+    kind: ClusterIssuer
+    name: letsencrypt-dns
+  dnsNames:
+    - "*.homelab.niekvlam.nl"

@@ -126,7 +126,7 @@ Initial Talos configuration, Cilium installation, and Argo CD bootstrap sit outs
 
 ```text
 .
-├── cilium/                 # Cilium values and shared Gateway API resources
+├── cilium/                 # Cilium values and Gateway API class resources
 ├── docs/                   # Operational documentation
 ├── gitops/
 │   ├── argocd/             # Argo CD bootstrap through Kustomize and Helm

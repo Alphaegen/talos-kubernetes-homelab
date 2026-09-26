@@ -1,0 +1,22 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: homelab-platform-smoke-gateway
+  namespace: homelab-platform
+  labels:
+    app.kubernetes.io/name: homelab-platform-smoke
+    app.kubernetes.io/part-of: homelab-platform
+spec:
+  # Traffic proxied by the shared Cilium Gateway (Envoy) carries the reserved
+  # "ingress" identity, not a kube-system namespace identity, so a Kubernetes
+  # NetworkPolicy namespaceSelector cannot allow it.
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: homelab-platform-smoke
+  ingress:
+    - fromEntities:
+        - ingress
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP

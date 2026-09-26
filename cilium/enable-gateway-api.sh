@@ -29,4 +29,3 @@ kc apply --server-side -f "https://github.com/kubernetes-sigs/gateway-api/releas
 
 echo "==> Verifying Gateway API resources"
 kc get gatewayclass
-kc -n kube-system get gateway cilium-gateway

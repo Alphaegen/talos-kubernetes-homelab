@@ -29,6 +29,7 @@ spec:
         maxDuration: 10m
     syncOptions:
       - FailOnSharedResource=true
+      - PruneLast=true
   source:
     repoURL: https://github.com/Alphaegen/talos-kubernetes-homelab.git
     targetRevision: main

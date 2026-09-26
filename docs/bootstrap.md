@@ -167,7 +167,9 @@ workload Applications. Subsequent changes flow from Git through this existing
 App-of-Apps hierarchy; do not separately apply the rendered child Applications.
 
 The root Application is named `app-of-apps` and is not reconciled by itself:
-re-apply `gitops/root-application.yaml` after changing it. Do not create a
+re-apply `gitops/root-application.yaml` after changing it. Argo CD's API server
+also writes the root's spec (for example when it is synced from the UI or CLI),
+so re-applying to an existing root needs `--force-conflicts`. Do not create a
 second root Application under another name; both would claim the same child
 Applications and fail with `SharedResourceWarning`.
 

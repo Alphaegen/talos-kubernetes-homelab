@@ -14,6 +14,15 @@ prometheus:
     enabled: true
     additionalLabels:
       release: kube-prometheus-stack
+# Requests from observed use (KRR, max + 15%); memory limit about 2x; no CPU limit.
+controller:
+  resources:
+    requests: {cpu: 25m, memory: 144Mi}
+    limits: {memory: 288Mi}
+speaker:
+  resources:
+    requests: {cpu: 30m, memory: 64Mi}
+    limits: {memory: 128Mi}
 # Addresses are announced with L2 only, so the BGP (frr-k8s) backend is not needed.
 frrk8s:
   enabled: false

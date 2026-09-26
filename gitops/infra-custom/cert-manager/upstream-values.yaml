@@ -5,3 +5,19 @@ prometheus:
     enabled: true
     labels:
       release: kube-prometheus-stack
+# Requests from observed use (KRR, max + 15%); memory limit about 2x; no CPU limit.
+resources:
+  requests: {cpu: 10m, memory: 80Mi}
+  limits: {memory: 160Mi}
+cainjector:
+  resources:
+    requests: {cpu: 10m, memory: 112Mi}
+    limits: {memory: 224Mi}
+webhook:
+  resources:
+    requests: {cpu: 10m, memory: 40Mi}
+    limits: {memory: 104Mi}
+startupapicheck:
+  resources:
+    requests: {cpu: 10m, memory: 32Mi}
+    limits: {memory: 96Mi}

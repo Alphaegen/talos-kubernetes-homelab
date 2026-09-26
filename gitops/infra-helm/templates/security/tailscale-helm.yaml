@@ -33,6 +33,11 @@ spec:
       targetRevision: {{ .Values.security.tailscale.version | quote }}
       helm:
         releaseName: tailscale-operator
+        values: |
+          operatorConfig:
+            resources:
+              requests: {cpu: 10m, memory: 64Mi}
+              limits: {memory: 128Mi}
     - repoURL: {{ .Values.cluster.repoURL | quote }}
       targetRevision: {{ .Values.cluster.revision | default "main" | quote }}
       path: gitops/infra-custom/tailscale

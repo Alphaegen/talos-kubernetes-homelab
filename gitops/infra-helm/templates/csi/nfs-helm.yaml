@@ -30,6 +30,9 @@ spec:
       values: |
         replicaCount: 1
         strategyType: Recreate
+        resources:
+          requests: {cpu: 10m, memory: 32Mi}
+          limits: {memory: 96Mi}
         leaderElection:
           enabled: false
         nfs:

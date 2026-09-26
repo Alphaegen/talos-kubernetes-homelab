@@ -27,6 +27,10 @@ extraArgs:
   cookie-secure: true
   cookie-samesite: lax
   cookie-expire: 24h
+  # One CSRF cookie per login attempt, so parallel requests (e.g. the
+  # browser's favicon fetch) cannot overwrite another attempt's PKCE verifier.
+  cookie-csrf-per-request: true
+  cookie-csrf-expire: 5m
   # Only the Cilium Gateway's Envoy (pod CIDR addresses) may set X-Forwarded-*.
   reverse-proxy: true
   trusted-proxy-ip: 10.244.0.0/16,fd00:10:244::/48

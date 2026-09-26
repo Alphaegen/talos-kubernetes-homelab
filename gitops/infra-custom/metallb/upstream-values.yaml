@@ -1,6 +1,19 @@
 prometheus:
+  # kube-prometheus-stack's Prometheus already has cluster-wide read access and
+  # the /metrics non-resource permission, so no extra Role is needed.
+  rbacPrometheus: false
   serviceMonitor:
-    enabled: false
+    enabled: true
+    speaker:
+      additionalLabels:
+        release: kube-prometheus-stack
+    controller:
+      additionalLabels:
+        release: kube-prometheus-stack
+  prometheusRule:
+    enabled: true
+    additionalLabels:
+      release: kube-prometheus-stack
 frr-k8s:
   prometheus:
     serviceMonitor:

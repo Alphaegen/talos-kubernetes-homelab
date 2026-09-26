@@ -75,6 +75,10 @@ monitoring:
         cert-manager:
           gnetId: 11001
           revision: 1
+        metallb:
+          gnetId: 20162
+          revision: 6
+          datasource: Prometheus
     dashboardFiles:
       - name: cp-link-watchdog-stability
         path: dashboards/cp-link-watchdog-stability.json

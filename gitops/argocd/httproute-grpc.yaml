@@ -1,6 +1,8 @@
-# Sends argocd CLI gRPC and gRPC-web requests to the h2c service port; the
-# chart's HTTPRoute can only target the HTTP/1.1 port. The header match makes
-# this rule take precedence over the chart's catch-all rule on the same host.
+# Sends native argocd CLI gRPC to the h2c service port; the chart's HTTPRoute
+# can only target the HTTP/1.1 port. The header match makes this rule take
+# precedence over the chart's catch-all rule on the same host.
+# gRPC-web (--grpc-web) is not routed here and does not work through the
+# Gateway: Cilium's Envoy converts it to gRPC, which the HTTP/1.1 port rejects.
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
@@ -19,8 +21,8 @@ spec:
             value: /
           headers:
             - name: content-type
-              type: RegularExpression
-              value: "^application/grpc"
+              type: Exact
+              value: application/grpc
       backendRefs:
         - name: argocd-server
           port: 81

@@ -40,7 +40,7 @@ server:
       memory: 256Mi
   ingress:
     enabled: false
-  # Cleartext HTTP/2 port for gRPC and gRPC-web, routed by httproute-grpc.yaml.
+  # Cleartext HTTP/2 port for native gRPC, routed by httproute-grpc.yaml.
   # The UI stays on the HTTP/1.1 port: argocd-server picks gRPC or HTTP per
   # connection, so one h2c upstream connection cannot carry both.
   service:

@@ -1,0 +1,137 @@
+# Shared values for every oauth2-proxy release (one per protected UI, because
+# oauth2-proxy routes upstreams by path, not by host). Each release adds a
+# <name>-values.yaml that sets `homelab.hostname` and `config.upstreams`.
+# Strings under extraArgs and extraObjects are rendered with `tpl`.
+
+image:
+  registry: quay.io
+  repository: oauth2-proxy/oauth2-proxy
+  tag: v7.15.4
+
+config:
+  # client-id, client-secret and cookie-secret from the ExternalSecret below.
+  existingSecret: "{{ .Release.Name }}"
+  cookieName: "_{{ .Release.Name }}"
+  emailDomains: ["*"]
+
+extraArgs:
+  provider: oidc
+  provider-display-name: Pocket ID
+  oidc-issuer-url: https://id.homelab.niekvlam.nl
+  scope: openid email profile groups
+  # Pocket ID puts group names in the `groups` claim.
+  allowed-group: homelab-admins
+  redirect-url: "https://{{ .Values.homelab.hostname }}/oauth2/callback"
+  code-challenge-method: S256
+  skip-provider-button: true
+  cookie-secure: true
+  cookie-samesite: lax
+  cookie-expire: 24h
+  # Only the Cilium Gateway's Envoy (pod CIDR addresses) may set X-Forwarded-*.
+  reverse-proxy: true
+  trusted-proxy-ip: 10.244.0.0/16,fd00:10:244::/48
+  silence-ping-logging: true
+
+serviceAccount:
+  automountServiceAccountToken: false
+
+# A single replica: a minAvailable=1 budget would block node drains.
+podDisruptionBudget:
+  enabled: false
+
+resources:
+  requests:
+    cpu: 10m
+    memory: 32Mi
+  limits:
+    memory: 128Mi
+
+metrics:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+    labels:
+      release: kube-prometheus-stack
+
+extraObjects:
+  - apiVersion: external-secrets.io/v1
+    kind: ExternalSecret
+    metadata:
+      name: "{{ .Release.Name }}"
+    spec:
+      refreshInterval: 1h
+      secretStoreRef:
+        kind: ClusterSecretStore
+        name: onepassword
+      target:
+        name: "{{ .Release.Name }}"
+        creationPolicy: Owner
+        template:
+          type: Opaque
+          metadata:
+            labels:
+              managed-by: external-secrets
+      data:
+        - secretKey: client-id
+          remoteRef:
+            key: "{{ .Release.Name }}/client-id"
+        - secretKey: client-secret
+          remoteRef:
+            key: "{{ .Release.Name }}/client-secret"
+        - secretKey: cookie-secret
+          remoteRef:
+            key: "{{ .Release.Name }}/cookie-secret"
+
+  # Written here rather than through the chart's gatewayApi values, which
+  # cannot set route timeouts.
+  - apiVersion: gateway.networking.k8s.io/v1
+    kind: HTTPRoute
+    metadata:
+      name: "{{ .Release.Name }}"
+    spec:
+      parentRefs:
+        # Shared Cilium Gateway HTTPS listener (wildcard cert); port 80 only redirects.
+        - name: cilium-gateway
+          namespace: kube-system
+          sectionName: https
+      hostnames:
+        - "{{ .Values.homelab.hostname }}"
+      rules:
+        # 0s disables Envoy's default 15s route timeout, which would cut the
+        # upstream UIs' websockets and streams.
+        - timeouts:
+            request: 0s
+          matches:
+            - path:
+                type: PathPrefix
+                value: /
+          backendRefs:
+            - name: "{{ .Release.Name }}"
+              port: 80
+
+  - apiVersion: cilium.io/v2
+    kind: CiliumNetworkPolicy
+    metadata:
+      name: "{{ .Release.Name }}"
+    spec:
+      endpointSelector:
+        matchLabels:
+          app.kubernetes.io/name: oauth2-proxy
+          app.kubernetes.io/instance: "{{ .Release.Name }}"
+      ingress:
+        # Traffic proxied by the shared Cilium Gateway carries the reserved
+        # "ingress" identity.
+        - fromEntities:
+            - ingress
+          toPorts:
+            - ports:
+                - port: "4180"
+                  protocol: TCP
+        - fromEndpoints:
+            - matchLabels:
+                k8s:io.kubernetes.pod.namespace: monitoring
+                app.kubernetes.io/name: prometheus
+          toPorts:
+            - ports:
+                - port: "44180"
+                  protocol: TCP

@@ -1,0 +1,23 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: hubble-ui
+  namespace: kube-system
+spec:
+  # Hubble UI is deployed by the manually applied Cilium chart and published
+  # through oauth2-proxy (auth namespace), which owns the
+  # hubble.homelab.niekvlam.nl route. Only that proxy may reach the UI;
+  # kubectl port-forward still works because it enters from the host.
+  endpointSelector:
+    matchLabels:
+      k8s-app: hubble-ui
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: auth
+            app.kubernetes.io/name: oauth2-proxy
+            app.kubernetes.io/instance: oauth2-proxy-hubble
+      toPorts:
+        - ports:
+            - port: "8081"
+              protocol: TCP

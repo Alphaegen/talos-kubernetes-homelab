@@ -1,0 +1,6 @@
+homelab:
+  hostname: hubble.homelab.niekvlam.nl
+
+config:
+  upstreams:
+    - http://hubble-ui.kube-system.svc.cluster.local

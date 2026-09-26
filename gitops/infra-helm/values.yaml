@@ -149,6 +149,16 @@ security:
   pocketId:
     enabled: true
 
+  # SSO reverse proxy for UIs without their own login; one release per entry,
+  # configured by gitops/infra-custom/oauth2-proxy/<name>-values.yaml.
+  oauth2Proxy:
+    enabled: true
+    # renovate: datasource=helm depName=oauth2-proxy registryUrl=https://oauth2-proxy.github.io/manifests versioning=helm
+    version: "10.7.0"
+    instances:
+      - longhorn
+      - hubble
+
   keycloak:
     enabled: false
     # The Bitnami keycloak chart is kept configurable because upstream packaging has changed over time.

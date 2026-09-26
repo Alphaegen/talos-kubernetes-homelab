@@ -1,0 +1,22 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: longhorn-ui
+  namespace: longhorn-system
+spec:
+  # The UI is published through oauth2-proxy (auth namespace), which owns the
+  # longhorn.homelab.niekvlam.nl route. Only that proxy may reach the UI;
+  # kubectl port-forward still works because it enters from the host.
+  endpointSelector:
+    matchLabels:
+      app: longhorn-ui
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: auth
+            app.kubernetes.io/name: oauth2-proxy
+            app.kubernetes.io/instance: oauth2-proxy-longhorn
+      toPorts:
+        - ports:
+            - port: "8000"
+              protocol: TCP

@@ -1,0 +1,43 @@
+{{- if and .Values.security.enabled .Values.security.oauth2Proxy.enabled }}
+{{- range .Values.security.oauth2Proxy.instances }}
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/refs/heads/main/argoproj.io/application_v1alpha1.json
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ include "infra.appName" (dict "root" $ "name" (printf "oauth2-proxy-%s" .)) }}
+  namespace: {{ $.Values.cluster.namespace | quote }}
+  labels:
+    cluster: {{ $.Values.cluster.name | quote }}
+    app: oauth2-proxy
+  annotations:
+    # Stage 3: needs Pocket ID (stage 2) to answer OIDC discovery at startup.
+    argocd.argoproj.io/sync-wave: "3"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: {{ include "infra.projectName" $ }}
+  destination:
+    server: {{ $.Values.cluster.url | default "https://kubernetes.default.svc" | quote }}
+    namespace: auth
+  syncPolicy:
+    {{- include "infra.syncPolicy" $ | nindent 4 }}
+    syncOptions:
+      - FailOnSharedResource=true
+      # The Pocket ID Application owns the auth Namespace.
+      - CreateNamespace=false
+      - SkipDryRunOnMissingResource=true
+  sources:
+    - repoURL: https://oauth2-proxy.github.io/manifests
+      chart: oauth2-proxy
+      targetRevision: {{ $.Values.security.oauth2Proxy.version | quote }}
+      helm:
+        releaseName: oauth2-proxy-{{ . }}
+        valueFiles:
+          - $values/gitops/infra-custom/oauth2-proxy/values.yaml
+          - $values/gitops/infra-custom/oauth2-proxy/{{ . }}-values.yaml
+    - repoURL: {{ $.Values.cluster.repoURL | quote }}
+      targetRevision: {{ $.Values.cluster.revision | default "main" | quote }}
+      ref: values
+{{- end }}
+{{- end }}

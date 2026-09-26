@@ -12,6 +12,7 @@ spec:
   template:
     metadata: { labels: { app: seerr } }
     spec:
+      priorityClassName: homelab-best-effort
       securityContext:
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch

@@ -16,6 +16,7 @@ spec:
       labels:
         app: profilarr
     spec:
+      priorityClassName: homelab-best-effort
       securityContext:
         runAsNonRoot: true
         runAsUser: 1000

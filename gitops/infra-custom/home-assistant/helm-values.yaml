@@ -2,6 +2,9 @@ controller:
   type: StatefulSet
 image:
   tag: ""
+# Keep Home Assistant running under memory pressure.
+priorityClassName: homelab-home-critical
+
 resources:
   requests:
     cpu: 200m

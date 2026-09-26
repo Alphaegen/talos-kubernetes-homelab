@@ -16,6 +16,9 @@ spec:
       labels:
         app: mosquitto
     spec:
+      {{- with .Values.priorityClassName }}
+      priorityClassName: {{ . }}
+      {{- end }}
       initContainers:
         - name: render-config
           image: {{ .Values.mqtt.image | quote }}

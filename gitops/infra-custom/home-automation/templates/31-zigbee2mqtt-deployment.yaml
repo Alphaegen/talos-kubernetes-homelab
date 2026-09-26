@@ -16,6 +16,9 @@ spec:
       labels:
         app: zigbee2mqtt
     spec:
+      {{- with .Values.priorityClassName }}
+      priorityClassName: {{ . }}
+      {{- end }}
       securityContext:
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch

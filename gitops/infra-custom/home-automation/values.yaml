@@ -3,6 +3,9 @@ createNamespace: true
 
 storageClassName: longhorn
 
+# Keep MQTT and Zigbee running under memory pressure.
+priorityClassName: homelab-home-critical
+
 slzb:
   ip: 192.168.30.232
   port: 6638

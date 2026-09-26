@@ -16,6 +16,7 @@ spec:
     metadata:
       labels: { app: qbittorrent }
     spec:
+      priorityClassName: homelab-best-effort
       terminationGracePeriodSeconds: 180
       # Use Gluetun's encrypted DNS resolver from every container in this Pod.
       dnsPolicy: None

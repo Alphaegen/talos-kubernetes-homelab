@@ -1,6 +1,6 @@
 # Cilium CRD source
 
-Vendored unchanged from Cilium Git tag `v1.20.1`:
+Vendored unchanged from Cilium Git tag `v1.20.2`:
 `pkg/k8s/apis/cilium.io/client/crds/{v2,v2alpha1}`.
 
 SHA-256 checksums of the source YAML files:
@@ -21,7 +21,7 @@ fecfbb3886d3683e93b6adce98553db7c6f52cbc4442de253db488df0ad44a7e  v2/ciliumendpo
 31dd3d26d987e46bc04d66ec2f9bdcf2aa2b13b7b368e515ca324961b55d65b1  v2/ciliumloadbalancerippools.yaml
 e4673421422e46bb43e16d4e214c57fef6f07a3f95b0aaca92a4044a7e59ae91  v2/ciliumlocalredirectpolicies.yaml
 62c6de8f358da125b94468d39187edb1cea157d79503fdc50ccec8a6aaa79a76  v2/ciliumnetworkpolicies.yaml
-c7e3558ed06e8d87ce75a007bd3b0f0fb2c28080a6c52ee9184f6d3b887f1aff  v2/ciliumnodeconfigs.yaml
+89aae253c84e12785034a4a06ead94c8a61ee0954e6d60816e79fcd584aa6d59  v2/ciliumnodeconfigs.yaml
 cc3e57ace385353b237b04f466fb99fd9c75c96682044063daae3e0150d2247f  v2/ciliumnodes.yaml
 c235378e12ae3e8108dac90188068de92e8e4ff54df3720cc4d394ec7a1973ed  v2alpha1/ciliumdatapathplugins.yaml
 bb6626fd03bc2d70ef39ae182420da42fecbc41cbca40c484082a7ce6a7fb705  v2alpha1/ciliumendpointslices.yaml

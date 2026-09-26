@@ -1,7 +1,8 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
-    "config:recommended"
+    "config:recommended",
+    "helpers:pinGitHubActionDigests"
   ],
   "dependencyDashboardApproval": false,
   "prCreation": "immediate",
@@ -16,6 +17,26 @@
         "#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)(?:\\s+registryUrl=(?<registryUrl>\\S+))?(?:\\s+versioning=(?<versioning>\\S+))?\\s*\\n\\s*version:\\s*[\"']?(?<currentValue>[^\"'\\s]+)[\"']?"
       ],
       "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}"
+    },
+    {
+      "customType": "regex",
+      "description": "Update CI tool versions annotated with '# renovate:' comments in workflow env",
+      "managerFilePatterns": [
+        "/(^|/)\\.github/workflows/.+\\.ya?ml$/"
+      ],
+      "matchStrings": [
+        "#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)\\s*\\n\\s*[A-Z0-9_]+_VERSION:\\s*[\"']?(?<currentValue>[^\"'\\s]+)[\"']?"
+      ]
+    },
+    {
+      "customType": "regex",
+      "description": "Update git commit pins annotated with '# renovate: datasource=git-refs' comments in scripts",
+      "managerFilePatterns": [
+        "/(^|/)scripts/.+\\.sh$/"
+      ],
+      "matchStrings": [
+        "#\\s*renovate:\\s*datasource=(?<datasource>git-refs)\\s+depName=(?<depName>\\S+)\\s+branch=(?<currentValue>\\S+)\\s*\\n[a-z_]+=(?<currentDigest>[0-9a-f]{40})"
+      ]
     }
   ],
   "helm-values": {
@@ -110,6 +131,32 @@
       "enabled": false
     },
     {
+      "description": "Group routine GitHub Actions and CI tool updates while keeping major upgrades isolated",
+      "matchManagers": [
+        "github-actions",
+        "custom.regex"
+      ],
+      "matchFileNames": [
+        ".github/workflows/**"
+      ],
+      "matchUpdateTypes": [
+        "minor",
+        "patch",
+        "pin",
+        "digest"
+      ],
+      "groupName": "CI updates"
+    },
+    {
+      "description": "The CRDs catalog moves often; refresh the schema pin in its own weekly PR",
+      "matchDepNames": [
+        "https://github.com/datreeio/CRDs-catalog"
+      ],
+      "schedule": [
+        "before 6am on monday"
+      ]
+    },
+    {
       "description": "Cilium is applied by hand, not by Argo CD; keep it out of the routine groups above",
       "matchFileNames": [
         "cilium/**"
@@ -135,7 +182,7 @@
         "manual-apply"
       ],
       "prBodyNotes": [
-        "> [!WARNING]\n> **Manual apply.** Merging does NOT upgrade Argo CD. Keep `global.image.tag` equal to the chart appVersion, then apply per `docs/bootstrap.md` (Bootstrap Argo CD manually)."
+        "> [!WARNING]\n> **Manual apply.** Merging does NOT upgrade Argo CD. Keep `global.image.tag` equal to the chart appVersion, then apply per `docs/bootstrap.md` (Bootstrap Argo CD manually).\n>\n> When the Argo CD version changes, set `HELM_VERSION` and `KUSTOMIZE_VERSION` in `.github/workflows/validate.yaml` to the versions in that release's `hack/tool-versions.sh`, so CI renders like the cluster."
       ]
     },
     {

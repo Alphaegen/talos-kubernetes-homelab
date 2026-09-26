@@ -14,7 +14,6 @@ prometheus:
     enabled: true
     additionalLabels:
       release: kube-prometheus-stack
-frr-k8s:
-  prometheus:
-    serviceMonitor:
-      enabled: false
+# Addresses are announced with L2 only, so the BGP (frr-k8s) backend is not needed.
+frrk8s:
+  enabled: false

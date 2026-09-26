@@ -26,6 +26,8 @@ env:
   YQ_VERSION: v4.53.6
   # renovate: datasource=github-releases depName=gitleaks/gitleaks
   GITLEAKS_VERSION: v8.30.1
+  # renovate: datasource=go depName=golang.stackrox.io/kube-linter
+  KUBE_LINTER_VERSION: v0.8.3
 
 jobs:
   manifests:
@@ -63,10 +65,42 @@ jobs:
             kubeconform
           # Verified through the Go checksum database.
           GOBIN="$INSTALL_DIR" go install "github.com/mikefarah/yq/v4@${YQ_VERSION}"
+          GOBIN="$INSTALL_DIR" go install "golang.stackrox.io/kube-linter/cmd/kube-linter@${KUBE_LINTER_VERSION}"
           echo "$INSTALL_DIR" >>"$GITHUB_PATH"
 
       - name: Validate
+        env:
+          RENDER_DIR: ${{ runner.temp }}/rendered
         run: scripts/validate.sh
+
+      # Informational only: findings go to the job summary and never fail the run.
+      - name: Lint rendered manifests (informational)
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        env:
+          RENDER_DIR: ${{ runner.temp }}/rendered
+        run: |
+          report=$RUNNER_TEMP/kube-linter.json
+          kube-linter lint "$RENDER_DIR" --format json >"$report" || true
+          jq -r '
+            "### kube-linter (informational)",
+            "",
+            "\(.Reports | length) findings. These do not fail the run.",
+            "",
+            "| Findings | Check |",
+            "|---:|---|",
+            (.Reports | group_by(.Check) | sort_by(-length)[] | "| \(length) | `\(.[0].Check)` |"),
+            "",
+            "<details><summary>Findings by object</summary>",
+            "",
+            "| Check | Namespace | Kind | Name |",
+            "|---|---|---|---|",
+            (.Reports | sort_by(.Check, .Object.K8sObject.Namespace, .Object.K8sObject.Name)[]
+              | .Object.K8sObject as $o
+              | "| `\(.Check)` | \($o.Namespace) | \($o.GroupVersionKind.Kind) | \($o.Name) |"),
+            "",
+            "</details>"
+          ' "$report" >>"$GITHUB_STEP_SUMMARY"
 
   secrets:
     name: Scan new commits for secrets

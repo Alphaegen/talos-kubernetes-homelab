@@ -3,7 +3,8 @@
 # Used locally and by .github/workflows/validate.yaml.
 #
 # Needs: helm, kustomize, kubeconform, yq (mikefarah), jq, go.
-# Env:   KEEP_RENDERED=1 keeps the rendered manifests and prints where they are.
+# Env:   RENDER_DIR=<dir> writes the rendered manifests there and keeps them
+#        (the directory must not exist yet), e.g. for kube-linter.
 
 set -euo pipefail
 
@@ -59,13 +60,10 @@ done
 [[ -n $kubernetes_version ]] || { printf 'Could not read KUBERNETES_VERSION from generate.sh\n' >&2; exit 2; }
 
 work=$(mktemp -d)
-manifests=$work/manifests
+trap 'rm -rf "$work"' EXIT
+manifests=${RENDER_DIR:-$work/manifests}
+mkdir -p "$(dirname "$manifests")"
 mkdir "$manifests"
-if [[ ${KEEP_RENDERED:-} == 1 ]]; then
-  trap 'printf "Rendered manifests kept in %s\n" "$work"' EXIT
-else
-  trap 'rm -rf "$work"' EXIT
-fi
 
 declare -A rendered=()
 

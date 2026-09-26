@@ -40,6 +40,12 @@ server:
       memory: 256Mi
   ingress:
     enabled: false
+  # Cleartext HTTP/2 port for gRPC and gRPC-web, routed by httproute-grpc.yaml.
+  # The UI stays on the HTTP/1.1 port: argocd-server picks gRPC or HTTP per
+  # connection, so one h2c upstream connection cannot carry both.
+  service:
+    servicePortHttp2: 81
+    servicePortHttp2AppProtocol: kubernetes.io/h2c
   # Backend is the plain HTTP service port because server.insecure is true.
   httproute:
     enabled: true

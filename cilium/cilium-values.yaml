@@ -37,6 +37,10 @@ gatewayAPI:
   gatewayClass:
     # Use explicit true so GatewayClass is created even when CRDs are installed after Cilium.
     create: "true"
+  # Negotiate HTTP/2 with clients (the argocd CLI's gRPC requires it). This also
+  # enables appProtocol support: backends stay HTTP/1.1 unless their Service
+  # port sets an appProtocol such as kubernetes.io/h2c.
+  enableAlpn: true
 
 envoy:
   updateStrategy:

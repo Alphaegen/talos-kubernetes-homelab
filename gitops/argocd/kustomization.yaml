@@ -18,3 +18,4 @@ helmCharts:
 resources:
   - ./namespace.yaml
   - ./repositories.yaml
+  - ./httproute-grpc.yaml

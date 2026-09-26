@@ -8,7 +8,7 @@ metadata:
     app.kubernetes.io/part-of: obsidian-livesync
 spec:
   # Traffic proxied by the shared Cilium Gateway (Envoy) carries the reserved
-  # "ingress" identity, which the ingress-nginx NetworkPolicy cannot match.
+  # "ingress" identity, which a namespace-based NetworkPolicy cannot match.
   endpointSelector:
     matchLabels:
       app.kubernetes.io/name: obsidian-livesync

@@ -25,12 +25,6 @@ etcdBackup:
 obsidianLiveSync:
   enabled: true
 
-ingressController:
-  enabled: true
-  class: nginx
-  # renovate: datasource=helm depName=ingress-nginx registryUrl=https://kubernetes.github.io/ingress-nginx versioning=helm
-  version: "4.15.1"
-
 # Shared Cilium Gateway (kube-system/cilium-gateway), wildcard cert and HTTPS redirect.
 gateway:
   enabled: true

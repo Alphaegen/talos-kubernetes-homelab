@@ -23,7 +23,6 @@ spec:
   - https://helm.releases.hashicorp.com
   - http://pajikos.github.io/home-assistant-helm-chart/
   - https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner/
-  - https://kubernetes.github.io/ingress-nginx
   - https://kyverno.github.io/kyverno
   - https://metallb.github.io/metallb
   - https://pkgs.tailscale.com/helmcharts

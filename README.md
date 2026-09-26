@@ -41,7 +41,7 @@ flowchart TB
             direction LR
             talos["Talos Linux: 4 nodes"]
             kubernetes["Kubernetes: 1 control plane, 3 workers"]
-            networking["Cilium, Hubble, MetalLB, ingress-nginx"]
+            networking["Cilium, Hubble, MetalLB, Gateway API"]
             talos --> kubernetes --> networking
         end
 
@@ -146,7 +146,7 @@ Initial Talos configuration, Cilium installation, and Argo CD bootstrap sit outs
 
 Cilium runs in Kubernetes IPAM mode with kube-proxy replacement enabled. The Talos configuration declares dual-stack pod and service CIDRs, and Hubble Relay and Hubble UI provide network-flow visibility.
 
-ingress-nginx serves existing Ingress resources, while a shared Cilium Gateway supports newer HTTPRoute-based workloads. MetalLB allocates service addresses from a fixed LAN pool and advertises them in L2 mode.
+A shared Cilium Gateway is the single ingress path: `*.homelab.niekvlam.nl` resolves to its MetalLB address `192.168.20.112`, which terminates TLS with a wildcard certificate and routes to workloads through HTTPRoutes. MetalLB allocates service addresses from a fixed LAN pool and advertises them in L2 mode.
 
 The Tailscale operator provides remote access through a home-LAN subnet router and exit node. Its OAuth credentials are delivered through External Secrets rather than stored in Git.
 
@@ -160,7 +160,7 @@ Home Assistant, Grafana, Loki, Mosquitto, Zigbee2MQTT, BookOrbit, and Obsidian L
 
 External Secrets authenticates to 1Password and creates namespace-scoped Kubernetes Secrets for workloads. Applications consume those Secrets through `secretKeyRef`, `envFrom`, or chart-specific existing-secret settings. The 1Password service account token is provided once during bootstrap because External Secrets needs it before the controller can retrieve other credentials.
 
-cert-manager uses a Cloudflare credential supplied through External Secrets to complete DNS-01 challenges. Let's Encrypt certificates are then attached to ingress resources through the `letsencrypt-dns` ClusterIssuer.
+cert-manager uses a Cloudflare credential supplied through External Secrets to complete DNS-01 challenges. The `letsencrypt-dns` ClusterIssuer then issues the wildcard certificate served by the shared Gateway.
 
 ### Observability and operations
 

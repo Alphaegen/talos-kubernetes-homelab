@@ -1,0 +1,164 @@
+#!/usr/bin/env bash
+# Render every manifest source in the repository and validate it.
+# Used locally and by .github/workflows/validate.yaml.
+#
+# Needs: helm, kustomize, kubeconform, yq (mikefarah), jq, go.
+# Env:   KEEP_RENDERED=1 keeps the rendered manifests and prints where they are.
+
+set -euo pipefail
+
+repo_root=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
+cd "$repo_root"
+
+# Schemas follow the cluster version that generate.sh installs.
+kubernetes_version=${KUBERNETES_VERSION:-$(sed -n 's/^KUBERNETES_VERSION="\${TALOS_KUBERNETES_VERSION:-\([0-9.]*\)}"$/\1/p' generate.sh)}
+
+# renovate: datasource=git-refs depName=https://github.com/datreeio/CRDs-catalog branch=main
+crds_catalog_ref=ad3b08c5045129d7bb1eeffd8e61719b2c8dd1e2
+
+# Kinds with no published schema, neither upstream nor in the CRDs catalog.
+skip_kinds=(
+  CustomResourceDefinition # kubeconform's default schema source has none
+  CiliumGatewayClassConfig # not in the CRDs catalog
+)
+
+infra_helm=gitops/infra-helm
+all_enabled_values=$infra_helm/ci/all-enabled-values.yaml
+go_modules=(gitops/infra-custom/pi5-fan-control)
+
+failures=()
+
+fail() {
+  printf 'FAIL: %s\n' "$1" >&2
+  failures+=("$1")
+}
+
+pass() {
+  printf 'PASS: %s\n' "$1"
+}
+
+# run <label> <command...>: run a step, show its output only when it fails
+# (apart from any "Summary:" line).
+run() {
+  local label=$1 log
+  shift
+  log=$(mktemp)
+  if "$@" >"$log" 2>&1; then
+    grep '^Summary:' "$log" | sed 's/^/  /' || true
+    pass "$label"
+  else
+    sed 's/^/  /' "$log" >&2
+    fail "$label"
+  fi
+  rm -f "$log"
+}
+
+for tool in helm kustomize kubeconform yq jq go; do
+  command -v "$tool" >/dev/null || { printf 'Missing tool: %s\n' "$tool" >&2; exit 2; }
+done
+[[ -n $kubernetes_version ]] || { printf 'Could not read KUBERNETES_VERSION from generate.sh\n' >&2; exit 2; }
+
+work=$(mktemp -d)
+manifests=$work/manifests
+mkdir "$manifests"
+if [[ ${KEEP_RENDERED:-} == 1 ]]; then
+  trap 'printf "Rendered manifests kept in %s\n" "$work"' EXIT
+else
+  trap 'rm -rf "$work"' EXIT
+fi
+
+declare -A rendered=()
+
+out_file() {
+  printf '%s/%s.yaml' "$manifests" "$(printf '%s' "$1" | tr '/' '_')"
+}
+
+kustomize_build() {
+  local dir=$1
+  run "kustomize build $dir" sh -c 'kustomize build --enable-helm "$1" > "$2"' _ "$dir" "$(out_file "$dir")"
+  rendered[$dir]=1
+}
+
+# 1. The app-of-apps chart, with the real values and with every toggle on.
+run "helm template $infra_helm" sh -c 'helm template infra-apps "$1" > "$2"' _ "$infra_helm" "$(out_file "$infra_helm")"
+run "helm template $infra_helm (all toggles on)" sh -c 'helm template infra-apps "$1" -f "$2" > "$3"' \
+  _ "$infra_helm" "$all_enabled_values" "$manifests/infra-helm-all-enabled.yaml"
+
+# 2. Every local source the Applications point at, rendered the way Argo CD
+#    renders it. Remote charts are left to Argo CD.
+if [[ -s $manifests/infra-helm-all-enabled.yaml ]]; then
+  while IFS= read -r source; do
+    path=$(jq -r .path <<<"$source")
+    [[ -n ${rendered[$path]:-} ]] && continue
+
+    if [[ -f $path/kustomization.yaml ]]; then
+      kustomize_build "$path"
+    elif [[ -f $path/Chart.yaml ]]; then
+      args=(template "$(jq -r '.helm.releaseName // "release"' <<<"$source")" "$path"
+        --namespace "$(jq -r .namespace <<<"$source")")
+      while IFS= read -r values_file; do
+        [[ -n $values_file ]] || continue
+        case $values_file in
+          '$values/'*) args+=(-f "${values_file#\$values/}") ;;
+          *) args+=(-f "$path/$values_file") ;;
+        esac
+      done < <(jq -r '.helm.valueFiles // [] | .[]' <<<"$source")
+      if jq -e '.helm.values // empty' <<<"$source" >/dev/null; then
+        inline=$(mktemp "$work/inline-values.XXXXXX")
+        jq -r .helm.values <<<"$source" >"$inline"
+        args+=(-f "$inline")
+      fi
+      run "helm template $path" sh -c 'out=$1; shift; helm "$@" > "$out"' _ "$(out_file "$path")" "${args[@]}"
+      rendered[$path]=1
+    else
+      # Plain directory source: Argo CD applies the top-level YAML files as-is.
+      dest=$(out_file "$path")
+      dest=${dest%.yaml}
+      mkdir -p "$dest"
+      find "$path" -maxdepth 1 -type f \( -name '*.yaml' -o -name '*.yml' \) -exec cp {} "$dest/" \;
+      pass "collect $path"
+      rendered[$path]=1
+    fi
+  done < <(yq -o=json -I=0 'select(.kind == "Application")' "$manifests/infra-helm-all-enabled.yaml" \
+    | jq -c '.spec.destination.namespace as $ns
+        | ((.spec.source // empty), (.spec.sources // [] | .[]))
+        | select(.path != null and (.path | startswith("gitops/")))
+        | {path, namespace: $ns, helm}')
+fi
+
+# 3. Anything the Applications did not reach: manually applied kustomizations
+#    (Argo CD, Cilium) and sources behind alternative toggles.
+while IFS= read -r kustomization; do
+  dir=$(dirname "$kustomization")
+  [[ -n ${rendered[$dir]:-} ]] || kustomize_build "$dir"
+done < <(find gitops cilium -name kustomization.yaml -not -path '*/charts/*' | sort)
+
+while IFS= read -r chart; do
+  dir=$(dirname "$chart")
+  [[ $dir == "$infra_helm" || -n ${rendered[$dir]:-} ]] && continue
+  run "helm template $dir (default values)" sh -c 'helm template release "$1" > "$2"' _ "$dir" "$(out_file "$dir")"
+  rendered[$dir]=1
+done < <(find gitops/infra-custom -name Chart.yaml -not -path '*/charts/*' | sort)
+
+# 4. Schema validation of everything rendered above.
+skip=$(IFS=,; printf '%s' "${skip_kinds[*]}")
+run "kubeconform (Kubernetes $kubernetes_version, CRDs catalog ${crds_catalog_ref:0:7})" \
+  kubeconform -strict -summary -output text \
+  -kubernetes-version "$kubernetes_version" \
+  -schema-location default \
+  -schema-location "https://raw.githubusercontent.com/datreeio/CRDs-catalog/$crds_catalog_ref/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json" \
+  -skip "$skip" \
+  "$manifests"
+
+# 5. Go code that ships in the repository.
+for module in "${go_modules[@]}"; do
+  run "go vet $module" sh -c 'cd "$1" && go vet ./...' _ "$module"
+  run "go test $module" sh -c 'cd "$1" && go test ./...' _ "$module"
+done
+
+if ((${#failures[@]})); then
+  printf '\n%d check(s) failed:\n' "${#failures[@]}" >&2
+  printf '  - %s\n' "${failures[@]}" >&2
+  exit 1
+fi
+printf '\nAll checks passed.\n'

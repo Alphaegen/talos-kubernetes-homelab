@@ -8,6 +8,10 @@ metadata:
     cluster: {{ .Values.cluster.name | quote }}
     app: nginx
   namespace: {{ .Values.cluster.namespace | quote }}
+  # Cascade deletion so removing this app also removes the controller,
+  # IngressClass, cluster RBAC and the admission webhook instead of orphaning them.
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
   annotations:
     # Stage 0: cluster ingress foundation.
     argocd.argoproj.io/sync-wave: "0"

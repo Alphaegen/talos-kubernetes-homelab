@@ -1,0 +1,114 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: pocket-id
+  namespace: auth
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+  labels:
+    app.kubernetes.io/name: pocket-id
+    app.kubernetes.io/part-of: auth
+spec:
+  serviceName: pocket-id
+  # SQLite plus a database lock: exactly one instance per database.
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: pocket-id
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: pocket-id
+        app.kubernetes.io/part-of: auth
+    spec:
+      automountServiceAccountToken: false
+      enableServiceLinks: false
+      priorityClassName: homelab-home-critical
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        fsGroup: 65532
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: pocket-id
+          # renovate: datasource=docker depName=ghcr.io/pocket-id/pocket-id
+          image: ghcr.io/pocket-id/pocket-id:v2.16.0-distroless
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 1411
+            - name: metrics
+              containerPort: 9464
+          env:
+            - name: APP_URL
+              value: https://id.homelab.niekvlam.nl
+            - name: ENCRYPTION_KEY_FILE
+              value: /secrets/encryption-key
+            # Requests arrive through the Cilium Gateway's Envoy, whose source
+            # addresses come from the pod CIDRs; trust its X-Forwarded-For.
+            - name: TRUST_PROXY
+              value: 10.244.0.0/16,fd00:10:244::/48
+            - name: ALLOW_INSECURE_CALLBACK_URLS
+              value: "false"
+            - name: ANALYTICS_DISABLED
+              value: "true"
+            - name: VERSION_CHECK_DISABLED
+              value: "true"
+            - name: LOG_JSON
+              value: "true"
+            - name: OTEL_METRICS_EXPORTER
+              value: prometheus
+            - name: OTEL_EXPORTER_PROMETHEUS_HOST
+              value: 0.0.0.0
+            - name: OTEL_EXPORTER_PROMETHEUS_PORT
+              value: "9464"
+          startupProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            periodSeconds: 5
+            failureThreshold: 30
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            periodSeconds: 30
+            timeoutSeconds: 5
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          resources:
+            requests:
+              cpu: 20m
+              memory: 64Mi
+            limits:
+              memory: 256Mi
+          volumeMounts:
+            - name: data
+              mountPath: /app/data
+            - name: secrets
+              mountPath: /secrets
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: pocket-id-data
+        - name: secrets
+          secret:
+            secretName: pocket-id
+        - name: tmp
+          emptyDir:
+            sizeLimit: 64Mi

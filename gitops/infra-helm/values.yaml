@@ -145,6 +145,10 @@ media:
 security:
   enabled: true
 
+  # OIDC identity provider (passkeys) for SSO in front of the platform UIs.
+  pocketId:
+    enabled: true
+
   keycloak:
     enabled: false
     # The Bitnami keycloak chart is kept configurable because upstream packaging has changed over time.

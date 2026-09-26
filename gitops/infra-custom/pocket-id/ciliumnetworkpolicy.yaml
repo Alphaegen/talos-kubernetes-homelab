@@ -1,0 +1,30 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: pocket-id
+  namespace: auth
+  labels:
+    app.kubernetes.io/name: pocket-id
+    app.kubernetes.io/part-of: auth
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: pocket-id
+  ingress:
+    # Browsers reach the UI through the shared Cilium Gateway (reserved
+    # "ingress" identity). OIDC clients such as oauth2-proxy, Argo CD and
+    # Grafana use the public URL too, so they arrive the same way.
+    - fromEntities:
+        - ingress
+      toPorts:
+        - ports:
+            - port: "1411"
+              protocol: TCP
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: monitoring
+            app.kubernetes.io/name: prometheus
+      toPorts:
+        - ports:
+            - port: "9464"
+              protocol: TCP

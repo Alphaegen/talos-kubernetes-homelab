@@ -1,0 +1,116 @@
+name: Validate
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+# Superseded PR runs are cancelled. Pushes to main always finish, so the
+# secret scan covers every pushed commit range.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  # Helm and Kustomize follow the versions bundled with the running Argo CD
+  # (hack/tool-versions.sh in argoproj/argo-cd), so CI renders like the cluster.
+  HELM_VERSION: v4.2.1
+  KUSTOMIZE_VERSION: v5.8.1
+  # renovate: datasource=github-releases depName=yannh/kubeconform
+  KUBECONFORM_VERSION: v0.8.0
+  # renovate: datasource=go depName=github.com/mikefarah/yq/v4
+  YQ_VERSION: v4.53.6
+  # renovate: datasource=github-releases depName=gitleaks/gitleaks
+  GITLEAKS_VERSION: v8.30.1
+
+jobs:
+  manifests:
+    name: Render and validate manifests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: gitops/infra-custom/pi5-fan-control/go.mod
+          cache-dependency-path: gitops/infra-custom/pi5-fan-control/go.sum
+
+      - name: Install tools
+        env:
+          INSTALL_DIR: ${{ runner.temp }}/bin
+        run: |
+          install=.github/scripts/install-release.sh
+          "$install" \
+            "https://get.helm.sh/helm-${HELM_VERSION}-linux-amd64.tar.gz" \
+            "https://get.helm.sh/helm-${HELM_VERSION}-linux-amd64.tar.gz.sha256sum" \
+            linux-amd64/helm
+          "$install" \
+            "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2F${KUSTOMIZE_VERSION}/kustomize_${KUSTOMIZE_VERSION}_linux_amd64.tar.gz" \
+            "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2F${KUSTOMIZE_VERSION}/checksums.txt" \
+            kustomize
+          "$install" \
+            "https://github.com/yannh/kubeconform/releases/download/${KUBECONFORM_VERSION}/kubeconform-linux-amd64.tar.gz" \
+            "https://github.com/yannh/kubeconform/releases/download/${KUBECONFORM_VERSION}/CHECKSUMS" \
+            kubeconform
+          # Verified through the Go checksum database.
+          GOBIN="$INSTALL_DIR" go install "github.com/mikefarah/yq/v4@${YQ_VERSION}"
+          echo "$INSTALL_DIR" >>"$GITHUB_PATH"
+
+      - name: Validate
+        run: scripts/validate.sh
+
+  secrets:
+    name: Scan new commits for secrets
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Install gitleaks
+        env:
+          INSTALL_DIR: ${{ runner.temp }}/bin
+        run: |
+          version=${GITLEAKS_VERSION#v}
+          .github/scripts/install-release.sh \
+            "https://github.com/gitleaks/gitleaks/releases/download/${GITLEAKS_VERSION}/gitleaks_${version}_linux_x64.tar.gz" \
+            "https://github.com/gitleaks/gitleaks/releases/download/${GITLEAKS_VERSION}/gitleaks_${version}_checksums.txt" \
+            gitleaks
+          echo "$INSTALL_DIR" >>"$GITHUB_PATH"
+
+      # Only the commits this push or PR adds. The full history is audited
+      # privately; public logs only show the result, never findings.
+      - name: Scan
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD: ${{ github.event.pull_request.head.sha }}
+          PUSH_BEFORE: ${{ github.event.before }}
+          PUSH_AFTER: ${{ github.sha }}
+        run: |
+          if [[ $EVENT_NAME == pull_request ]]; then
+            range="${PR_BASE}..${PR_HEAD}"
+          elif [[ $PUSH_BEFORE =~ ^[0-9a-f]{40}$ && $PUSH_BEFORE != 0000000000000000000000000000000000000000 ]] \
+            && git cat-file -e "${PUSH_BEFORE}^{commit}" 2>/dev/null; then
+            range="${PUSH_BEFORE}..${PUSH_AFTER}"
+          else
+            # New branch or rewritten history: scan the pushed head commit only.
+            range="-1 ${PUSH_AFTER}"
+          fi
+          printf 'Scanning %s\n' "$range"
+          if ! gitleaks git --config .gitleaks.toml --log-opts="$range" --redact --no-banner --exit-code 1 .; then
+            printf '::error::gitleaks found a possible secret. Run it locally for details: gitleaks git --log-opts="%s" --redact -v .\n' "$range"
+            exit 1
+          fi

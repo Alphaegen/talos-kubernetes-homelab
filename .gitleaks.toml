@@ -1,0 +1,22 @@
+title = "homelab gitleaks config"
+
+[extend]
+useDefault = true
+
+# The default generic rules skip low-entropy values, so a human-chosen
+# password in Helm values or env vars would slip through.
+[[rules]]
+id = "yaml-plaintext-password"
+description = "Plain-text password assigned in YAML or env"
+regex = '''(?i)(?:^|[\s"'-])(?:[a-z0-9_]*_)?(?:password|passwd|pwd)["']?[ \t]*[:=][ \t]*["']?([^\s"'{}$<>|]{6,})'''
+secretGroup = 1
+keywords = ["password", "passwd", "pwd"]
+
+[[rules.allowlists]]
+description = "References to other keys, files or templates rather than values"
+regexTarget = "match"
+regexes = ['''(?i)(?:password|passwd|pwd)[a-z_]*(?:key|ref|file|secret|name)["']?[ \t]*[:=]''']
+
+[[allowlists]]
+description = "Vendored upstream charts ship example keys in their default values"
+paths = ['''(^|/)charts/''']

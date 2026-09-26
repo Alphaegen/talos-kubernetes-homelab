@@ -38,13 +38,15 @@ dex:
       memory: 40Mi
     limits:
       memory: 104Mi
+  # copyutil copies the ~200 MB argocd binary; the page cache counts against
+  # this limit, so it needs more room than the process itself uses.
   initImage:
     resources:
       requests:
         cpu: 10m
-        memory: 16Mi
+        memory: 32Mi
       limits:
-        memory: 64Mi
+        memory: 384Mi
 
 configs:
   params:

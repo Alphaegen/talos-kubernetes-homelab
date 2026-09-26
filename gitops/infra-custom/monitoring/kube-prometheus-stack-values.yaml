@@ -25,6 +25,9 @@ alertmanager:
   alertmanagerSpec:
     # From 1Password via monitoring/alertmanager/externalsecret.yaml.
     secrets: [alertmanager-notifications]
+    resources:
+      requests: {cpu: 10m, memory: 32Mi}
+      limits: {memory: 96Mi}
   # Chart 91.5.0 default config, with ntfy as the default receiver.
   config:
     global:
@@ -68,6 +71,29 @@ alertmanager:
       - '/etc/alertmanager/config/*.tmpl'
 kubeStateMetrics: {enabled: true}
 nodeExporter: {enabled: true}
+# Requests from observed use (KRR, max + 15%); memory limit about 2x; no CPU limit.
+prometheusOperator:
+  resources:
+    requests: {cpu: 15m, memory: 72Mi}
+    limits: {memory: 144Mi}
+  # Also used for the Prometheus and Alertmanager config-reloader sidecars.
+  prometheusConfigReloader:
+    resources:
+      requests: {cpu: 5m, memory: 32Mi}
+      limits: {memory: 96Mi}
+  admissionWebhooks:
+    patch:
+      resources:
+        requests: {cpu: 10m, memory: 32Mi}
+        limits: {memory: 96Mi}
+kube-state-metrics:
+  resources:
+    requests: {cpu: 10m, memory: 56Mi}
+    limits: {memory: 120Mi}
+prometheus-node-exporter:
+  resources:
+    requests: {cpu: 10m, memory: 32Mi}
+    limits: {memory: 96Mi}
 # Talos + Cilium: kube-proxy is replaced by Cilium, and Talos binds the
 # controller-manager, scheduler and etcd metrics to localhost.
 kubeProxy: {enabled: false}

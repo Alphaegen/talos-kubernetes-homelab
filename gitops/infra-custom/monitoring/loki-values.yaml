@@ -32,8 +32,20 @@ loki:
         index: {prefix: loki_tsdb_index_, period: 24h}
 gateway:
   enabled: true
+  resources:
+    requests: {cpu: 10m, memory: 32Mi}
+    limits: {memory: 96Mi}
   # Access logs for every push would otherwise be shipped back into Loki.
   verboseLogging: false
+lokiCanary:
+  resources:
+    requests: {cpu: 5m, memory: 48Mi}
+    limits: {memory: 112Mi}
+# Rules sidecar (loki-sc-rules).
+sidecar:
+  resources:
+    requests: {cpu: 5m, memory: 112Mi}
+    limits: {memory: 224Mi}
 # Helm test pod only; not used by Argo CD.
 test: {enabled: false}
 monitoring:

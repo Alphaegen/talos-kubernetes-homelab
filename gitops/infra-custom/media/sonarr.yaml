@@ -22,10 +22,10 @@ spec:
           resources:
             requests:
               cpu: 50m
-              memory: 128Mi
+              memory: 400Mi
             limits:
               cpu: "1"
-              memory: 1Gi
+              memory: 800Mi
           ports: [{ name: http, containerPort: 8989 }]
           env:
             - { name: PUID, value: "1000" }

@@ -22,6 +22,10 @@ bookorbit:
 etcdBackup:
   enabled: true
 
+# PriorityClasses for home-critical and best-effort workloads.
+priorityClasses:
+  enabled: true
+
 obsidianLiveSync:
   enabled: true
 

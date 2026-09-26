@@ -1,0 +1,22 @@
+# Workloads that keep the house running (Home Assistant, Zigbee2MQTT, MQTT).
+# Under memory pressure the kubelet evicts lower-priority pods first, and the
+# scheduler may preempt them to place these pods.
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: homelab-home-critical
+value: 100000
+globalDefault: false
+preemptionPolicy: PreemptLowerPriority
+description: Home automation workloads that should keep running under resource pressure.
+---
+# Workloads that can wait (media). Below the default priority of 0, and they
+# never preempt other pods.
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: homelab-best-effort
+value: -100
+globalDefault: false
+preemptionPolicy: Never
+description: Non-essential workloads that are evicted or preempted first.

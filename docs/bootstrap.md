@@ -107,6 +107,11 @@ kustomize build --enable-helm cilium
 kubectl apply --server-side -f <reviewed-cilium-manifest.yaml>
 ```
 
+The Cilium ServiceMonitors are rejected at this point because
+kube-prometheus-stack isn't installed yet; everything else is applied. Apply the
+manifest again after Argo CD has synced kube-prometheus-stack. Later changes
+follow [`cilium/README.md`](../cilium/README.md#apply-a-configuration-change).
+
 Wait until Cilium is healthy and cluster networking works before proceeding.
 
 ### 5. Bootstrap Argo CD manually

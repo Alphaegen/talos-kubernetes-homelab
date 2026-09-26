@@ -22,7 +22,48 @@ Experimental bundle, mutate Cilium, restart Cilium, or repair Gateway routes.
 For a Cilium upgrade, first apply this prerequisite and verify Gateway and
 HTTPRoute conditions. Then render `cilium/` with `kustomize build --enable-helm`,
 review the diff and server-side dry-run, run the target Cilium preflight, and
-apply that same reviewed manifest with `kubectl apply -f`.
+apply that same reviewed manifest as described below.
+
+## Apply a configuration change
+
+Render once and split the output, so the reviewed files are exactly what gets
+applied:
+
+```bash
+kustomize build --enable-helm cilium > /tmp/cilium.yaml
+yq 'select(.kind != "Secret" and .metadata.labels.grafana_dashboard != "1")' /tmp/cilium.yaml > /tmp/cilium-main.yaml
+yq 'select(.kind == "ConfigMap" and .metadata.labels.grafana_dashboard == "1")' /tmp/cilium.yaml > /tmp/cilium-dashboards.yaml
+kubectl diff -f /tmp/cilium-main.yaml
+kubectl apply --dry-run=server -f /tmp/cilium-main.yaml
+kubectl apply --server-side --dry-run=server -f /tmp/cilium-dashboards.yaml
+```
+
+- The chart generates a new Hubble CA and certificates (`cilium-ca`,
+  `hubble-server-certs`, `hubble-relay-client-certs`) on every render. Leave
+  these Secrets out unless you mean to rotate them.
+- The Grafana dashboard ConfigMaps are too large for client-side apply, so they
+  are applied server-side.
+
+After review, apply both files:
+
+```bash
+kubectl apply -f /tmp/cilium-main.yaml
+kubectl apply --server-side -f /tmp/cilium-dashboards.yaml
+kubectl -n kube-system rollout status ds/cilium
+```
+
+## Metrics and dashboards
+
+The agent, operator, Envoy and Hubble expose Prometheus metrics. Their
+ServiceMonitors carry `release: kube-prometheus-stack`, and the chart's Grafana
+dashboards are loaded by the Grafana dashboard sidecar. Hubble metrics use
+namespace-level labels (workload labels for `httpV2` only) and no IP labels, to
+keep series counts small.
+
+The ServiceMonitor kind comes from kube-prometheus-stack, which Argo CD installs
+after Cilium. On a new cluster, `kubectl apply` reports the ServiceMonitors as
+unknown kinds and applies everything else; apply the manifest again once
+kube-prometheus-stack is running.
 
 ## Shared Gateway
 

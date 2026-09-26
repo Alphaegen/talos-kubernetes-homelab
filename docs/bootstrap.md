@@ -175,20 +175,15 @@ Applications and fail with `SharedResourceWarning`.
 
 ## Local validation
 
-Run the relevant render before committing a change:
+Run the repository validation before committing a change:
 
 ```bash
-helm template infra-apps gitops/infra-helm
-kustomize build --enable-helm gitops/argocd
+scripts/validate.sh
 ```
 
-The root Application is a plain Kubernetes manifest and can be checked with:
+It needs `helm`, `kustomize`, `kubeconform`, `yq`, `jq`, and `go`, and runs the same checks as the `Validate` GitHub Actions workflow: it renders the Application chart (with the real values and with every toggle on), every local chart, kustomization, and plain manifest directory the Applications use, the root Application, and the manually applied Argo CD and Cilium kustomizations, then validates everything with kubeconform. Set `RENDER_DIR=<new directory>` to keep the rendered manifests for review or for other tools such as `kube-linter lint`.
 
-```bash
-kubectl apply --dry-run=client -f gitops/root-application.yaml
-```
-
-Custom charts under `gitops/infra-custom` can be rendered individually with their corresponding values. Review both source changes and rendered resources, particularly when Renovate updates a Helm chart or container image.
+Review both source changes and rendered resources, particularly when Renovate updates a Helm chart or container image.
 
 ## Authenticated Talos reconfiguration
 

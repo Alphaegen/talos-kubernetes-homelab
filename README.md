@@ -1,5 +1,7 @@
 # Talos Kubernetes Homelab
 
+[![Validate](https://github.com/Alphaegen/talos-kubernetes-homelab/actions/workflows/validate.yaml/badge.svg?branch=main)](https://github.com/Alphaegen/talos-kubernetes-homelab/actions/workflows/validate.yaml)
+
 This repository contains the configuration for a four-node Kubernetes homelab running on Raspberry Pi 5 hardware and Talos Linux. Argo CD deploys and reconciles platform services and workloads from Git. The cluster runs persistent home-automation, media, and application workloads. I use it to build practical experience with GitOps, networking, storage, secrets management, observability, and progressive delivery.
 
 [Architecture](#architecture) · [Platform capabilities](#platform-capabilities) · [Workloads](#workloads) · [Deployment model](#deployment-model) · [Engineering trade-offs](#engineering-decisions-and-trade-offs)
@@ -17,7 +19,8 @@ This repository contains the configuration for a four-node Kubernetes homelab ru
 | Metrics and logs | Prometheus, Alertmanager, Grafana, Loki, and Grafana Alloy |
 | Supplemental node cooling | Opt-in Raspberry Pi 5 RP1 PWM fan controller on all four nodes, rolled out after a one-node canary |
 | Progressive delivery | Argo Rollouts canaries with analysis steps against a dedicated smoke-test workload |
-| Dependency maintenance | Renovate groups Helm chart and container-image updates into reviewable pull requests |
+| Dependency maintenance | Renovate groups Helm chart, container-image, GitHub Actions, and CI tool updates into reviewable pull requests |
+| Repository validation | GitHub Actions renders every Application source, validates schemas with kubeconform, and scans new commits with gitleaks |
 | Persistent workloads | Home Assistant, Zigbee2MQTT, media services, BookOrbit, and Obsidian LiveSync |
 
 ## Architecture
@@ -126,6 +129,7 @@ Initial Talos configuration, Cilium installation, and Argo CD bootstrap sit outs
 
 ```text
 .
+├── .github/                # Validation workflow and CI helper scripts
 ├── cilium/                 # Cilium values and Gateway API class resources
 ├── docs/                   # Operational documentation
 ├── gitops/
@@ -133,6 +137,7 @@ Initial Talos configuration, Cilium installation, and Argo CD bootstrap sit outs
 │   ├── infra-helm/         # Platform Application chart and central feature values
 │   └── infra-custom/       # Custom charts and workload manifests
 ├── patches/                # Talos control-plane, worker, and storage patches
+├── scripts/                # Repository validation and operational checks
 ├── nodes.yaml              # Cluster endpoint, VIP, and node inventory
 ├── generate.sh             # Talos client and machine-config generation
 └── apply.sh                # Authenticated Talos machine-config updates
@@ -176,7 +181,7 @@ Grafana is provisioned with Prometheus and Loki data sources, upstream component
 
 The smoke-test application uses an Argo Rollouts canary strategy. Canary weight advances through 20%, 50%, and 100% stages with timed pauses and analysis steps. This gives me a predictable workload for checking rollout behaviour, metrics, and alerts.
 
-Renovate tracks annotated Helm versions and pinned container images. Routine Helm chart and container updates are grouped separately, while major upgrades stay isolated for focused review. Renovate creates eligible update branches automatically without dependency-dashboard approval.
+Renovate tracks annotated Helm versions, pinned container images, SHA-pinned GitHub Actions, and the CI tool versions. Routine Helm chart and container updates are grouped separately, while major upgrades stay isolated for focused review. Renovate creates eligible update branches automatically without dependency-dashboard approval.
 
 ## Workloads
 
@@ -225,23 +230,27 @@ The complete procedure, prerequisites, configuration overrides, and reconfigurat
 ### Day-to-day GitOps workflow
 
 1. Update the relevant values or manifest.
-2. Render the affected Helm or Kustomize output locally.
-3. Review the source and rendered diffs.
-4. Commit and push the change.
+2. Run `scripts/validate.sh` and review the source and rendered diffs.
+3. Commit and push the change, or open a pull request.
+4. Let the `Validate` workflow pass.
 5. Allow Argo CD to reconcile the affected Application.
 
 Argo CD reports drift and reconciliation state, while Git retains the reviewed configuration changes.
+
+`scripts/validate.sh` is the same check locally and in CI. It renders the Application chart twice, once with the real values and once with every feature toggle on, so disabled templates cannot silently break. It then renders every local source the Applications point at the way Argo CD does, plus the manually applied Argo CD and Cilium kustomizations, and validates the output with kubeconform in strict mode against the cluster's Kubernetes version and a pinned CRD schema catalog. Go code in the repository is vetted and tested.
+
+The `Validate` workflow runs on every pull request and push to `main`. It uses read-only permissions and no secrets, pins actions by commit SHA, and verifies downloaded tools against their published checksums. Helm and Kustomize match the versions bundled with the running Argo CD. A second job scans only the newly pushed or proposed commits with gitleaks, and a non-blocking kube-linter report is published to the job summary. GitHub secret scanning with push protection is enabled on the repository.
 
 ## Engineering decisions and trade-offs
 
 - **Control-plane topology:** I currently run one control-plane node so that three of the four nodes remain available for workloads and Longhorn replicas. The API uses a VIP, but the control plane itself is not highly available.
 - **Storage placement:** I keep Kubernetes-managed application state on Longhorn, while large media and book datasets remain on the NAS. This avoids replicating bulk data across the worker NVMe volumes.
 - **Bootstrap boundary:** Talos, Cilium, and Argo CD have to be installed before GitOps reconciliation can start. Once Argo CD is running, platform and workload changes are made through Git.
+- **Validation scope:** CI proves that every repository-owned source renders and matches its schema, which keeps it fast and free of cluster credentials. Upstream charts pulled straight from their Helm repositories are rendered only by Argo CD, and runtime behaviour is still checked through Argo CD health and the monitoring stack.
 - **Observability footprint:** Prometheus, Grafana, and Loki run with retention and storage sized for the available hardware. Grafana and Loki use single replicas, so they can be unavailable during node or volume recovery.
 
 ## Roadmap
 
-- Add repeatable repository validation and secret scanning for public changes.
 - Document Longhorn and application-data restore procedures.
 - Evaluate Kyverno in audit mode and measure the resource cost of Trivy Operator before enabling either component.
 - Test the documented control-plane recovery workflow on spare SD media.

@@ -25,6 +25,8 @@ skip_kinds=(
 
 infra_helm=gitops/infra-helm
 all_enabled_values=$infra_helm/ci/all-enabled-values.yaml
+# Standalone manifests applied by hand, outside any chart or kustomization.
+plain_manifests=(gitops/root-application.yaml)
 go_modules=(gitops/infra-custom/pi5-fan-control)
 
 failures=()
@@ -81,6 +83,10 @@ kustomize_build() {
 run "helm template $infra_helm" sh -c 'helm template infra-apps "$1" > "$2"' _ "$infra_helm" "$(out_file "$infra_helm")"
 run "helm template $infra_helm (all toggles on)" sh -c 'helm template infra-apps "$1" -f "$2" > "$3"' \
   _ "$infra_helm" "$all_enabled_values" "$manifests/infra-helm-all-enabled.yaml"
+
+for manifest in "${plain_manifests[@]}"; do
+  cp "$manifest" "$(out_file "$manifest")"
+done
 
 # 2. Every local source the Applications point at, rendered the way Argo CD
 #    renders it. Remote charts are left to Argo CD.

@@ -7,3 +7,4 @@ resources:
   - certificate.yaml
   - gateway.yaml
   - http-redirect.yaml
+  - hubble-ui-httproute.yaml

@@ -4,6 +4,7 @@ commonAnnotations:
   # The Longhorn controller/CRDs are wave 0 in the same Application.
   argocd.argoproj.io/sync-wave: "1"
 resources:
+  - httproute.yaml
   - networkpolicy.yaml
   - prometheus-rule.yaml
   - recurring-job.yaml

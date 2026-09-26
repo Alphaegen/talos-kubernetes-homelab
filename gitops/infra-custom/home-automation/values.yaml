@@ -82,3 +82,9 @@ zigbee2mqtt:
       enabled: false
       url: http://oauth2-proxy.home-assistant.svc.cluster.local:4180/oauth2/auth
       signin: https://home-assistant.homelab.niekvlam.nl/oauth2/start?rd=$escaped_request_uri
+  # HTTPRoute on the shared Cilium Gateway. It cannot enforce ingress.auth or
+  # ingress.whitelistSourceRange, so rendering fails if either is set.
+  httpRoute:
+    enabled: true
+    # Defaults to ingress.host.
+    host: ""

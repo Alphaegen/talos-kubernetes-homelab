@@ -1,0 +1,21 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: obsidian-livesync-gateway
+  namespace: obsidian-livesync
+  labels:
+    app.kubernetes.io/name: obsidian-livesync
+    app.kubernetes.io/part-of: obsidian-livesync
+spec:
+  # Traffic proxied by the shared Cilium Gateway (Envoy) carries the reserved
+  # "ingress" identity, which the ingress-nginx NetworkPolicy cannot match.
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: obsidian-livesync
+  ingress:
+    - fromEntities:
+        - ingress
+      toPorts:
+        - ports:
+            - port: "5984"
+              protocol: TCP

@@ -31,24 +31,31 @@ redisSecretInit:
     limits:
       memory: 96Mi
 
+# Argo CD talks OIDC to Pocket ID directly (configs.cm."oidc.config").
 dex:
-  resources:
-    requests:
-      cpu: 10m
-      memory: 40Mi
-    limits:
-      memory: 104Mi
-  # copyutil copies the ~200 MB argocd binary; the page cache counts against
-  # this limit, so it needs more room than the process itself uses.
-  initImage:
-    resources:
-      requests:
-        cpu: 10m
-        memory: 32Mi
-      limits:
-        memory: 384Mi
+  enabled: false
 
 configs:
+  cm:
+    # Sign-in is SSO only. Break-glass steps are in docs/auth.md.
+    admin.enabled: false
+    oidc.config: |
+      name: Pocket ID
+      issuer: https://id.homelab.niekvlam.nl
+      # Confidential client for the web UI (callback /auth/callback).
+      clientID: $argocd-oidc:client-id
+      clientSecret: $argocd-oidc:client-secret
+      # Public PKCE client for `argocd login --sso`
+      # (callback http://localhost:8085/auth/callback).
+      cliClientID: $argocd-oidc:cli-client-id
+      requestedScopes: ["openid", "profile", "email", "groups"]
+  rbac:
+    # Pocket ID group names arrive in the `groups` claim. Users outside a
+    # mapped group get no permissions.
+    scopes: "[groups]"
+    policy.default: ""
+    policy.csv: |
+      g, homelab-admins, role:admin
   params:
     server.insecure: true
     # Keep a recursive/full-tree sync from reconciling every workload at once.

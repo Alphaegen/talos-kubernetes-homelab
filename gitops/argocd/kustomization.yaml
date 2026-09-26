@@ -19,3 +19,5 @@ resources:
   - ./namespace.yaml
   - ./repositories.yaml
   - ./httproute-grpc.yaml
+  - ./admin-externalsecret.yaml
+  - ./oidc-externalsecret.yaml

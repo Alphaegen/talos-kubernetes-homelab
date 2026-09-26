@@ -8,9 +8,9 @@ plugin. The plugin itself remains installed on each Obsidian client.
 
 - Single-node CouchDB with the upstream LiveSync CORS and request-size settings.
 - A 10 GiB Longhorn data volume and a 1 GiB persistent configuration volume.
-- TLS ingress at `https://livesync.homelab.niekvlam.nl`.
+- HTTPS at `https://livesync.homelab.niekvlam.nl` through the shared Cilium Gateway.
 - CouchDB admin credentials sourced from 1Password through External Secrets.
-- Ingress restricted to the nginx ingress-controller namespace.
+- Inbound traffic restricted to the Cilium Gateway on port 5984.
 
 ## Required 1Password values
 

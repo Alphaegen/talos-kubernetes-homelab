@@ -90,20 +90,10 @@ configuration:
     script: !include scripts.yaml
     scene: !include scenes.yaml
 ingress:
-  enabled: true
-  className: nginx
-  annotations:
-    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
-    cert-manager.io/cluster-issuer: letsencrypt-dns
-  hosts:
-    - host: home-assistant.homelab.niekvlam.nl
-      paths:
-        - path: /
-          pathType: Prefix
-  tls:
-    - hosts:
-        - home-assistant.homelab.niekvlam.nl
-      secretName: home-assistant-tls
+  # Routed by the shared Cilium Gateway (httproute.yaml). external keeps the
+  # chart's reverse-proxy settings (use_x_forwarded_for, trusted_proxies).
+  enabled: false
+  external: true
 persistence:
   enabled: true
   storageClass: longhorn

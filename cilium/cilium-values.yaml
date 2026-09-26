@@ -81,16 +81,7 @@ hubble:
   ui:
     enabled: true
     ingress:
-      enabled: true
-      className: nginx
-      hosts:
-        - hubble.homelab.niekvlam.nl
-      annotations:
-        cert-manager.io/cluster-issuer: letsencrypt-dns
-      tls:
-        - hosts:
-            - hubble.homelab.niekvlam.nl
-          secretName: hubble-tls
+      enabled: false
   relay:
     enabled: true
 

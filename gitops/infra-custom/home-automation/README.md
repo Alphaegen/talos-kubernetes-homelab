@@ -8,7 +8,7 @@ This chart deploys an in-cluster MQTT broker (Mosquitto) and Zigbee2MQTT for a r
 - MQTT broker: Mosquitto (`ClusterIP` only)
 - Zigbee bridge: Zigbee2MQTT with persistent `/app/data`
 - Secrets: `ExternalSecret` (1Password/ESO) by default, with optional fallback `Secret`
-- Frontend: Zigbee2MQTT UI via TLS ingress
+- Frontend: Zigbee2MQTT UI via the shared Cilium Gateway (HTTPRoute)
 
 ## Zigbee2MQTT Configuration
 
@@ -42,7 +42,7 @@ Sample config file:
 1. Sync ArgoCD application:
    - `homelab-home-automation` (or `<cluster.appNamePrefix>-home-automation`)
 1. Confirm resources:
-   - `kubectl -n home-automation get deploy,po,svc,pvc,ingress,secret,externalsecret`
+   - `kubectl -n home-automation get deploy,po,svc,pvc,httproute,secret,externalsecret`
 
 ## Validation
 

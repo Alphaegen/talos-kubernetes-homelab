@@ -25,11 +25,4 @@ persistence:
 service:
   ui: {type: ClusterIP}
 ingress:
-  enabled: true
-  ingressClassName: nginx
-  host: longhorn.homelab.niekvlam.nl
-  tls: true
-  tlsSecret: longhorn-tls-secret
-  annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-dns
-    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+  enabled: false

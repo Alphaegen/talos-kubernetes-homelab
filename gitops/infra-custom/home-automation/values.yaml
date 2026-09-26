@@ -72,7 +72,8 @@ zigbee2mqtt:
     permitJoin: false
     logLevel: info
   ingress:
-    enabled: true
+    # Dormant nginx Ingress; host still defaults the HTTPRoute hostname.
+    enabled: false
     className: nginx
     host: zigbee2mqtt.homelab.niekvlam.nl
     tlsSecretName: zigbee2mqtt-tls

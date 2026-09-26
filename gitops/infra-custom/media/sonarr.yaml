@@ -64,29 +64,6 @@ spec:
   ports:
     - { name: http, port: 8989, targetPort: http }
 ---
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: sonarr
-  namespace: media
-  annotations:
-    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
-    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
-    cert-manager.io/cluster-issuer: "letsencrypt-dns"
-spec:
-  ingressClassName: nginx
-  tls:
-    - hosts: ["sonarr.homelab.niekvlam.nl"]
-      secretName: sonarr-tls
-  rules:
-    - host: sonarr.homelab.niekvlam.nl
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service: { name: sonarr, port: { number: 8989 } }
----
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:

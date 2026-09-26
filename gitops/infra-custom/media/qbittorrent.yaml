@@ -59,7 +59,7 @@ spec:
             - { name: SERVER_COUNTRIES, value: "Netherlands" }
             - { name: PORT_FORWARD_ONLY, value: "on" }
             - { name: VPN_PORT_FORWARDING, value: "on" }
-            # Keep the Web UI reachable through the ClusterIP Service/Ingress.
+            # Keep the Web UI reachable through the ClusterIP Service/Gateway.
             - { name: FIREWALL_INPUT_PORTS, value: "8080" }
             # Proton assigns a dynamic port. Keep qBittorrent bound to the tunnel
             # and update its listening port after every VPN (re)connection.
@@ -194,29 +194,6 @@ spec:
   selector: { app: qbittorrent }
   ports:
     - { name: http, port: 8080, targetPort: http }
----
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: qbittorrent
-  namespace: media
-  annotations:
-    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
-    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
-    cert-manager.io/cluster-issuer: "letsencrypt-dns"
-spec:
-  ingressClassName: nginx
-  tls:
-    - hosts: ["qbittorrent.homelab.niekvlam.nl"]
-      secretName: qbittorrent-tls
-  rules:
-    - host: qbittorrent.homelab.niekvlam.nl
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service: { name: qbittorrent, port: { number: 8080 } }
 ---
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute

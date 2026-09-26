@@ -64,29 +64,6 @@ spec:
   ports:
     - { name: http, port: 6767, targetPort: http }
 ---
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: bazarr
-  namespace: media
-  annotations:
-    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
-    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
-    cert-manager.io/cluster-issuer: "letsencrypt-dns"
-spec:
-  ingressClassName: nginx
-  tls:
-    - hosts: ["bazarr.homelab.niekvlam.nl"]
-      secretName: bazarr-tls
-  rules:
-    - host: bazarr.homelab.niekvlam.nl
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service: { name: bazarr, port: { number: 6767 } }
----
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:

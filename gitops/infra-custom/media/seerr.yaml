@@ -66,29 +66,6 @@ spec:
   ports:
     - { name: http, port: 5055, targetPort: http }
 ---
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: seerr
-  namespace: media
-  annotations:
-    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
-    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
-    cert-manager.io/cluster-issuer: "letsencrypt-dns"
-spec:
-  ingressClassName: nginx
-  tls:
-    - hosts: ["overseerr.homelab.niekvlam.nl"]
-      secretName: overseerr-tls
-  rules:
-    - host: overseerr.homelab.niekvlam.nl
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service: { name: seerr, port: { number: 5055 } }
----
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:

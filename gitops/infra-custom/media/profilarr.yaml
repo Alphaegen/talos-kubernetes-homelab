@@ -129,32 +129,6 @@ spec:
       port: 6868
       targetPort: http
 ---
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: profilarr
-  namespace: media
-  annotations:
-    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
-    cert-manager.io/cluster-issuer: "letsencrypt-dns"
-spec:
-  ingressClassName: nginx
-  tls:
-    - hosts:
-        - profilarr.homelab.niekvlam.nl
-      secretName: profilarr-tls
-  rules:
-    - host: profilarr.homelab.niekvlam.nl
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: profilarr
-                port:
-                  number: 6868
----
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:

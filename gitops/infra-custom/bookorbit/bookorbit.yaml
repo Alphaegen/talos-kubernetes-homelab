@@ -72,9 +72,9 @@ spec:
           resources:
             requests:
               cpu: 100m
-              memory: 512Mi
+              memory: 288Mi
             limits:
-              memory: 2Gi
+              memory: 576Mi
           volumeMounts:
             - name: data
               mountPath: /data

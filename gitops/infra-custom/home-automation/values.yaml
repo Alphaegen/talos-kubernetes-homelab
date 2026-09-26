@@ -55,10 +55,10 @@ zigbee2mqtt:
   resources:
     requests:
       cpu: 50m
-      memory: 128Mi
+      memory: 112Mi
     limits:
       cpu: 500m
-      memory: 512Mi
+      memory: 256Mi
   timezone: Europe/Amsterdam
   persistence:
     size: 5Gi

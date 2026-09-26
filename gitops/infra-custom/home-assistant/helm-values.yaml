@@ -5,10 +5,10 @@ image:
 resources:
   requests:
     cpu: 200m
-    memory: 512Mi
+    memory: 672Mi
   limits:
     cpu: "2"
-    memory: 2Gi
+    memory: 1536Mi
 env:
   - name: TZ
     value: Europe/Amsterdam

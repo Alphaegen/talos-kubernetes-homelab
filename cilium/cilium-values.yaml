@@ -82,6 +82,12 @@ envoy:
       interval: 30s
       labels:
         release: kube-prometheus-stack
+      # Envoy exposes several hundred stats per upstream cluster. Keep the
+      # Gateway request, response-code, latency and upstream-health metrics.
+      metricRelabelings:
+        - sourceLabels: [__name__]
+          regex: envoy_(http_downstream_rq_(total|xx|time_bucket|time_sum|time_count)|cluster_upstream_rq_(total|xx|timeout)|cluster_upstream_cx_(active|connect_fail)|cluster_membership_(healthy|total)|listener_downstream_cx_(total|active)|server_(live|uptime|memory_allocated))
+          action: keep
 
 operator:
   replicas: 2

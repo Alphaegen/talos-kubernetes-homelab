@@ -1,9 +1,8 @@
-{{- if .Values.zigbee2mqtt.httpRoute.enabled }}
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
-  name: zigbee2mqtt
-  namespace: {{ .Values.namespace }}
+  name: vault
+  namespace: security
 spec:
   parentRefs:
     # Shared Cilium Gateway HTTPS listener (wildcard cert); port 80 only redirects.
@@ -11,10 +10,9 @@ spec:
       namespace: kube-system
       sectionName: https
   hostnames:
-    - {{ .Values.zigbee2mqtt.httpRoute.host | quote }}
+    - vault.homelab.niekvlam.nl
   rules:
-    # 0s disables Envoy's default 15s route timeout, which would cut the
-    # frontend's /api websocket.
+    # 0s disables Envoy's default 15s route timeout.
     - timeouts:
         request: 0s
       matches:
@@ -22,6 +20,6 @@ spec:
             type: PathPrefix
             value: /
       backendRefs:
-        - name: {{ .Values.zigbee2mqtt.service.name }}
-          port: {{ .Values.zigbee2mqtt.service.port }}
-{{- end }}
+        # The HA chart's active-node Service, as its own Ingress/HTTPRoute use.
+        - name: vault-active
+          port: 8200

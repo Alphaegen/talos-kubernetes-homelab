@@ -4,5 +4,4 @@ excludeNamespaces:
   - metallb-system
   - longhorn-system
   - monitoring
-  - ingress-nginx
   - argocd

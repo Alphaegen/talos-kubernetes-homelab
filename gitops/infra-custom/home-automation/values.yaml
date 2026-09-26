@@ -71,21 +71,7 @@ zigbee2mqtt:
     frontendEnabled: true
     permitJoin: false
     logLevel: info
-  ingress:
-    # Dormant nginx Ingress; host still defaults the HTTPRoute hostname.
-    enabled: false
-    className: nginx
-    host: zigbee2mqtt.homelab.niekvlam.nl
-    tlsSecretName: zigbee2mqtt-tls
-    certIssuer: letsencrypt-dns
-    whitelistSourceRange: ""
-    auth:
-      enabled: false
-      url: http://oauth2-proxy.home-assistant.svc.cluster.local:4180/oauth2/auth
-      signin: https://home-assistant.homelab.niekvlam.nl/oauth2/start?rd=$escaped_request_uri
-  # HTTPRoute on the shared Cilium Gateway. It cannot enforce ingress.auth or
-  # ingress.whitelistSourceRange, so rendering fails if either is set.
+  # HTTPRoute on the shared Cilium Gateway (wildcard TLS terminates there).
   httpRoute:
     enabled: true
-    # Defaults to ingress.host.
-    host: ""
+    host: zigbee2mqtt.homelab.niekvlam.nl

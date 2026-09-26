@@ -27,8 +27,11 @@ spec:
     targetRevision: {{ .Values.security.keycloak.version | quote }}
     helm:
       values: |
+        # Stable Service name for the HTTPRoute below.
+        fullnameOverride: keycloak
         production: true
-        proxy: edge
+        # TLS terminates at the shared Cilium Gateway, which sets X-Forwarded-*.
+        proxyHeaders: xforwarded
         httpRelativePath: "/"
         replicaCount: 2
 
@@ -50,12 +53,29 @@ spec:
               size: 10Gi
               storageClass: longhorn
 
-        ingress:
-          enabled: true
-          ingressClassName: nginx
-          hostname: {{ printf "keycloak.%s.nl" .Values.cluster.name }}
-          tls: true
-          annotations:
-            nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
-            cert-manager.io/cluster-issuer: "letsencrypt-dns"
+        # The chart has no HTTPRoute support; expose it on the shared Gateway.
+        extraDeploy:
+          - apiVersion: gateway.networking.k8s.io/v1
+            kind: HTTPRoute
+            metadata:
+              name: keycloak
+            spec:
+              parentRefs:
+                # Shared Cilium Gateway HTTPS listener (wildcard cert); port 80 only redirects.
+                - name: cilium-gateway
+                  namespace: kube-system
+                  sectionName: https
+              hostnames:
+                - {{ printf "keycloak.%s.nl" .Values.cluster.name | quote }}
+              rules:
+                # 0s disables Envoy's default 15s route timeout.
+                - timeouts:
+                    request: 0s
+                  matches:
+                    - path:
+                        type: PathPrefix
+                        value: /
+                  backendRefs:
+                    - name: keycloak
+                      port: 80
 {{- end }}

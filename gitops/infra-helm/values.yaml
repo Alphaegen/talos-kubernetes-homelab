@@ -148,7 +148,6 @@ security:
     enabled: false
     # renovate: datasource=helm depName=vault registryUrl=https://helm.releases.hashicorp.com versioning=helm
     version: "0.34.1"
-    host: vault.homelab.niekvlam.nl
     storageSize: 10Gi
     unsealer:
       image: curlimages/curl:8.22.0
@@ -171,7 +170,6 @@ security:
       - metallb-system
       - longhorn-system
       - monitoring
-      - ingress-nginx
       - argocd
 
   trivy:

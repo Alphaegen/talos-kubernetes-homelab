@@ -66,5 +66,4 @@ Sample config file:
 
 - Mosquitto is intentionally exposed only as `ClusterIP`.
 - Zigbee2MQTT is configured for remote network adapter mode (`tcp://...:6638`), with no USB passthrough/privileged host device mapping.
-- IP allowlisting is optional; leave `zigbee2mqtt.ingress.whitelistSourceRange` in `values.yaml` empty to disable it.
-- If you use oauth2-proxy, configure `zigbee2mqtt.ingress.auth.url` and `zigbee2mqtt.ingress.auth.signin` in `values.yaml`, then set `zigbee2mqtt.ingress.auth.enabled=true`.
+- The Zigbee2MQTT UI is exposed only through the shared Cilium Gateway, which offers no IP allowlisting or oauth2-proxy auth-request support; any authentication must be added in front of or inside Zigbee2MQTT itself.

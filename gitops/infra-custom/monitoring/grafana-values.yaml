@@ -19,7 +19,7 @@ serviceMonitor:
 resources:
   requests:
     cpu: 100m
-    memory: 256Mi
+    memory: 384Mi
   limits:
     cpu: 500m
     memory: 768Mi
@@ -102,10 +102,10 @@ sidecar:
   resources:
     requests:
       cpu: 10m
-      memory: 64Mi
+      memory: 96Mi
     limits:
       cpu: 200m
-      memory: 256Mi
+      memory: 192Mi
   dashboards:
     enabled: true
     skipReload: true

@@ -11,8 +11,8 @@ prometheus:
     scrapeInterval: 30s
     enableAdminAPI: false
     resources:
-      requests: {cpu: 100m, memory: 1Gi}
-      limits: {memory: 1536Mi}
+      requests: {cpu: 100m, memory: 1216Mi}
+      limits: {memory: 2Gi}
     storageSpec:
       volumeClaimTemplate:
         spec:

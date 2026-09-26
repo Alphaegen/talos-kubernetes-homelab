@@ -96,3 +96,23 @@ spec:
             pathType: Prefix
             backend:
               service: { name: radarr, port: { number: 7878 } }
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: radarr
+  namespace: media
+spec:
+  parentRefs:
+    # Shared Cilium Gateway HTTPS listener (wildcard cert); port 80 only redirects.
+    - name: cilium-gateway
+      namespace: kube-system
+      sectionName: https
+  hostnames: ["radarr.homelab.niekvlam.nl"]
+  rules:
+    # 0s disables Envoy's default 15s route timeout; interactive searches can take longer.
+    - timeouts: { request: 0s }
+      matches:
+        - path: { type: PathPrefix, value: / }
+      backendRefs:
+        - { name: radarr, port: 7878 }

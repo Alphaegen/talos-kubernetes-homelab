@@ -88,3 +88,23 @@ spec:
             pathType: Prefix
             backend:
               service: { name: seerr, port: { number: 5055 } }
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: seerr
+  namespace: media
+spec:
+  parentRefs:
+    # Shared Cilium Gateway HTTPS listener (wildcard cert); port 80 only redirects.
+    - name: cilium-gateway
+      namespace: kube-system
+      sectionName: https
+  hostnames: ["overseerr.homelab.niekvlam.nl"]
+  rules:
+    # 0s disables Envoy's default 15s route timeout.
+    - timeouts: { request: 0s }
+      matches:
+        - path: { type: PathPrefix, value: / }
+      backendRefs:
+        - { name: seerr, port: 5055 }

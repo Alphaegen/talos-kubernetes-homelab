@@ -20,3 +20,17 @@ spec:
         - ports:
             - port: "8000"
               protocol: TCP
+    # The platform smoke app checks that the UI answers. Its Envoy-enforced
+    # HTTP rule allows only the static index page, not the /v1 API behind it.
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: homelab-platform
+            app.kubernetes.io/name: homelab-platform-smoke
+      toPorts:
+        - ports:
+            - port: "8000"
+              protocol: TCP
+          rules:
+            http:
+              - method: GET
+                path: "/"

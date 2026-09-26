@@ -173,3 +173,7 @@ rbac:
     - {apiGroups: [""], resources: [pods], verbs: [get, list, watch]}
   clusterRules:
     - {apiGroups: [""], resources: [nodes], verbs: [get, list, watch]}
+serviceMonitor:
+  enabled: true
+  additionalLabels:
+    release: kube-prometheus-stack

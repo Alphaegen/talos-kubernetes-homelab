@@ -30,4 +30,23 @@ loki:
         object_store: filesystem
         schema: v13
         index: {prefix: loki_tsdb_index_, period: 24h}
-gateway: {enabled: true}
+gateway:
+  enabled: true
+  # Access logs for every push would otherwise be shipped back into Loki.
+  verboseLogging: false
+# Helm test pod only; not used by Argo CD.
+test: {enabled: false}
+monitoring:
+  serviceMonitor:
+    enabled: true
+    interval: 30s
+    labels: {release: kube-prometheus-stack}
+  rules:
+    enabled: true
+    labels: {release: kube-prometheus-stack}
+    configs:
+      # Single Raspberry Pi instance: alert on sustained slowness, not on
+      # the occasional long query.
+      LokiRequestLatency: {severity: warning, threshold: 5}
+      # SingleBinary runs exactly one compactor.
+      LokiTooManyCompactorsRunning: {enabled: false}

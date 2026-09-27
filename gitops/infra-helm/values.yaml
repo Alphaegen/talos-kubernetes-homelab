@@ -51,16 +51,6 @@ certmanager:
   # renovate: datasource=helm depName=cert-manager registryUrl=https://charts.jetstack.io versioning=helm
   version: "v1.21.2"
 
-sealedsecrets:
-  enabled: false
-  # renovate: datasource=helm depName=sealed-secrets registryUrl=https://bitnami.github.io/sealed-secrets versioning=helm
-  version: "2.20.0"
-
-ceph:
-  enabled: false
-  # renovate: datasource=helm depName=rook-ceph registryUrl=https://charts.rook.io/release versioning=helm
-  version: "v1.20.7"
-
 monitoring:
   enabled: true
   grafana:
@@ -161,21 +151,6 @@ security:
     instances:
       - longhorn
       - hubble
-
-  keycloak:
-    enabled: false
-    # The Bitnami keycloak chart is kept configurable because upstream packaging has changed over time.
-    # Pin even disabled charts so enabling one cannot unexpectedly select a release.
-    # renovate: datasource=helm depName=keycloak registryUrl=https://charts.bitnami.com/bitnami versioning=helm
-    version: "25.2.0"
-
-  vault:
-    enabled: false
-    # renovate: datasource=helm depName=vault registryUrl=https://helm.releases.hashicorp.com versioning=helm
-    version: "0.34.1"
-    storageSize: 10Gi
-    unsealer:
-      image: curlimages/curl:8.22.0
 
   eso:
     enabled: true

@@ -1,16 +1,6 @@
 # CI only: layered on values.yaml by scripts/validate.sh so templates behind
 # disabled toggles still get rendered and schema-checked.
-sealedsecrets:
-  enabled: true
-
-ceph:
-  enabled: true
-
 security:
-  keycloak:
-    enabled: true
-  vault:
-    enabled: true
   kyverno:
     enabled: true
   trivy:

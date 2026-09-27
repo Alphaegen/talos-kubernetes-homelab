@@ -19,17 +19,3 @@ Recommended pattern:
 
 - `external-secrets-onepassword-service-account-token`
   - field: `token`
-- `argocd-repo`
-  - field: `sshPrivateKey`
-
-## Argo Repo Secrets via ESO
-
-The chart now renders `ExternalSecret` resources to manage Argo repository
-credentials in `argocd` namespace.
-
-They write into existing secret names:
-
-- `repo-1798823262` (project `default`)
-- `repo-1485164468` (project `homelab.niekvlam`)
-
-Only `sshPrivateKey` comes from 1Password; repo metadata stays in GitOps.

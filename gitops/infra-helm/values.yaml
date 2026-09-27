@@ -173,7 +173,7 @@ security:
       - argocd
 
   trivy:
-    enabled: false
+    enabled: true
     # renovate: datasource=helm depName=trivy-operator registryUrl=https://aquasecurity.github.io/helm-charts/ versioning=helm
     version: "0.36.0"
     serviceMonitorLabel: kube-prometheus-stack

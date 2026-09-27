@@ -31,24 +31,57 @@ spec:
       releaseName: trivy-operator
       values: |
         operator:
-          scanJobsConcurrentLimit: 2
+          # Download the vulnerability DB once in trivy-server instead of in every scan job.
+          builtInTrivyServer: true
+          scanJobsConcurrentLimit: 1
+          scanJobTTL: 10m
           vulnerabilityScannerScanOnlyCurrentRevisions: true
-          metricsVulnIdEnabled: true
-          admissionController:
-            enabled: false
+          # One series per CVE is too much cardinality for this cluster.
+          metricsVulnIdEnabled: false
+          # SBOMs are produced in CI instead; keep large reports out of etcd.
+          sbomGenerationEnabled: false
+          # node-collector needs hostPath mounts; Talos hosts are read-only and not CIS-shaped.
+          infraAssessmentScannerEnabled: false
 
-          configAuditScanner:
-            # explicitly disable any external Rego sources
-            external:
-              policies:
-                configMaps: []
-                git:
-                  repositories: []
+        compliance:
+          specs:
+            - k8s-nsa-1.0
+            - k8s-pss-baseline-0.1
+            - k8s-pss-restricted-0.1
+
+        trivyOperator:
+          scanJobPodPriorityClassName: homelab-best-effort
+
+        resources:
+          requests:
+            cpu: 50m
+            memory: 192Mi
+          limits:
+            memory: 512Mi
 
         trivy:
           ignoreUnfixed: true
           severity: "HIGH,CRITICAL"
           timeout: 5m
+          # The DB is a cache; re-downloaded on restart instead of living on Longhorn.
+          storageClassEnabled: false
+          priorityClassName: homelab-best-effort
+          # Scan job containers.
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: null
+              memory: 1Gi
+          server:
+            resources:
+              requests:
+                cpu: 50m
+                memory: 256Mi
+              limits:
+                cpu: null
+                memory: 1Gi
         serviceMonitor:
           enabled: true
           labels:

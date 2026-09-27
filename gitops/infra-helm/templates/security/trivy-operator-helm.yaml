@@ -52,6 +52,14 @@ spec:
 
         trivyOperator:
           scanJobPodPriorityClassName: homelab-best-effort
+          # Scan jobs run `trivy image` against the registry and the Trivy server,
+          # so they need no root; the chart already drops capabilities.
+          scanJobPodTemplatePodSecurityContext:
+            runAsNonRoot: true
+            runAsUser: 65534
+            runAsGroup: 65534
+            seccompProfile:
+              type: RuntimeDefault
 
         resources:
           requests:

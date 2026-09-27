@@ -62,10 +62,6 @@ monitoring:
           gnetId: 1860
           revision: 32
           datasource: Prometheus
-        coredns:
-          gnetId: 14981
-          revision: 2
-          datasource: Prometheus
         argocd:
           gnetId: 14584
           revision: 1

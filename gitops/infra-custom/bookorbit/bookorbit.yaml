@@ -17,6 +17,7 @@ spec:
     metadata:
       labels:
         app: bookorbit
+        app.kubernetes.io/name: bookorbit
     spec:
       securityContext:
         runAsNonRoot: true
@@ -24,6 +25,8 @@ spec:
         runAsGroup: 1000
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: bookorbit
           image: ghcr.io/bookorbit/bookorbit:3.1.0

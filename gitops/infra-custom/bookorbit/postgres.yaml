@@ -30,6 +30,7 @@ spec:
     metadata:
       labels:
         app: bookorbit-postgres
+        app.kubernetes.io/name: bookorbit-postgres
     spec:
       securityContext:
         runAsNonRoot: true
@@ -37,6 +38,8 @@ spec:
         runAsGroup: 999
         fsGroup: 999
         fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: postgres
           image: pgvector/pgvector:pg18
@@ -91,6 +94,7 @@ spec:
             failureThreshold: 3
           securityContext:
             allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
             capabilities:
               drop:
                 - ALL
@@ -106,7 +110,17 @@ spec:
             - name: initdb
               mountPath: /docker-entrypoint-initdb.d
               readOnly: true
+            # Writable paths for the read-only root filesystem: the Unix socket
+            # directory and temporary files.
+            - name: run
+              mountPath: /var/run/postgresql
+            - name: tmp
+              mountPath: /tmp
       volumes:
+        - name: run
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}
         - name: data
           persistentVolumeClaim:
             claimName: bookorbit-postgres-data

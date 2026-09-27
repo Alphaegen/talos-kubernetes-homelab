@@ -94,6 +94,13 @@ prometheus-node-exporter:
   resources:
     requests: {cpu: 10m, memory: 32Mi}
     limits: {memory: 96Mi}
+  # Host namespaces and hostPath are covered by a PolicyException; the
+  # container itself runs as nobody and needs no capabilities.
+  containerSecurityContext:
+    readOnlyRootFilesystem: true
+    allowPrivilegeEscalation: false
+    capabilities: {drop: [ALL]}
+    seccompProfile: {type: RuntimeDefault}
 # Talos + Cilium: kube-proxy is replaced by Cilium, and Talos binds the
 # controller-manager, scheduler and etcd metrics to localhost.
 kubeProxy: {enabled: false}

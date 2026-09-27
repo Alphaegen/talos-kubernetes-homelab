@@ -13,7 +13,10 @@ spec:
   policyRefs:
     - name: pss-restricted-run-as-non-root
       kind: ValidatingPolicy
+  # The media manifests set the app label on the pod template only.
   matchConditions:
     - name: linuxserver-root
       expression: >-
-        object.metadata.namespace == 'media' && object.metadata.?labels[?'app'].orValue('') in ['bazarr', 'prowlarr', 'radarr', 'sonarr']
+        object.metadata.namespace == 'media' &&
+        object.metadata.?labels[?'app'].orValue(
+          object.spec.?template.?metadata.?labels[?'app'].orValue('')) in ['bazarr', 'prowlarr', 'radarr', 'sonarr']

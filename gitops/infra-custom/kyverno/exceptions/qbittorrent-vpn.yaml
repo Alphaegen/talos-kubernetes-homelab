@@ -16,7 +16,10 @@ spec:
       kind: ValidatingPolicy
     - name: pss-restricted-capabilities
       kind: ValidatingPolicy
+  # The media manifests set the app label on the pod template only.
   matchConditions:
     - name: qbittorrent-vpn
       expression: >-
-        object.metadata.namespace == 'media' && object.metadata.?labels[?'app'].orValue('') == 'qbittorrent'
+        object.metadata.namespace == 'media' &&
+        object.metadata.?labels[?'app'].orValue(
+          object.spec.?template.?metadata.?labels[?'app'].orValue('')) == 'qbittorrent'

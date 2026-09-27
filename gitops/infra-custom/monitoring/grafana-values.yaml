@@ -58,7 +58,10 @@ resources:
     cpu: 500m
     memory: 768Mi
 
+# The root chown init container is not needed: Grafana keeps its uid 472, the
+# data is already 472-owned from earlier starts, and fsGroup 472 covers new files.
 initChownData:
+  enabled: false
   resources:
     requests:
       cpu: 10m
@@ -104,6 +107,11 @@ extraInitContainers:
           attempt=$((attempt + 1))
           sleep 5
         done
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities: {drop: [ALL]}
+      seccompProfile: {type: RuntimeDefault}
+      readOnlyRootFilesystem: true
     resources:
       requests:
         cpu: 10m

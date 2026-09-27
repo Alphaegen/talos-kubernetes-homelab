@@ -81,8 +81,6 @@ monitoring:
           revision: 16
           datasource: Prometheus
     dashboardFiles:
-      - name: cp-link-watchdog-stability
-        path: dashboards/cp-link-watchdog-stability.json
       - name: homelab-platform-smoke
         path: dashboards/homelab-platform-smoke.json
 
@@ -97,10 +95,6 @@ monitoring:
   prometheus:
     # renovate: datasource=helm depName=kube-prometheus-stack registryUrl=https://prometheus-community.github.io/helm-charts versioning=helm
     version: "91.5.3"
-
-networkWatchdog:
-  enabled: true
-  namespace: kube-system
 
 pi5FanControl:
   enabled: true

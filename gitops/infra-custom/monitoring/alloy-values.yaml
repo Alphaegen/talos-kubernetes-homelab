@@ -98,30 +98,6 @@ alloy:
         forward_to = [loki.write.default.receiver]
 
         stage.cri { }
-
-        stage.match {
-          selector = "{app=\"cp-link-watchdog\"}"
-
-          stage.logfmt {
-            mapping = {
-              event     = "",
-              fails     = "",
-              gateway   = "",
-              iface     = "",
-              node      = "",
-              threshold = "",
-            }
-          }
-
-          stage.labels {
-            values = {
-              event   = null,
-              gateway = null,
-              iface   = null,
-              node    = null,
-            }
-          }
-        }
       }
 
       loki.write "default" {

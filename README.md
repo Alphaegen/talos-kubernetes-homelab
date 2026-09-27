@@ -182,7 +182,7 @@ Longhorn UI and Hubble UI have no login of their own, so each sits behind its ow
 
 Prometheus collects cluster and application metrics with a 30-day retention target. Alertmanager handles alert routing, while kube-state-metrics and node-exporter expose Kubernetes and node state.
 
-Loki runs in single-binary mode with Longhorn-backed filesystem storage and seven-day retention. Grafana Alloy runs on every node, collects pod logs, and applies additional parsing to the control-plane link watchdog.
+Loki runs in single-binary mode with Longhorn-backed filesystem storage and seven-day retention. Grafana Alloy runs on every node and ships pod logs to Loki.
 
 Prometheus also scrapes the Cilium agent, operator and Envoy proxy, Hubble flow metrics (DNS, drops, TCP, flows, ports, ICMP, policy verdicts and HTTP), MetalLB, Loki, and Alloy. Hubble metrics carry namespace-level labels and no IP addresses, and only Gateway-relevant Envoy metrics are kept, which keeps the series count small. MetalLB and Loki ship their upstream alert rules, and the Cilium and Hubble dashboards come from the Cilium chart so they match the running version.
 
@@ -192,7 +192,7 @@ Every platform and application container has CPU and memory requests and a memor
 
 The opt-in `pi5-fan-control` node agent supplies high-temperature cooling from the Waveshare HAT fans while the external Noctua fans provide continuous baseline airflow. It runs on all four Pi 5 nodes, including the control plane, through the `hardware.niekvlam.nl/pi5-fan` node label set in `nodes.yaml`; direct RP1 register access is isolated in a dedicated privileged namespace until Talos provides native RP1 PWM support.
 
-Grafana is provisioned with Prometheus and Loki data sources, upstream component dashboards, and repository-managed dashboards for control-plane link stability and the platform smoke-test workload. The `cp-link-watchdog` DaemonSet records network-link events. `homelab-platform-smoke` exposes health checks and metrics used by the rollout analysis and dashboards.
+Grafana is provisioned with Prometheus and Loki data sources, upstream component dashboards, and a repository-managed dashboard for the platform smoke-test workload. `homelab-platform-smoke` exposes health checks and metrics used by the rollout analysis and dashboards.
 
 ### Progressive delivery and dependency management
 

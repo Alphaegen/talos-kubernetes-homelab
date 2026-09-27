@@ -16,10 +16,15 @@ prometheus:
       release: kube-prometheus-stack
 # Requests from observed use (KRR, max + 15%); memory limit about 2x; no CPU limit.
 controller:
+  # Merged with the chart's default pod securityContext (non-root 65534).
+  securityContext:
+    seccompProfile: {type: RuntimeDefault}
   resources:
     requests: {cpu: 25m, memory: 144Mi}
     limits: {memory: 288Mi}
 speaker:
+  securityContext:
+    seccompProfile: {type: RuntimeDefault}
   resources:
     requests: {cpu: 30m, memory: 64Mi}
     limits: {memory: 128Mi}

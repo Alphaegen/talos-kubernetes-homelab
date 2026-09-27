@@ -7,9 +7,11 @@ api_server_cert_sans:
 network:
   prefix: 24
   gateway: 192.168.20.1
+  # Only the LAN resolver: it also serves the private *.homelab.niekvlam.nl
+  # zone. A public fallback answers NXDOMAIN for it, and CoreDNS picks
+  # upstreams at random, so in-cluster lookups of those names would flap.
   nameservers:
     - 192.168.20.1
-    - 1.1.1.1
   valid_subnets:
     - 192.168.20.0/24
   etcd_advertised_subnets:

@@ -38,6 +38,18 @@ spec:
             resources:
               requests: {cpu: 10m, memory: 64Mi}
               limits: {memory: 128Mi}
+            # State lives in the operator Secret; tsnet only keeps logs and a
+            # netmap cache under $HOME/.config, so point HOME at the writable /tmp.
+            podSecurityContext:
+              runAsNonRoot: true
+              runAsUser: 65534
+              runAsGroup: 65534
+              seccompProfile: {type: RuntimeDefault}
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities: {drop: [ALL]}
+            extraEnv:
+              - {name: HOME, value: /tmp}
     - repoURL: {{ .Values.cluster.repoURL | quote }}
       targetRevision: {{ .Values.cluster.revision | default "main" | quote }}
       path: gitops/infra-custom/tailscale

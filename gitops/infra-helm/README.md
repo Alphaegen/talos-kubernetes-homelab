@@ -2,16 +2,18 @@
 
 ## Application Naming
 
-This chart now separates application naming from project/domain naming:
-
-- `cluster.projectName`: ArgoCD project name (defaults to `cluster.name`)
 - `cluster.appNamePrefix`: prefix used for ArgoCD `Application.metadata.name`
+  (defaults to `cluster.name`); currently `homelab-*`
 - `cluster.name`: kept for hostnames/legacy references
+- `cluster.projects.platform` / `cluster.projects.apps`: the two AppProjects
+  rendered by `templates/projects.yaml`
 
-Example with current values:
-
-- project: `homelab.niekvlam`
-- app names: `homelab-*`
+`platform` holds cluster services (controllers, storage, networking,
+monitoring, auth) and may create cluster-scoped resources, but only in its
+listed namespaces. `apps` holds the user-facing apps: only their own
+namespaces, their sources, and no cluster-scoped resources beyond Namespace
+and PersistentVolume. Add a new namespace to the matching project's
+`destinations` before enabling an Application that deploys there.
 
 ## Update Workflow
 

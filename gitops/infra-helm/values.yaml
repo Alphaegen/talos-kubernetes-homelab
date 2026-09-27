@@ -1,8 +1,6 @@
 cluster:
   # Used for hostnames and legacy references.
   name: homelab.niekvlam
-  # Used for ArgoCD project naming (defaults to cluster.name if omitted).
-  projectName: homelab.niekvlam
   # Argo CD AppProjects: cluster-level platform services, and the user-facing
   # apps that only get their own namespaces (templates/projects.yaml).
   projects:

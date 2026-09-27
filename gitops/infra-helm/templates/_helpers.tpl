@@ -1,12 +1,4 @@
 {{/*
-Project name used by ArgoCD Application.spec.project and AppProject.metadata.name.
-Defaults to cluster.name to preserve current behavior.
-*/}}
-{{- define "infra.projectName" -}}
-{{- default .Values.cluster.name .Values.cluster.projectName -}}
-{{- end -}}
-
-{{/*
 AppProjects for platform services and for user-facing apps.
 Usage: project: {{ include "infra.platformProject" . }}
 */}}
@@ -23,7 +15,7 @@ Prefix for generated ArgoCD Application metadata.name values.
 Set cluster.appNamePrefix to shorten app names independently from project/domain naming.
 */}}
 {{- define "infra.appNamePrefix" -}}
-{{- default (include "infra.projectName" .) .Values.cluster.appNamePrefix -}}
+{{- default .Values.cluster.name .Values.cluster.appNamePrefix -}}
 {{- end -}}
 
 {{/*

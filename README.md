@@ -2,7 +2,7 @@
 
 [![Validate](https://github.com/Alphaegen/talos-kubernetes-homelab/actions/workflows/validate.yaml/badge.svg?branch=main)](https://github.com/Alphaegen/talos-kubernetes-homelab/actions/workflows/validate.yaml)
 
-This repository contains the configuration for a four-node Kubernetes homelab running on Raspberry Pi 5 hardware and Talos Linux. Argo CD deploys and reconciles platform services and workloads from Git. The cluster runs persistent home-automation, media, and application workloads. I use it to build practical experience with GitOps, networking, storage, secrets management, observability, and progressive delivery.
+This repository contains the configuration for a four-node Kubernetes homelab running on Raspberry Pi 5 hardware and Talos Linux. Argo CD deploys and reconciles platform services and workloads from Git. The cluster runs persistent home-automation, media, and application workloads. I use it to build practical experience with GitOps, networking, storage, identity, policy and security scanning, secrets management, observability, and progressive delivery.
 
 [Architecture](#architecture) · [Platform capabilities](#platform-capabilities) · [Workloads](#workloads) · [Deployment model](#deployment-model) · [Engineering trade-offs](#engineering-decisions-and-trade-offs)
 
@@ -13,18 +13,20 @@ This repository contains the configuration for a four-node Kubernetes homelab ru
 | Immutable node operating system | Talos Linux configuration generated from versioned machine patches |
 | GitOps reconciliation | Argo CD Applications with automated sync, pruning, and self-healing, split into `platform` and `apps` AppProjects, with sync and health notifications to ntfy |
 | Single sign-on | Pocket ID (passkeys) as the OIDC provider; Argo CD and Grafana sign in natively with group-based roles, and oauth2-proxy protects UIs without their own login |
-| eBPF networking | Cilium with kube-proxy replacement, dual-stack addressing, Hubble, and Gateway API |
+| eBPF networking | Cilium with kube-proxy replacement, dual-stack addressing, Hubble, and a single Gateway API ingress; Tailscale for remote access |
 | Persistent storage | Longhorn on dedicated worker NVMe volumes; NFS for large shared datasets |
+| Backups | Nightly Longhorn volume backups and etcd snapshots to the NAS, with a documented control-plane recovery procedure |
 | External secrets | External Secrets Operator authenticates to 1Password and creates Kubernetes Secrets |
 | Policy as code | Kyverno CEL policies for the restricted Pod Security Standard, image tags and resources, with documented exceptions, CI tests, and Policy Reporter behind SSO; Pod Security Admission enforces baseline on every namespace unless a documented override applies |
+| Vulnerability scanning | Trivy Operator scans running images for fixable high and critical CVEs and reports configuration and compliance findings, with a Grafana dashboard and an alert for new critical CVEs |
 | Automated certificates | cert-manager issues Let's Encrypt certificates through Cloudflare DNS-01 |
-| Metrics and logs | Prometheus, Alertmanager, Grafana, Loki, and Grafana Alloy, including Cilium, Hubble, and MetalLB metrics |
+| Metrics and logs | Prometheus, Alertmanager, Grafana, Loki, and Grafana Alloy, including Cilium, Hubble, and MetalLB metrics; alerts go to ntfy |
 | Resource management | Requests and memory limits sized from observed usage; PriorityClasses keep home automation running under memory pressure |
 | Supplemental node cooling | Opt-in Raspberry Pi 5 RP1 PWM fan controller on all four nodes, rolled out after a one-node canary |
 | Progressive delivery | Argo Rollouts canaries with analysis steps against a dedicated smoke-test workload |
-| Dependency maintenance | Renovate groups Helm chart, container-image, GitHub Actions, and CI tool updates into reviewable pull requests |
+| Dependency maintenance | Self-hosted Renovate runs in the cluster and groups Helm chart, container-image, GitHub Actions, and CI tool updates into reviewable pull requests |
 | Repository validation | GitHub Actions renders every Application source, validates schemas with kubeconform, and scans new commits with gitleaks |
-| Persistent workloads | Home Assistant, Zigbee2MQTT, media services, BookOrbit, and Obsidian LiveSync |
+| Workloads | Home Assistant, Zigbee2MQTT, media services, BookOrbit, and Obsidian LiveSync |
 
 ## Architecture
 
@@ -38,6 +40,8 @@ flowchart TB
         onepassword["1Password"]
         publicdns["Cloudflare DNS and Let's Encrypt"]
         nas["External NAS"]
+        ntfy["ntfy"]
+        tailnet["Tailscale tailnet"]
     end
 
     subgraph cluster["Raspberry Pi 5 Kubernetes cluster"]
@@ -57,8 +61,17 @@ flowchart TB
             eso["External Secrets"]
             certificates["cert-manager"]
             rollouts["Argo Rollouts"]
+            renovate["Renovate"]
             observability["Prometheus, Grafana, Loki, Alertmanager"]
             identity["Pocket ID and oauth2-proxy"]
+            remote["Tailscale subnet router"]
+        end
+
+        subgraph security["Policy and security"]
+            direction LR
+            psa["Pod Security Admission"]
+            kyverno["Kyverno and Policy Reporter"]
+            trivy["Trivy Operator"]
         end
 
         subgraph applications["Application namespaces"]
@@ -78,10 +91,11 @@ flowchart TB
             appentry --> smoke
         end
 
-        subgraph storage["Persistent storage"]
+        subgraph storage["Persistent storage and backups"]
             direction LR
             longhorn["Longhorn on worker NVMe"]
             nfs["NFS provisioner"]
+            etcdbackup["etcd snapshots"]
         end
 
         kubernetes --> argocd
@@ -92,17 +106,23 @@ flowchart TB
         rollouts --> smoke
         observability -. monitors .-> kubernetes
         observability -. monitors .-> appentry
+        security -. audits .-> appentry
         appentry --> longhorn
         appentry --> nfs
     end
 
     git --> argocd
+    git -. pull requests .- renovate
     onepassword --> eso
     publicdns --> certificates
+    tailnet --> remote
     nas --> nfs
+    nas -. nightly backups .- longhorn
+    nas -. nightly snapshots .- etcdbackup
+    ntfy -. alerts and sync events .- observability
 ```
 
-Talos handles node and Kubernetes configuration, while Argo CD manages the platform above it. Longhorn stores cluster-managed application state on worker NVMe volumes; NFS provides access to large shared datasets on the NAS.
+Talos handles node and Kubernetes configuration, while Argo CD manages the platform above it. Longhorn stores cluster-managed application state on worker NVMe volumes; NFS provides access to large shared datasets on the NAS, which also holds the nightly backups.
 
 ### Cluster topology
 
@@ -165,7 +185,11 @@ The Tailscale operator provides remote access through a home-LAN subnet router a
 
 Longhorn stores Kubernetes-managed application state on dedicated worker NVMe volumes formatted with XFS. Large shared media and book datasets remain on the NAS and are provisioned through NFS. Talos system disks are kept separate from Longhorn data volumes.
 
-Home Assistant, Grafana, Loki, Mosquitto, Zigbee2MQTT, BookOrbit, and Obsidian LiveSync use Longhorn-backed claims. Media applications consume shared NFS storage through the NFS subdir external provisioner.
+Home Assistant, Mosquitto, Zigbee2MQTT, BookOrbit, Obsidian LiveSync, the media configuration volumes, Pocket ID, Prometheus, Grafana, and Loki use Longhorn-backed claims. Media applications consume shared NFS storage through the NFS subdir external provisioner.
+
+### Backups and recovery
+
+A Longhorn recurring job backs up every volume to an NFS target on the NAS each night and keeps seven backups. Because the cluster has a single etcd member, an `etcd-backup` CronJob also takes a nightly etcd snapshot through the Talos API, using a Talos `ServiceAccount` limited to the `os:etcd:backup` role, and writes it to a separate NAS share with a checksum and rotation. The snapshot verification, A/B rollback, and etcd recovery procedures are documented in [`docs/control-plane-recovery.md`](docs/control-plane-recovery.md).
 
 ### Secrets and certificate management
 
@@ -177,7 +201,7 @@ cert-manager uses a Cloudflare credential supplied through External Secrets to c
 
 Pocket ID is the single OIDC identity provider at `id.homelab.niekvlam.nl`; people sign in with passkeys, and access is granted through the `homelab-admins` group. Every OIDC client is restricted to that group in Pocket ID and checks it again on its own side. Argo CD talks OIDC to Pocket ID directly (Dex is disabled), maps the group to `role:admin` and grants nothing by default, and its local `admin` account is disabled. The CLI uses a separate public PKCE client for `argocd login --sso`. Grafana maps the group to server admin and only offers SSO on its login page.
 
-Longhorn UI and Hubble UI have no login of their own, so each sits behind its own oauth2-proxy instance, which owns the public HTTPRoute. A CiliumNetworkPolicy lets only that proxy reach the UI pod; the platform smoke test may fetch only the Longhorn UI index page, enforced by a Cilium L7 HTTP rule. Client credentials come from 1Password through External Secrets. Break-glass access (one-time Pocket ID login links, `kubectl port-forward`, `argocd --core`, and temporarily re-enabling local admins) is documented in [`docs/auth.md`](docs/auth.md).
+Longhorn UI, Hubble UI, and the Policy Reporter UI have no login of their own, so each sits behind its own oauth2-proxy instance, which owns the public HTTPRoute. A CiliumNetworkPolicy lets only that proxy reach the UI pod; the platform smoke test may fetch only the Longhorn UI index page, enforced by a Cilium L7 HTTP rule. Client credentials come from 1Password through External Secrets. Break-glass access (one-time Pocket ID login links, `kubectl port-forward`, `argocd --core`, and temporarily re-enabling local admins) is documented in [`docs/auth.md`](docs/auth.md).
 
 ### Policy and workload security
 
@@ -187,9 +211,13 @@ Kyverno then checks every workload individually against the restricted standard 
 
 The policies run in Audit and will move to Enforce one at a time once each has stayed clean. Each has a `kyverno test` suite that CI runs, and Policy Reporter shows the results per namespace and policy behind oauth2-proxy SSO, with Grafana dashboards. Details, the exception list, and the enforce and rollback procedure are in [`docs/policy.md`](docs/policy.md).
 
+### Vulnerability scanning
+
+Trivy Operator runs in observe-only mode with its built-in Trivy server, so scan jobs share one vulnerability database instead of downloading their own. It scans the current revision of every workload, one job at a time at best-effort priority, and reports only fixable high and critical vulnerabilities. Configuration audits and the NSA and Pod Security Standard compliance reports cover the workload side. A Grafana dashboard shows the findings per workload, and an alert fires when an image gains a new fixable critical vulnerability, which usually means Renovate has an update worth merging.
+
 ### Observability and operations
 
-Prometheus collects cluster and application metrics with a 30-day retention target. Alertmanager handles alert routing, while kube-state-metrics and node-exporter expose Kubernetes and node state.
+Prometheus collects cluster and application metrics on a Longhorn volume with 30-day retention. Alertmanager routes alerts to ntfy, while kube-state-metrics and node-exporter expose Kubernetes and node state. metrics-server serves the resource metrics API for `kubectl top`, using kubelet serving certificates that Talos rotates and kubelet-serving-cert-approver approves.
 
 Loki runs in single-binary mode with Longhorn-backed filesystem storage and seven-day retention. Grafana Alloy runs on every node and ships pod logs to Loki.
 
@@ -207,7 +235,7 @@ Grafana is provisioned with Prometheus and Loki data sources, upstream component
 
 The smoke-test application uses an Argo Rollouts canary strategy. Canary weight advances through 20%, 50%, and 100% stages with timed pauses and analysis steps. This gives me a predictable workload for checking rollout behaviour, metrics, and alerts.
 
-Renovate tracks annotated Helm versions, pinned container images, SHA-pinned GitHub Actions, and the CI tool versions. Routine Helm chart and container updates are grouped separately, while major upgrades stay isolated for focused review. Renovate creates eligible update branches automatically without dependency-dashboard approval.
+Renovate runs self-hosted as a daily CronJob in the cluster, with its GitHub token delivered through External Secrets. It tracks annotated Helm versions, pinned container images, SHA-pinned GitHub Actions, and the CI tool versions. Routine Helm chart and container updates are grouped separately, while major upgrades stay isolated for focused review. Renovate creates eligible update branches automatically without dependency-dashboard approval.
 
 ## Workloads
 
@@ -221,7 +249,7 @@ Mosquitto and Zigbee2MQTT run in a dedicated `home-automation` namespace. Zigbee
 
 ### Media services
 
-The media stack includes Sonarr, Radarr, Prowlarr, qBittorrent Enhanced Edition, Seerr, Profilarr, and Trawl. Trawl exposes a FlareSolverr-compatible service alias so the existing Prowlarr proxy configuration keeps working. Kubernetes-managed configuration volumes are separated from shared media data on NFS.
+The media stack includes Sonarr, Radarr, Bazarr, Prowlarr, qBittorrent Enhanced Edition, Seerr, Profilarr, and Trawl. qBittorrent sends its traffic through a Gluetun VPN sidecar in the same pod. Trawl exposes a FlareSolverr-compatible service alias so the existing Prowlarr proxy configuration keeps working. Kubernetes-managed configuration volumes are separated from shared media data on NFS, and the media workloads run at best-effort priority so they give way first under memory pressure.
 
 ### BookOrbit
 
@@ -277,12 +305,18 @@ The `Validate` workflow runs on every pull request and push to `main`. It uses r
 - **Metric cardinality:** Hubble metrics are labelled by namespace (and by workload for HTTP only), not by pod or IP address, and Envoy keeps only request, response-code, latency and upstream-health metrics. Per-pod flow detail stays available in Hubble itself. Enabling the Cilium, Hubble, MetalLB, Loki, and Alloy metrics added about 7% to the active series count.
 - **Single identity provider:** Pocket ID is small (one replica, SQLite on Longhorn) instead of an HA Keycloak with its own database, which would cost about 1 GB of memory. If it is down, SSO logins fail until it recovers; `kubectl` access, port-forwarding, and Argo CD core mode keep working as documented break-glass paths.
 - **Fail-open policy:** While the policies run in Audit, Kyverno's webhooks ignore failures, so a Kyverno outage never blocks deployments. Enforced policies will only fail closed once they have proven stable, and namespace Pod Security Admission keeps a baseline floor that does not depend on Kyverno at all.
+- **Observe-only scanning:** Trivy Operator keeps its vulnerability database in an `emptyDir`, runs one scan job at a time, and skips SBOM generation and node infrastructure assessment, whose node collector needs host paths that do not fit Talos. That keeps the cost low, at the price of re-downloading the database after a restart and having no node-level CIS results.
+- **Backups on the NAS:** Longhorn backups and etcd snapshots leave the cluster, but they share one NAS; an off-site copy is not part of this repository.
 - **Resource sizing:** Requests track measured usage so the scheduler sees the real load, while memory limits leave room for spikes rather than packing nodes tightly. The trade-off is that the sum of limits still exceeds node memory on some workers; priorities decide which workloads give way first.
 
 ## Roadmap
 
-- Document Longhorn and application-data restore procedures.
 - Switch the Kyverno policies from Audit to Enforce, one at a time, once each has stayed clean for several days.
-- Measure the resource cost of the Trivy Operator vulnerability scanning.
+- Measure the resource cost of the Trivy Operator vulnerability scanning and right-size it.
+- Add default-deny network policies per namespace, derived from observed Hubble flows.
+- Build the repository's own images in CI with SBOMs, provenance, and keyless signatures, and verify them at admission.
+- Ship Kubernetes API audit logs to Loki and add Tetragon for runtime security events.
+- Replace the unmaintained NFS subdir external provisioner with the NFS CSI driver.
+- Document Longhorn and application-data restore procedures.
 - Test the documented control-plane recovery workflow on spare SD media.
 - Separate remaining environment-specific configuration through clearer overlays and reusable examples.

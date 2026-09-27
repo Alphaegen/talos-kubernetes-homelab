@@ -43,7 +43,7 @@ to register a new passkey:
 kubectl -n auth exec pocket-id-0 -- /app/pocket-id one-time-access-token <username-or-email>
 ```
 
-### Pocket ID is down: Longhorn and Hubble UI
+### Pocket ID is down: Longhorn, Hubble and Policy Reporter UI
 
 Port-forwarding enters the pod from the node, which the UI network policies
 allow, and skips oauth2-proxy:
@@ -51,6 +51,7 @@ allow, and skips oauth2-proxy:
 ```bash
 kubectl -n longhorn-system port-forward svc/longhorn-frontend 8080:80
 kubectl -n kube-system port-forward svc/hubble-ui 8081:80
+kubectl -n policy-reporter port-forward svc/policy-reporter-ui 8082:8080
 ```
 
 ### Pocket ID is down: Argo CD

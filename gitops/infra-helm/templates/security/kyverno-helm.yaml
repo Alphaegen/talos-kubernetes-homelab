@@ -13,6 +13,10 @@ metadata:
   annotations:
     # Stage 1: optional platform add-on after monitoring CRDs.
     argocd.argoproj.io/sync-wave: "1"
+    # Compare like the API server applies: the policies.kyverno.io CRDs render
+    # empty metadata maps that the server drops, which a client-side diff
+    # reports as drift on every refresh.
+    argocd.argoproj.io/compare-options: ServerSideDiff=true
 spec:
   project: {{ include "infra.platformProject" . }}
   destination:
@@ -48,8 +52,7 @@ spec:
           grafana:
             enabled: true
 
-          # The policies.kyverno.io CRDs otherwise render "labels: {}", which the
-          # API server drops, so Argo CD shows them OutOfSync forever.
+          # Label the policies.kyverno.io CRDs like the other Kyverno CRDs.
           kyverno-api:
             labels:
               app.kubernetes.io/part-of: kyverno

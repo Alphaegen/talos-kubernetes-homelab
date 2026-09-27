@@ -1,0 +1,35 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/refs/heads/main/policies.kyverno.io/policyexception_v1.json
+apiVersion: policies.kyverno.io/v1
+kind: PolicyException
+metadata:
+  name: longhorn
+  namespace: kyverno
+spec:
+  properties:
+    reason: >-
+      Longhorn is the storage driver: its manager, CSI and
+      instance-manager pods need privileged host access, and the operator
+      creates pods the chart cannot configure (no resources or labels).
+  policyRefs:
+    - name: pss-baseline
+      kind: ValidatingPolicy
+    - name: pss-restricted-privilege-escalation
+      kind: ValidatingPolicy
+    - name: pss-restricted-capabilities
+      kind: ValidatingPolicy
+    - name: pss-restricted-run-as-non-root
+      kind: ValidatingPolicy
+    - name: pss-restricted-seccomp
+      kind: ValidatingPolicy
+    - name: pss-restricted-volume-types
+      kind: ValidatingPolicy
+    - name: require-resources
+      kind: ValidatingPolicy
+    - name: require-name-label
+      kind: ValidatingPolicy
+    - name: require-probes
+      kind: ValidatingPolicy
+  matchConditions:
+    - name: longhorn
+      expression: >-
+        object.metadata.namespace == 'longhorn-system'

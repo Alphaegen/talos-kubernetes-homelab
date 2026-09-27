@@ -1,7 +1,0 @@
-mode: audit               # audit | enforce
-excludeNamespaces:
-  - kube-system
-  - metallb-system
-  - longhorn-system
-  - monitoring
-  - argocd

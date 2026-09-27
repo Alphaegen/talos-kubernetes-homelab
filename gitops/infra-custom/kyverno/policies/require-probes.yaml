@@ -1,0 +1,34 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/refs/heads/main/policies.kyverno.io/validatingpolicy_v1.json
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: require-probes
+  annotations:
+    policies.kyverno.io/title: Require liveness and readiness probes
+    policies.kyverno.io/category: Best Practices
+    policies.kyverno.io/description: >-
+      Long-running workloads need a readiness probe so traffic only reaches ready pods, and a liveness probe so a hung process is restarted.
+spec:
+  validationActions: [Audit]
+  failurePolicy: Ignore
+  matchConstraints:
+    namespaceSelector:
+      matchExpressions:
+        - key: kubernetes.io/metadata.name
+          operator: NotIn
+          values: [kube-system]
+    resourceRules:
+      - apiGroups: [apps]
+        apiVersions: [v1]
+        operations: [CREATE, UPDATE]
+        resources: [deployments, statefulsets]
+  variables:
+    - name: missing
+      expression: >-
+        object.spec.template.spec.containers.filter(c,
+          !has(c.livenessProbe) || !has(c.readinessProbe))
+  validations:
+    - expression: size(variables.missing) == 0
+      messageExpression: >-
+        'Add liveness and readiness probes to: ' +
+        variables.missing.map(c, c.name).join(', ')

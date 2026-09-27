@@ -26,75 +26,84 @@ spec:
       # The CRDs are too large for client-side apply's last-applied annotation.
       - ServerSideApply=true
       - SkipDryRunOnMissingResource=true
-  source:
-    repoURL: https://kyverno.github.io/kyverno
-    chart: kyverno
-    targetRevision: {{ .Values.security.kyverno.version | quote }}
-    helm:
-      releaseName: kyverno
-      values: |
-        features:
-          # Policies run in Audit for now; a Kyverno outage must never block admission.
-          forceFailurePolicyIgnore:
-            enabled: true
-          # Exceptions live only in the kyverno namespace, which only Argo CD writes to.
-          policyExceptions:
-            enabled: true
-            namespace: kyverno
+  sources:
+    - repoURL: {{ .Values.cluster.repoURL | quote }}
+      targetRevision: {{ .Values.cluster.revision | default "main" | quote }}
+      path: gitops/infra-custom/kyverno
+    - repoURL: https://kyverno.github.io/kyverno
+      chart: kyverno
+      targetRevision: {{ .Values.security.kyverno.version | quote }}
+      helm:
+        releaseName: kyverno
+        values: |
+          features:
+            # Policies run in Audit for now; a Kyverno outage must never block admission.
+            forceFailurePolicyIgnore:
+              enabled: true
+            # Exceptions live only in the kyverno namespace, which only Argo CD writes to.
+            policyExceptions:
+              enabled: true
+              namespace: kyverno
 
-        grafana:
-          enabled: true
-
-        admissionController:
-          replicas: 2
-          podDisruptionBudget:
+          grafana:
             enabled: true
-            minAvailable: 1
-          container:
+
+          # The policies.kyverno.io CRDs otherwise render "labels: {}", which the
+          # API server drops, so Argo CD shows them OutOfSync forever.
+          kyverno-api:
+            labels:
+              app.kubernetes.io/part-of: kyverno
+
+          admissionController:
+            replicas: 2
+            podDisruptionBudget:
+              enabled: true
+              minAvailable: 1
+            container:
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 192Mi
+                limits:
+                  memory: 512Mi
+            serviceMonitor:
+              enabled: true
+              additionalLabels:
+                release: {{ .Values.security.kyverno.serviceMonitorLabel }}
+
+          backgroundController:
             resources:
               requests:
-                cpu: 50m
-                memory: 192Mi
+                cpu: 25m
+                memory: 96Mi
               limits:
-                memory: 512Mi
-          serviceMonitor:
-            enabled: true
-            additionalLabels:
-              release: {{ .Values.security.kyverno.serviceMonitorLabel }}
+                memory: 256Mi
+            serviceMonitor:
+              enabled: true
+              additionalLabels:
+                release: {{ .Values.security.kyverno.serviceMonitorLabel }}
 
-        backgroundController:
-          resources:
-            requests:
-              cpu: 25m
-              memory: 96Mi
-            limits:
-              memory: 256Mi
-          serviceMonitor:
-            enabled: true
-            additionalLabels:
-              release: {{ .Values.security.kyverno.serviceMonitorLabel }}
+          reportsController:
+            resources:
+              requests:
+                cpu: 25m
+                memory: 128Mi
+              limits:
+                memory: 384Mi
+            serviceMonitor:
+              enabled: true
+              additionalLabels:
+                release: {{ .Values.security.kyverno.serviceMonitorLabel }}
 
-        reportsController:
-          resources:
-            requests:
-              cpu: 25m
-              memory: 128Mi
-            limits:
-              memory: 384Mi
-          serviceMonitor:
-            enabled: true
-            additionalLabels:
-              release: {{ .Values.security.kyverno.serviceMonitorLabel }}
-
-        cleanupController:
-          resources:
-            requests:
-              cpu: 10m
-              memory: 48Mi
-            limits:
-              memory: 128Mi
-          serviceMonitor:
-            enabled: true
-            additionalLabels:
-              release: {{ .Values.security.kyverno.serviceMonitorLabel }}
+          cleanupController:
+            resources:
+              requests:
+                cpu: 10m
+                memory: 48Mi
+              limits:
+                memory: 128Mi
+            serviceMonitor:
+              enabled: true
+              additionalLabels:
+                release: {{ .Values.security.kyverno.serviceMonitorLabel }}
 {{- end }}

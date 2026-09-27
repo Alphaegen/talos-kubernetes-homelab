@@ -1,0 +1,44 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/refs/heads/main/policies.kyverno.io/validatingpolicy_v1.json
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: pss-restricted-seccomp
+  annotations:
+    policies.kyverno.io/title: Require a seccomp profile
+    policies.kyverno.io/category: Pod Security Standards (Restricted)
+    policies.kyverno.io/description: >-
+      Pods must use the RuntimeDefault or a Localhost seccomp profile, set on the pod or on every container.
+spec:
+  validationActions: [Audit]
+  failurePolicy: Ignore
+  autogen:
+    podControllers:
+      controllers: [deployments, statefulsets, daemonsets, jobs, cronjobs]
+  matchConstraints:
+    namespaceSelector:
+      matchExpressions:
+        - key: kubernetes.io/metadata.name
+          operator: NotIn
+          values: [kube-system]
+    resourceRules:
+      - apiGroups: [""]
+        apiVersions: [v1]
+        operations: [CREATE, UPDATE]
+        resources: [pods]
+  variables:
+    - name: containers
+      expression: >-
+        object.spec.containers +
+        object.spec.?initContainers.orValue([]) +
+        object.spec.?ephemeralContainers.orValue([])
+    - name: podProfile
+      expression: object.spec.?securityContext.?seccompProfile.?type.orValue('')
+    - name: unconfined
+      expression: >-
+        variables.containers.filter(c,
+          !(c.?securityContext.?seccompProfile.?type.orValue(variables.podProfile) in ['RuntimeDefault', 'Localhost']))
+  validations:
+    - expression: size(variables.unconfined) == 0
+      messageExpression: >-
+        'Set seccompProfile.type: RuntimeDefault on the pod or on: ' +
+        variables.unconfined.map(c, c.name).join(', ')

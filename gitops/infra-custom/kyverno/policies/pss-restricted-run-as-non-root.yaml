@@ -1,0 +1,45 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/refs/heads/main/policies.kyverno.io/validatingpolicy_v1.json
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: pss-restricted-run-as-non-root
+  annotations:
+    policies.kyverno.io/title: Require running as non-root
+    policies.kyverno.io/category: Pod Security Standards (Restricted)
+    policies.kyverno.io/description: >-
+      Containers must run with runAsNonRoot, set on the pod or on every container, and must not set runAsUser to 0.
+spec:
+  validationActions: [Audit]
+  failurePolicy: Ignore
+  autogen:
+    podControllers:
+      controllers: [deployments, statefulsets, daemonsets, jobs, cronjobs]
+  matchConstraints:
+    namespaceSelector:
+      matchExpressions:
+        - key: kubernetes.io/metadata.name
+          operator: NotIn
+          values: [kube-system]
+    resourceRules:
+      - apiGroups: [""]
+        apiVersions: [v1]
+        operations: [CREATE, UPDATE]
+        resources: [pods]
+  variables:
+    - name: containers
+      expression: >-
+        object.spec.containers +
+        object.spec.?initContainers.orValue([]) +
+        object.spec.?ephemeralContainers.orValue([])
+    - name: pod
+      expression: object.spec.?securityContext.orValue({})
+    - name: rootContainers
+      expression: >-
+        variables.containers.filter(c,
+          !c.?securityContext.?runAsNonRoot.orValue(variables.pod.?runAsNonRoot.orValue(false)) ||
+          c.?securityContext.?runAsUser.orValue(variables.pod.?runAsUser.orValue(-1)) == 0)
+  validations:
+    - expression: size(variables.rootContainers) == 0
+      messageExpression: >-
+        'Set runAsNonRoot: true (and a non-zero runAsUser) for: ' +
+        variables.rootContainers.map(c, c.name).join(', ')

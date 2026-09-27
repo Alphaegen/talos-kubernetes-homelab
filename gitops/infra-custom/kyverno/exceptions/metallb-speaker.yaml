@@ -1,0 +1,22 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/refs/heads/main/policies.kyverno.io/policyexception_v1.json
+apiVersion: policies.kyverno.io/v1
+kind: PolicyException
+metadata:
+  name: metallb-speaker
+  namespace: kyverno
+spec:
+  properties:
+    reason: >-
+      The speaker announces service IPs on the node network, which needs
+      the host network namespace, NET_RAW and root.
+  policyRefs:
+    - name: pss-baseline
+      kind: ValidatingPolicy
+    - name: pss-restricted-capabilities
+      kind: ValidatingPolicy
+    - name: pss-restricted-run-as-non-root
+      kind: ValidatingPolicy
+  matchConditions:
+    - name: metallb-speaker
+      expression: >-
+        object.metadata.namespace == 'metallb-system' && object.metadata.?labels[?'app.kubernetes.io/component'].orValue('') == 'speaker'

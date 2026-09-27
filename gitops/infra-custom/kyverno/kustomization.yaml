@@ -1,0 +1,26 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Policies start in Audit. Switch one policy at a time to Deny in its
+# validationActions once it has been clean for a few days.
+resources:
+  - policies/disallow-default-namespace.yaml
+  - policies/disallow-mutable-tags.yaml
+  - policies/pss-baseline.yaml
+  - policies/pss-restricted-capabilities.yaml
+  - policies/pss-restricted-privilege-escalation.yaml
+  - policies/pss-restricted-run-as-non-root.yaml
+  - policies/pss-restricted-seccomp.yaml
+  - policies/pss-restricted-volume-types.yaml
+  - policies/require-name-label.yaml
+  - policies/require-probes.yaml
+  - policies/require-resources.yaml
+  - exceptions/alloy.yaml
+  - exceptions/home-assistant-setup-config.yaml
+  - exceptions/linuxserver-root.yaml
+  - exceptions/longhorn.yaml
+  - exceptions/metallb-speaker.yaml
+  - exceptions/node-exporter.yaml
+  - exceptions/pi5-fan-control.yaml
+  - exceptions/qbittorrent-vpn.yaml
+  - exceptions/tailscale-subnet-router.yaml

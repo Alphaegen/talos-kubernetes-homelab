@@ -1,0 +1,19 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/refs/heads/main/policies.kyverno.io/policyexception_v1.json
+apiVersion: policies.kyverno.io/v1
+kind: PolicyException
+metadata:
+  name: linuxserver-root
+  namespace: kyverno
+spec:
+  properties:
+    reason: >-
+      linuxserver.io images start as root under s6-overlay, fix file
+      ownership, then drop to PUID/PGID. They cannot start with
+      runAsNonRoot.
+  policyRefs:
+    - name: pss-restricted-run-as-non-root
+      kind: ValidatingPolicy
+  matchConditions:
+    - name: linuxserver-root
+      expression: >-
+        object.metadata.namespace == 'media' && object.metadata.?labels[?'app'].orValue('') in ['bazarr', 'prowlarr', 'radarr', 'sonarr']

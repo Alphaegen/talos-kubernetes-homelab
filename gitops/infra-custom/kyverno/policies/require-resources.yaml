@@ -1,0 +1,39 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/refs/heads/main/policies.kyverno.io/validatingpolicy_v1.json
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: require-resources
+  annotations:
+    policies.kyverno.io/title: Require requests and a memory limit
+    policies.kyverno.io/category: Best Practices
+    policies.kyverno.io/description: >-
+      Every container needs CPU and memory requests so the scheduler sees real usage, and a memory limit so one leak cannot take down a node. CPU limits are deliberately not required.
+spec:
+  validationActions: [Audit]
+  failurePolicy: Ignore
+  autogen:
+    podControllers:
+      controllers: [deployments, statefulsets, daemonsets, jobs, cronjobs]
+  matchConstraints:
+    namespaceSelector:
+      matchExpressions:
+        - key: kubernetes.io/metadata.name
+          operator: NotIn
+          values: [kube-system]
+    resourceRules:
+      - apiGroups: [""]
+        apiVersions: [v1]
+        operations: [CREATE, UPDATE]
+        resources: [pods]
+  variables:
+    - name: missing
+      expression: >-
+        (object.spec.containers + object.spec.?initContainers.orValue([])).filter(c,
+          !c.?resources.?requests[?'cpu'].hasValue() ||
+          !c.?resources.?requests[?'memory'].hasValue() ||
+          !c.?resources.?limits[?'memory'].hasValue())
+  validations:
+    - expression: size(variables.missing) == 0
+      messageExpression: >-
+        'Set requests.cpu, requests.memory and limits.memory on: ' +
+        variables.missing.map(c, c.name).join(', ')

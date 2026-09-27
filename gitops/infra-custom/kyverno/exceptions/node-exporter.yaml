@@ -1,0 +1,20 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/refs/heads/main/policies.kyverno.io/policyexception_v1.json
+apiVersion: policies.kyverno.io/v1
+kind: PolicyException
+metadata:
+  name: node-exporter
+  namespace: kyverno
+spec:
+  properties:
+    reason: >-
+      node-exporter reports host metrics, so it shares the host network
+      and PID namespaces and reads /proc, /sys and / through hostPath.
+  policyRefs:
+    - name: pss-baseline
+      kind: ValidatingPolicy
+    - name: pss-restricted-volume-types
+      kind: ValidatingPolicy
+  matchConditions:
+    - name: node-exporter
+      expression: >-
+        object.metadata.namespace == 'monitoring' && object.metadata.?labels[?'app.kubernetes.io/name'].orValue('') == 'prometheus-node-exporter'

@@ -1,0 +1,22 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/refs/heads/main/policies.kyverno.io/policyexception_v1.json
+apiVersion: policies.kyverno.io/v1
+kind: PolicyException
+metadata:
+  name: qbittorrent-vpn
+  namespace: kyverno
+spec:
+  properties:
+    reason: >-
+      The gluetun VPN sidecar creates a WireGuard tunnel, which needs
+      NET_ADMIN and the /dev/net/tun device from the host.
+  policyRefs:
+    - name: pss-baseline
+      kind: ValidatingPolicy
+    - name: pss-restricted-volume-types
+      kind: ValidatingPolicy
+    - name: pss-restricted-capabilities
+      kind: ValidatingPolicy
+  matchConditions:
+    - name: qbittorrent-vpn
+      expression: >-
+        object.metadata.namespace == 'media' && object.metadata.?labels[?'app'].orValue('') == 'qbittorrent'

@@ -1,0 +1,22 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/refs/heads/main/policies.kyverno.io/policyexception_v1.json
+apiVersion: policies.kyverno.io/v1
+kind: PolicyException
+metadata:
+  name: alloy
+  namespace: kyverno
+spec:
+  properties:
+    reason: >-
+      Alloy tails pod and node logs from the host through hostPath, and
+      those files are only readable by root.
+  policyRefs:
+    - name: pss-baseline
+      kind: ValidatingPolicy
+    - name: pss-restricted-volume-types
+      kind: ValidatingPolicy
+    - name: pss-restricted-run-as-non-root
+      kind: ValidatingPolicy
+  matchConditions:
+    - name: alloy
+      expression: >-
+        object.metadata.namespace == 'monitoring' && object.metadata.?labels[?'app.kubernetes.io/name'].orValue('') == 'alloy'

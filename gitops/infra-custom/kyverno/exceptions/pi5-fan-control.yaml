@@ -1,0 +1,28 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/refs/heads/main/policies.kyverno.io/policyexception_v1.json
+apiVersion: policies.kyverno.io/v1
+kind: PolicyException
+metadata:
+  name: pi5-fan-control
+  namespace: kyverno
+spec:
+  properties:
+    reason: >-
+      The fan controller writes the Raspberry Pi 5 fan PWM through sysfs
+      on each node, which needs a privileged container.
+  policyRefs:
+    - name: pss-baseline
+      kind: ValidatingPolicy
+    - name: pss-restricted-privilege-escalation
+      kind: ValidatingPolicy
+    - name: pss-restricted-capabilities
+      kind: ValidatingPolicy
+    - name: pss-restricted-run-as-non-root
+      kind: ValidatingPolicy
+    - name: pss-restricted-seccomp
+      kind: ValidatingPolicy
+    - name: pss-restricted-volume-types
+      kind: ValidatingPolicy
+  matchConditions:
+    - name: pi5-fan-control
+      expression: >-
+        object.metadata.namespace == 'pi5-fan-control' && object.metadata.?labels[?'app.kubernetes.io/name'].orValue('') == 'pi5-fan-control'

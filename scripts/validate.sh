@@ -17,10 +17,11 @@ kubernetes_version=${KUBERNETES_VERSION:-$(sed -n 's/^KUBERNETES_VERSION="\${TAL
 # renovate: datasource=git-refs depName=https://github.com/datreeio/CRDs-catalog branch=main
 crds_catalog_ref=ad3b08c5045129d7bb1eeffd8e61719b2c8dd1e2
 
-# Kinds with no published schema, neither upstream nor in the CRDs catalog.
+# Kinds with no usable published schema, neither upstream nor in the CRDs catalog.
 skip_kinds=(
   CustomResourceDefinition # kubeconform's default schema source has none
   CiliumGatewayClassConfig # not in the CRDs catalog
+  PolicyException          # catalog schema does not compile (spec has a field named "properties")
 )
 
 infra_helm=gitops/infra-helm

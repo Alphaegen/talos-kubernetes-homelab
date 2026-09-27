@@ -1,0 +1,29 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/refs/heads/main/policies.kyverno.io/policyexception_v1.json
+apiVersion: policies.kyverno.io/v1
+kind: PolicyException
+metadata:
+  name: tailscale-subnet-router
+  namespace: kyverno
+spec:
+  properties:
+    reason: >-
+      The Tailscale connector is a kernel-mode subnet router and exit
+      node: it needs NET_ADMIN, IP forwarding sysctls and root. The
+      operator creates this StatefulSet.
+  policyRefs:
+    - name: pss-baseline
+      kind: ValidatingPolicy
+    - name: pss-restricted-privilege-escalation
+      kind: ValidatingPolicy
+    - name: pss-restricted-capabilities
+      kind: ValidatingPolicy
+    - name: pss-restricted-run-as-non-root
+      kind: ValidatingPolicy
+    - name: pss-restricted-seccomp
+      kind: ValidatingPolicy
+    - name: pss-restricted-volume-types
+      kind: ValidatingPolicy
+  matchConditions:
+    - name: tailscale-subnet-router
+      expression: >-
+        object.metadata.namespace == 'tailscale' && object.metadata.?labels[?'tailscale.com/parent-resource-type'].orValue('') == 'connector'

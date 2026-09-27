@@ -1,0 +1,30 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/refs/heads/main/policies.kyverno.io/validatingpolicy_v1.json
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: require-name-label
+  annotations:
+    policies.kyverno.io/title: Require the app.kubernetes.io/name label
+    policies.kyverno.io/category: Best Practices
+    policies.kyverno.io/description: >-
+      Pods need the recommended app.kubernetes.io/name label, so dashboards, network policies and reports can group them by application.
+spec:
+  validationActions: [Audit]
+  failurePolicy: Ignore
+  autogen:
+    podControllers:
+      controllers: [deployments, statefulsets, daemonsets, jobs, cronjobs]
+  matchConstraints:
+    namespaceSelector:
+      matchExpressions:
+        - key: kubernetes.io/metadata.name
+          operator: NotIn
+          values: [kube-system]
+    resourceRules:
+      - apiGroups: [""]
+        apiVersions: [v1]
+        operations: [CREATE, UPDATE]
+        resources: [pods]
+  validations:
+    - expression: object.metadata.?labels[?'app.kubernetes.io/name'].orValue('') != ''
+      message: Add the app.kubernetes.io/name label to the pod (template).

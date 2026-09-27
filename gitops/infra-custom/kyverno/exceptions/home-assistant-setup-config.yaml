@@ -1,0 +1,18 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/refs/heads/main/policies.kyverno.io/policyexception_v1.json
+apiVersion: policies.kyverno.io/v1
+kind: PolicyException
+metadata:
+  name: home-assistant-setup-config
+  namespace: kyverno
+spec:
+  properties:
+    reason: >-
+      The home-assistant chart has no resources value for its
+      setup-config init container.
+  policyRefs:
+    - name: require-resources
+      kind: ValidatingPolicy
+  matchConditions:
+    - name: home-assistant-setup-config
+      expression: >-
+        object.metadata.namespace == 'home-assistant' && object.metadata.?labels[?'app.kubernetes.io/name'].orValue('') == 'home-assistant'

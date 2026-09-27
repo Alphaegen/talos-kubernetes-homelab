@@ -10,12 +10,14 @@ spec:
     type: Recreate
   selector: { matchLabels: { app: seerr } }
   template:
-    metadata: { labels: { app: seerr } }
+    metadata: { labels: { app: seerr, app.kubernetes.io/name: seerr } }
     spec:
       priorityClassName: homelab-best-effort
       securityContext:
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: seerr
           image: ghcr.io/seerr-team/seerr:v3.4.1
@@ -36,6 +38,9 @@ spec:
             runAsUser: 1000
             runAsGroup: 1000
             runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
           volumeMounts:
             - { name: config, mountPath: /app/config }
           startupProbe:

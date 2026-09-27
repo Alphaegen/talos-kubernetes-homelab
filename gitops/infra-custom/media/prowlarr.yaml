@@ -10,15 +10,23 @@ spec:
     type: Recreate
   selector: { matchLabels: { app: prowlarr } }
   template:
-    metadata: { labels: { app: prowlarr } }
+    metadata: { labels: { app: prowlarr, app.kubernetes.io/name: prowlarr } }
     spec:
       priorityClassName: homelab-best-effort
       securityContext:
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: prowlarr
           image: lscr.io/linuxserver/prowlarr:2.6.5.5623-ls162
+          # s6-overlay starts as root, fixes ownership, then drops to PUID/PGID.
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+              add: ["CHOWN", "DAC_OVERRIDE", "FOWNER", "SETGID", "SETUID"]
           resources:
             requests:
               cpu: 50m

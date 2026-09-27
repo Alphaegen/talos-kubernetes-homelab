@@ -9,9 +9,12 @@ spec:
     reason: >-
       linuxserver.io images start as root under s6-overlay, fix file
       ownership, then drop to PUID/PGID. They cannot start with
-      runAsNonRoot.
+      runAsNonRoot, and keep CHOWN, DAC_OVERRIDE, FOWNER, SETGID and SETUID
+      after dropping all other capabilities.
   policyRefs:
     - name: pss-restricted-run-as-non-root
+      kind: ValidatingPolicy
+    - name: pss-restricted-capabilities
       kind: ValidatingPolicy
   # The media manifests set the app label on the pod template only.
   matchConditions:

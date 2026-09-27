@@ -14,7 +14,7 @@ spec:
   selector: { matchLabels: { app: qbittorrent } }
   template:
     metadata:
-      labels: { app: qbittorrent }
+      labels: { app: qbittorrent, app.kubernetes.io/name: qbittorrent }
     spec:
       priorityClassName: homelab-best-effort
       terminationGracePeriodSeconds: 180
@@ -146,6 +146,12 @@ spec:
             - { name: PGID, value: "1000" }
             - { name: WEBUI_PORT, value: "8080" }
             - { name: UMASK, value: "002" }
+          # s6-overlay starts as root, fixes ownership, then drops to PUID/PGID.
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+              add: ["CHOWN", "DAC_OVERRIDE", "FOWNER", "SETGID", "SETUID"]
           volumeMounts:
             - { name: data, mountPath: /data }
             - { name: config, mountPath: /config }

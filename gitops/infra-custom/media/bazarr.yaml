@@ -11,15 +11,23 @@ spec:
   selector: { matchLabels: { app: bazarr } }
   template:
     metadata:
-      labels: { app: bazarr }
+      labels: { app: bazarr, app.kubernetes.io/name: bazarr }
     spec:
       priorityClassName: homelab-best-effort
       securityContext:
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: bazarr
           image: lscr.io/linuxserver/bazarr:v1.6.2-ls366
+          # s6-overlay starts as root, fixes ownership, then drops to PUID/PGID.
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+              add: ["CHOWN", "DAC_OVERRIDE", "FOWNER", "SETGID", "SETUID"]
           resources:
             requests:
               cpu: 50m

@@ -7,14 +7,17 @@ metadata:
 spec:
   properties:
     reason: >-
-      The gluetun VPN sidecar creates a WireGuard tunnel, which needs
-      NET_ADMIN and the /dev/net/tun device from the host.
+      The gluetun VPN sidecar creates a WireGuard tunnel, which needs root,
+      NET_ADMIN and the /dev/net/tun device from the host. The qBittorrent
+      image starts as root under s6-overlay like the linuxserver.io images.
   policyRefs:
     - name: pss-baseline
       kind: ValidatingPolicy
     - name: pss-restricted-volume-types
       kind: ValidatingPolicy
     - name: pss-restricted-capabilities
+      kind: ValidatingPolicy
+    - name: pss-restricted-run-as-non-root
       kind: ValidatingPolicy
   # The media manifests set the app label on the pod template only.
   matchConditions:

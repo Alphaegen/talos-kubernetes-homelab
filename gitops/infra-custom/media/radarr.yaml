@@ -11,12 +11,14 @@ spec:
   selector: { matchLabels: { app: radarr } }
   template:
     metadata:
-      labels: { app: radarr }
+      labels: { app: radarr, app.kubernetes.io/name: radarr }
     spec:
       priorityClassName: homelab-best-effort
       securityContext:
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
@@ -30,6 +32,12 @@ spec:
       containers:
         - name: radarr
           image: lscr.io/linuxserver/radarr:6.4.4.10685-ls318
+          # s6-overlay starts as root, fixes ownership, then drops to PUID/PGID.
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+              add: ["CHOWN", "DAC_OVERRIDE", "FOWNER", "SETGID", "SETUID"]
           resources:
             requests:
               cpu: 50m

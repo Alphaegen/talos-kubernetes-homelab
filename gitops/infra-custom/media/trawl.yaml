@@ -17,6 +17,7 @@ spec:
     metadata:
       labels:
         app: trawl-redis
+        app.kubernetes.io/name: trawl-redis
     spec:
       priorityClassName: homelab-best-effort
       securityContext:
@@ -89,6 +90,7 @@ spec:
     metadata:
       labels:
         app: trawl
+        app.kubernetes.io/name: trawl
     spec:
       priorityClassName: homelab-best-effort
       securityContext:

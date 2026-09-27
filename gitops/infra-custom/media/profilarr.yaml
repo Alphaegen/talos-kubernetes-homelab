@@ -15,6 +15,7 @@ spec:
     metadata:
       labels:
         app: profilarr
+        app.kubernetes.io/name: profilarr
     spec:
       priorityClassName: homelab-best-effort
       securityContext:

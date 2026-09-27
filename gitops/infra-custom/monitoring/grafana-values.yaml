@@ -107,6 +107,17 @@ extraInitContainers:
           attempt=$((attempt + 1))
           sleep 5
         done
+
+        # The download script only adds files, so a dashboard dropped from the
+        # values stays on the volume and can clash with a sidecar dashboard of
+        # the same title. Keep only the downloads and the chart's file dashboards.
+        for existing in /var/lib/grafana/dashboards/default/*.json; do
+          [ -e "$existing" ] || continue
+          printf '%s\n' "$dashboard_files" | grep -qxF "$existing" && continue
+          [ -e "/etc/grafana/dashboards-default/$(basename "$existing")" ] && continue
+          echo "Removing dashboard that is no longer configured: $(basename "$existing")"
+          rm -f "$existing"
+        done
     securityContext:
       allowPrivilegeEscalation: false
       capabilities: {drop: [ALL]}
@@ -125,6 +136,10 @@ extraInitContainers:
         subPath: download_dashboards.sh
       - name: storage
         mountPath: /var/lib/grafana
+      # The chart's volume for dashboardFiles (see monitoring.grafana.dashboardFiles).
+      - name: dashboards-default
+        mountPath: /etc/grafana/dashboards-default
+        readOnly: true
 
 dashboardProviders:
   dashboardproviders.yaml:

@@ -42,7 +42,7 @@ spec:
       - RespectIgnoreDifferences=true
       - SkipDryRunOnMissingResource=true
   sources:
-    - repoURL: https://grafana.github.io/helm-charts
+    - repoURL: https://grafana-community.github.io/helm-charts
       chart: grafana
       targetRevision: {{ .Values.monitoring.grafana.version | quote }}
       helm:

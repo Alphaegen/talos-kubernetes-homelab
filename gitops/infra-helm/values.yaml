@@ -54,8 +54,8 @@ certmanager:
 monitoring:
   enabled: true
   grafana:
-    # renovate: datasource=helm depName=grafana registryUrl=https://grafana.github.io/helm-charts versioning=helm
-    version: "10.5.15"
+    # renovate: datasource=helm depName=grafana registryUrl=https://grafana-community.github.io/helm-charts versioning=helm
+    version: "13.2.6"
     dashboards:
       default:
         node-exporter:

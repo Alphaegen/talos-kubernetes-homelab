@@ -8,9 +8,10 @@ kind: Connector
 metadata:
   name: {{ .Values.connector.name }}
   annotations:
-    # The Tailscale operator/CRDs are wave 0 in the same Application.
-    argocd.argoproj.io/sync-wave: "1"
+    # After the operator/CRDs (wave 0) and its ProxyClass (wave 1).
+    argocd.argoproj.io/sync-wave: "2"
 spec:
+  proxyClass: {{ .Values.connector.name }}
   hostnamePrefix: {{ .Values.connector.hostnamePrefix | quote }}
   replicas: {{ .Values.connector.replicas }}
   {{- if .Values.connector.tags }}

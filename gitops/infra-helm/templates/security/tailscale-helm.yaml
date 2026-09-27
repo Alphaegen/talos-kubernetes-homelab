@@ -50,6 +50,8 @@ spec:
               capabilities: {drop: [ALL]}
             extraEnv:
               - {name: HOME, value: /tmp}
+            podLabels:
+              app.kubernetes.io/name: tailscale-operator
     - repoURL: {{ .Values.cluster.repoURL | quote }}
       targetRevision: {{ .Values.cluster.revision | default "main" | quote }}
       path: gitops/infra-custom/tailscale

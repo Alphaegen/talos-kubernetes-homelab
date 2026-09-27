@@ -1,0 +1,30 @@
+{{- if .Values.connector.enabled }}
+# Pod settings for the operator-managed Connector StatefulSet, which the
+# Connector resource itself cannot set.
+apiVersion: tailscale.com/v1alpha1
+kind: ProxyClass
+metadata:
+  name: {{ .Values.connector.name }}
+  annotations:
+    # Before the Connector (wave 2) that references it.
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  statefulSet:
+    pod:
+      labels:
+        app.kubernetes.io/name: tailscale-connector
+      tailscaleContainer:
+        resources:
+          requests:
+            cpu: 10m
+            memory: 48Mi
+          limits:
+            memory: 128Mi
+      tailscaleInitContainer:
+        resources:
+          requests:
+            cpu: 5m
+            memory: 8Mi
+          limits:
+            memory: 32Mi
+{{- end }}

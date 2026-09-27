@@ -163,17 +163,10 @@ security:
     bootstrap: true
 
   kyverno:
-    enabled: false
+    enabled: true
     # renovate: datasource=helm depName=kyverno registryUrl=https://kyverno.github.io/kyverno/ versioning=helm
     version: "3.9.1"
-    # Start in audit to avoid surprise breakages; flip to "enforce" later.
-    mode: audit # audit | enforce
-    excludeNamespaces:
-      - kube-system
-      - metallb-system
-      - longhorn-system
-      - monitoring
-      - argocd
+    serviceMonitorLabel: kube-prometheus-stack
 
   trivy:
     enabled: true

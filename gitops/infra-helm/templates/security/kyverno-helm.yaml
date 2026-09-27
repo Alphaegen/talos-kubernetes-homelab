@@ -11,8 +11,8 @@ metadata:
   finalizers:
     - resources-finalizer.argocd.argoproj.io
   annotations:
-    # Install the admission controller early, before policies & scanners.
-    argocd.argoproj.io/sync-wave: "0"
+    # Stage 1: optional platform add-on after monitoring CRDs.
+    argocd.argoproj.io/sync-wave: "1"
 spec:
   project: {{ include "infra.platformProject" . }}
   destination:
@@ -23,29 +23,78 @@ spec:
     syncOptions:
       - FailOnSharedResource=true
       - CreateNamespace=true
+      # The CRDs are too large for client-side apply's last-applied annotation.
       - ServerSideApply=true
-  sources:
-    - repoURL: https://kyverno.github.io/kyverno
-      chart: kyverno
-      targetRevision: {{ .Values.security.kyverno.version | quote }}
-      helm:
-        releaseName: kyverno
-        values: |
-          admissionController:
-            replicas: 2
-          backgroundController:
-            replicas: 1
-          reportsController:
-            replicas: 1
-    - repoURL: {{ .Values.cluster.repoURL | quote }}
-      targetRevision: {{ .Values.cluster.revision | default "main" | quote }}
-      path: gitops/infra-custom/kyverno
-      helm:
-        releaseName: kyverno-policies
-        values: |-
-          mode: {{ .Values.security.kyverno.mode | default "audit" }}
-          excludeNamespaces:
-          {{- range $ns := .Values.security.kyverno.excludeNamespaces }}
-            - {{ $ns }}
-          {{- end }}
+      - SkipDryRunOnMissingResource=true
+  source:
+    repoURL: https://kyverno.github.io/kyverno
+    chart: kyverno
+    targetRevision: {{ .Values.security.kyverno.version | quote }}
+    helm:
+      releaseName: kyverno
+      values: |
+        features:
+          # Policies run in Audit for now; a Kyverno outage must never block admission.
+          forceFailurePolicyIgnore:
+            enabled: true
+          # Exceptions live only in the kyverno namespace, which only Argo CD writes to.
+          policyExceptions:
+            enabled: true
+            namespace: kyverno
+
+        grafana:
+          enabled: true
+
+        admissionController:
+          replicas: 2
+          podDisruptionBudget:
+            enabled: true
+            minAvailable: 1
+          container:
+            resources:
+              requests:
+                cpu: 50m
+                memory: 192Mi
+              limits:
+                memory: 512Mi
+          serviceMonitor:
+            enabled: true
+            additionalLabels:
+              release: {{ .Values.security.kyverno.serviceMonitorLabel }}
+
+        backgroundController:
+          resources:
+            requests:
+              cpu: 25m
+              memory: 96Mi
+            limits:
+              memory: 256Mi
+          serviceMonitor:
+            enabled: true
+            additionalLabels:
+              release: {{ .Values.security.kyverno.serviceMonitorLabel }}
+
+        reportsController:
+          resources:
+            requests:
+              cpu: 25m
+              memory: 128Mi
+            limits:
+              memory: 384Mi
+          serviceMonitor:
+            enabled: true
+            additionalLabels:
+              release: {{ .Values.security.kyverno.serviceMonitorLabel }}
+
+        cleanupController:
+          resources:
+            requests:
+              cpu: 10m
+              memory: 48Mi
+            limits:
+              memory: 128Mi
+          serviceMonitor:
+            enabled: true
+            additionalLabels:
+              release: {{ .Values.security.kyverno.serviceMonitorLabel }}
 {{- end }}

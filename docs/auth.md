@@ -10,6 +10,7 @@ check again on their side.
 |---|---|---|
 | Argo CD (web) | Native OIDC, `g, homelab-admins, role:admin` | `Argo CD` (confidential) |
 | Argo CD (CLI) | `argocd login argocd.homelab.niekvlam.nl --sso` (PKCE) | `Argo CD CLI` (public) |
+| Grafana | Native `auth.generic_oauth`, `homelab-admins` → Grafana server admin | `Grafana` |
 | Longhorn | oauth2-proxy `oauth2-proxy-longhorn` in `auth` | `Longhorn` |
 | Hubble UI | oauth2-proxy `oauth2-proxy-hubble` in `auth` | `Hubble` |
 
@@ -83,6 +84,20 @@ The local `admin` account is disabled (`admin.enabled: false` in
    kustomize build --enable-helm gitops/argocd | kubectl apply --server-side --force-conflicts -f -
    ```
 
+### Pocket ID is down: Grafana
+
+The login form is hidden (`auth.disable_login_form: true`), but the local
+`admin` user still works over the HTTP API with basic auth. Its password is in
+the chart-managed Secret `monitoring/grafana` (key `admin-password`):
+
+```bash
+kubectl -n monitoring get secret grafana -o jsonpath='{.data.admin-password}' | base64 -d
+```
+
+For the web UI, set `disable_login_form: false` in
+`gitops/infra-custom/monitoring/grafana-values.yaml` and let Argo CD sync it
+(use `argocd --core` if Argo CD SSO is down too), then revert it afterwards.
+
 ## Secrets in 1Password
 
 | Item | Fields | Used by |
@@ -90,6 +105,7 @@ The local `admin` account is disabled (`admin.enabled: false` in
 | `pocket-id` | `encryption-key` | Pocket ID database encryption |
 | `argocd-oidc` | `client-id`, `client-secret`, `cli-client-id` | Argo CD SSO |
 | `argocd-account` | `passwordBcrypt`, `passwordMtime` | Argo CD break-glass `admin` |
+| `grafana-oidc` | `client-id`, `client-secret` | Grafana SSO |
 | `oauth2-proxy-longhorn` | `client-id`, `client-secret`, `cookie-secret` | Longhorn oauth2-proxy |
 | `oauth2-proxy-hubble` | `client-id`, `client-secret`, `cookie-secret` | Hubble oauth2-proxy |
 

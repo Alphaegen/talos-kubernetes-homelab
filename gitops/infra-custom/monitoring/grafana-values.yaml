@@ -11,8 +11,10 @@ grafana.ini:
     domain: grafana.homelab.niekvlam.nl
     # OAuth redirect URIs are built from root_url; the default includes :3000.
     root_url: https://grafana.homelab.niekvlam.nl/
-  # Sign-in through Pocket ID. The local admin login form stays available as
-  # break-glass (docs/auth.md).
+  # Sign-in through Pocket ID only. The local admin keeps working over the
+  # API; break-glass steps are in docs/auth.md.
+  auth:
+    disable_login_form: true
   auth.generic_oauth:
     enabled: true
     name: Pocket ID

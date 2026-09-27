@@ -29,7 +29,7 @@ integrations:
       name: onepassword
     operatorOAuthSecret:
       name: operator-oauth
-      refreshInterval: 1h
+      refreshInterval: 24h
       remoteRef:
         clientIdKey: tailscale-operator/client_id
         clientSecretKey: tailscale-operator/client_secret

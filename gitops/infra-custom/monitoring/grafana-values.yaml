@@ -188,7 +188,7 @@ extraObjects:
       name: grafana-oidc
       namespace: monitoring
     spec:
-      refreshInterval: 1h
+      refreshInterval: 24h
       secretStoreRef:
         kind: ClusterSecretStore
         name: onepassword

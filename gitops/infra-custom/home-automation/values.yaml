@@ -6,6 +6,14 @@ storageClassName: longhorn
 # Keep MQTT and Zigbee running under memory pressure.
 priorityClassName: homelab-home-critical
 
+# Every container (restricted Pod Security Standard); the root filesystem is
+# read-only, so all writes go to the data volumes or emptyDirs.
+containerSecurityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop: [ALL]
+
 slzb:
   ip: 192.168.30.232
   port: 6638

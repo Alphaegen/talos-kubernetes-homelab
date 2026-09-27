@@ -15,16 +15,26 @@ spec:
     metadata:
       labels:
         app: zigbee2mqtt
+        app.kubernetes.io/name: zigbee2mqtt
     spec:
       {{- with .Values.priorityClassName }}
       priorityClassName: {{ . }}
       {{- end }}
       securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
         fsGroup: 1000
-        fsGroupChangePolicy: OnRootMismatch
+        # Older files were written as root without group write; Always re-applies
+        # group read/write on every start (the volume is small).
+        fsGroupChangePolicy: Always
+        seccompProfile:
+          type: RuntimeDefault
       initContainers:
         - name: wait-for-slzb
           image: busybox:1.38
+          securityContext:
+{{ toYaml .Values.containerSecurityContext | indent 12 }}
           resources:
             requests:
               cpu: 5m
@@ -44,6 +54,8 @@ spec:
               done
         - name: render-configuration
           image: busybox:1.38
+          securityContext:
+{{ toYaml .Values.containerSecurityContext | indent 12 }}
           resources:
             requests:
               cpu: 10m
@@ -60,7 +72,7 @@ spec:
 
               if [ -s /app/data/configuration.yaml ]; then
                 echo "Reconciling existing /app/data/configuration.yaml serial adapter settings."
-                tmp_file="$(mktemp)"
+                tmp_file="$(mktemp /app/data/configuration.yaml.XXXXXX)"
                 awk \
                   -v serial_port="${SERIAL_PORT}" \
                   -v serial_adapter="${SERIAL_ADAPTER}" \
@@ -177,6 +189,8 @@ spec:
       containers:
         - name: zigbee2mqtt
           image: {{ .Values.zigbee2mqtt.image | quote }}
+          securityContext:
+{{ toYaml .Values.containerSecurityContext | indent 12 }}
           resources:
 {{ toYaml .Values.zigbee2mqtt.resources | indent 12 }}
           env:
@@ -210,7 +224,11 @@ spec:
           volumeMounts:
             - name: zigbee2mqtt-data
               mountPath: /app/data
+            - name: tmp
+              mountPath: /tmp
       volumes:
+        - name: tmp
+          emptyDir: {}
         - name: zigbee2mqtt-data
           persistentVolumeClaim:
             claimName: zigbee2mqtt-data

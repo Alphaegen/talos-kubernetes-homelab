@@ -164,6 +164,69 @@ applicationSet:
         release: kube-prometheus-stack
 
 notifications:
+  # argocd-notifications-secret comes from notifications-externalsecret.yaml.
+  secret:
+    create: false
+  notifiers:
+    # ntfy's inline templating (X-Template: yes) renders title, message and
+    # priority from the JSON body each template sends, so one service with
+    # static headers covers every notification.
+    service.webhook.ntfy: |
+      url: $ntfy-url
+      headers:
+        - name: Authorization
+          value: Bearer $ntfy-token
+        - name: X-Template
+          value: "yes"
+        - name: X-Title
+          value: "{{.title}}"
+        - name: X-Message
+          value: "{{.message}}"
+        - name: X-Priority
+          value: "{{.priority}}"
+        - name: X-Tags
+          value: argocd
+  # Every Application, including the root, is subscribed here instead of
+  # through per-Application annotations.
+  subscriptions:
+    - recipients: [ntfy]
+      triggers: [on-sync-failed, on-health-degraded, on-deployed]
+  triggers:
+    trigger.on-sync-failed: |
+      - description: Application syncing has failed
+        send: [app-sync-failed]
+        when: app.status.operationState != nil and app.status.operationState.phase in ['Error', 'Failed']
+    trigger.on-health-degraded: |
+      - description: Application has degraded
+        send: [app-health-degraded]
+        when: app.status.health.status == 'Degraded'
+    trigger.on-deployed: |
+      # finishedAt, not the revision: multi-source apps have no single revision.
+      - description: Application synced successfully and is healthy
+        oncePer: app.status.operationState?.finishedAt
+        send: [app-deployed]
+        when: app.status.operationState != nil and app.status.operationState.phase in ['Succeeded'] and app.status.health.status == 'Healthy'
+  # Bodies are JSON (sprig dict | toJson handles escaping). ntfy priorities:
+  # 4 = high (failures), 2 = low, no sound (deploys).
+  templates:
+    template.app-sync-failed: |
+      webhook:
+        ntfy:
+          method: POST
+          body: |
+            {{ dict "title" (printf "%s: sync failed" .app.metadata.name) "message" (printf "%s\n%s/applications/%s" (.app.status.operationState.message | default "no message") .context.argocdUrl .app.metadata.name) "priority" 4 | toJson }}
+    template.app-health-degraded: |
+      webhook:
+        ntfy:
+          method: POST
+          body: |
+            {{ dict "title" (printf "%s: degraded" .app.metadata.name) "message" (printf "Health is Degraded.\n%s/applications/%s" .context.argocdUrl .app.metadata.name) "priority" 4 | toJson }}
+    template.app-deployed: |
+      webhook:
+        ntfy:
+          method: POST
+          body: |
+            {{ dict "title" (printf "%s: deployed" .app.metadata.name) "message" (printf "Sync succeeded and the app is healthy.\n%s/applications/%s" .context.argocdUrl .app.metadata.name) "priority" 2 | toJson }}
   resources:
     requests:
       cpu: 10m

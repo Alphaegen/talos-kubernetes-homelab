@@ -1,8 +1,5 @@
 # CI only: layered on values.yaml by scripts/validate.sh so templates behind
 # disabled toggles still get rendered and schema-checked.
-notifications:
-  notifications.argoproj.io/subscribe.on-sync-failed.ntfy: ""
-
 sealedsecrets:
   enabled: true
 

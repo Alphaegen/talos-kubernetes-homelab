@@ -12,9 +12,6 @@ metadata:
     # Stage 0: optional storage API provider.
     argocd.argoproj.io/sync-wave: "0"
     app.kubernetes.io/part-of: rook-ceph-helm
-    {{- if .Values.notifications }}
-    {{- toYaml .Values.notifications | nindent 4 }}
-    {{- end }}
 spec:
   project: {{ include "infra.platformProject" . }}
   destination:

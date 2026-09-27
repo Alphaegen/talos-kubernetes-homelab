@@ -13,9 +13,6 @@ metadata:
   annotations:
     # Stage 0: cluster-scoped classes before the workloads that reference them.
     argocd.argoproj.io/sync-wave: "0"
-    {{- if .Values.notifications }}
-    {{- toYaml .Values.notifications | nindent 4 }}
-    {{- end }}
 spec:
   project: {{ include "infra.platformProject" . }}
   destination:

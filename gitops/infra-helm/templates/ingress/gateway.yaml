@@ -14,9 +14,6 @@ metadata:
     # Stage 1: consumes Cilium Gateway API and wave-0 cert-manager.
     argocd.argoproj.io/sync-wave: "1"
     app.kubernetes.io/part-of: cilium-gateway-api
-    {{- if .Values.notifications }}
-    {{- toYaml .Values.notifications | nindent 4 }}
-    {{- end }}
 spec:
   project: {{ include "infra.platformProject" . }}
   destination:

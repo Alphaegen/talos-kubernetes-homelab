@@ -22,3 +22,4 @@ resources:
   - ./admin-externalsecret.yaml
   - ./oidc-externalsecret.yaml
   - ./default-project.yaml
+  - ./notifications-externalsecret.yaml

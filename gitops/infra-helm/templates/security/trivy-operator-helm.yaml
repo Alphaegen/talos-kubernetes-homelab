@@ -59,6 +59,13 @@ spec:
             memory: 192Mi
           limits:
             memory: 512Mi
+        # The image already runs as uid 10000; its USER is a name, so runAsNonRoot
+        # needs the numeric uid spelled out.
+        podSecurityContext:
+          runAsNonRoot: true
+          runAsUser: 10000
+          runAsGroup: 10000
+          seccompProfile: {type: RuntimeDefault}
 
         trivy:
           ignoreUnfixed: true
@@ -83,6 +90,12 @@ spec:
               limits:
                 cpu: null
                 memory: 1Gi
+            # Merged with the chart defaults (uid 65534, read-only root filesystem).
+            podSecurityContext:
+              seccompProfile: {type: RuntimeDefault}
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities: {drop: [ALL]}
         serviceMonitor:
           enabled: true
           labels:

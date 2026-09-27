@@ -76,6 +76,10 @@ monitoring:
           gnetId: 20162
           revision: 6
           datasource: Prometheus
+        trivy-operator:
+          gnetId: 16337
+          revision: 16
+          datasource: Prometheus
     dashboardFiles:
       - name: cp-link-watchdog-stability
         path: dashboards/cp-link-watchdog-stability.json

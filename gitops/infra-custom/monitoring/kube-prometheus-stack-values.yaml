@@ -100,3 +100,28 @@ kubeProxy: {enabled: false}
 kubeControllerManager: {enabled: false}
 kubeScheduler: {enabled: false}
 kubeEtcd: {enabled: false}
+additionalPrometheusRulesMap:
+  trivy-operator:
+    groups:
+      - name: trivy-operator
+        rules:
+          # Reports only hold fixable HIGH/CRITICAL findings (ignoreUnfixed).
+          # Fires once per image that gains a CRITICAL finding it did not have in the
+          # previous week, then resolves after about 2h. Skipped for the first day
+          # after install, when every finding is new.
+          - alert: TrivyNewFixableCriticalVulnerability
+            expr: |
+              (
+                sum by (namespace, image_registry, image_repository, image_tag) (trivy_image_vulnerabilities{severity="Critical"}) > 0
+              )
+              unless on (namespace, image_registry, image_repository, image_tag)
+              (
+                sum by (namespace, image_registry, image_repository, image_tag) (max_over_time(trivy_image_vulnerabilities{severity="Critical"}[7d] offset 2h)) > 0
+              )
+              and on () (count(trivy_image_vulnerabilities offset 1d) > 0)
+            for: 30m
+            labels:
+              severity: warning
+            annotations:
+              summary: New fixable CRITICAL vulnerability in {{ $labels.image_repository }}:{{ $labels.image_tag }}
+              description: Trivy found {{ $value }} fixable CRITICAL vulnerabilities in {{ $labels.image_registry }}/{{ $labels.image_repository }}:{{ $labels.image_tag }} ({{ $labels.namespace }}). Check the Trivy Operator dashboard or the VulnerabilityReport.

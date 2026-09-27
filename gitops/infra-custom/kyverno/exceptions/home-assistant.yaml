@@ -1,0 +1,25 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/refs/heads/main/policies.kyverno.io/policyexception_v1.json
+apiVersion: policies.kyverno.io/v1
+kind: PolicyException
+metadata:
+  name: home-assistant
+  namespace: kyverno
+spec:
+  properties:
+    reason: >-
+      The official Home Assistant image runs as root and relies on the
+      default capabilities for network integrations such as ping and
+      discovery. The chart has no resources value for its setup-config init
+      container.
+  policyRefs:
+    - name: pss-restricted-run-as-non-root
+      kind: ValidatingPolicy
+    - name: pss-restricted-capabilities
+      kind: ValidatingPolicy
+    - name: require-resources
+      kind: ValidatingPolicy
+  matchConditions:
+    - name: home-assistant
+      expression: >-
+        object.metadata.namespace == 'home-assistant' &&
+        object.metadata.?labels[?'app.kubernetes.io/name'].orValue('') == 'home-assistant'

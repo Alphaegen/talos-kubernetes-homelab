@@ -16,10 +16,11 @@ resources:
   - policies/require-probes.yaml
   - policies/require-resources.yaml
   - exceptions/alloy.yaml
-  - exceptions/home-assistant-setup-config.yaml
+  - exceptions/home-assistant.yaml
   - exceptions/linuxserver-root.yaml
   - exceptions/longhorn.yaml
   - exceptions/metallb-speaker.yaml
+  - exceptions/nfs-provisioner.yaml
   - exceptions/node-exporter.yaml
   - exceptions/pi5-fan-control.yaml
   - exceptions/qbittorrent-vpn.yaml

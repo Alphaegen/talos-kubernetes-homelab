@@ -1,0 +1,29 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/refs/heads/main/policies.kyverno.io/policyexception_v1.json
+apiVersion: policies.kyverno.io/v1
+kind: PolicyException
+metadata:
+  name: nfs-provisioner
+  namespace: kyverno
+spec:
+  properties:
+    reason: >-
+      nfs-subdir-external-provisioner is no longer maintained and will be
+      replaced by csi-driver-nfs. The exception expires so the findings
+      return if the replacement slips.
+  expiresAt: "2026-12-31T00:00:00Z"
+  policyRefs:
+    - name: pss-restricted-privilege-escalation
+      kind: ValidatingPolicy
+    - name: pss-restricted-capabilities
+      kind: ValidatingPolicy
+    - name: pss-restricted-run-as-non-root
+      kind: ValidatingPolicy
+    - name: pss-restricted-seccomp
+      kind: ValidatingPolicy
+    - name: require-name-label
+      kind: ValidatingPolicy
+  matchConditions:
+    - name: nfs-provisioner
+      expression: >-
+        object.metadata.namespace == 'nfs-provisioner' &&
+        object.metadata.?labels[?'app'].orValue('') == 'nfs-subdir-external-provisioner'

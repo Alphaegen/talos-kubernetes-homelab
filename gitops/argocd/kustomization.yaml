@@ -21,3 +21,4 @@ resources:
   - ./httproute-grpc.yaml
   - ./admin-externalsecret.yaml
   - ./oidc-externalsecret.yaml
+  - ./default-project.yaml

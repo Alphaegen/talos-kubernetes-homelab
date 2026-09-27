@@ -1,0 +1,24 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/refs/heads/main/argoproj.io/appproject_v1alpha1.json
+# Argo CD's built-in project. Only the root App-of-Apps
+# (gitops/root-application.yaml) uses it, because the root renders the
+# platform and apps projects itself. Restrict it to exactly what the root
+# creates, so an Application that falls back to `default` cannot deploy
+# anything else.
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: default
+  namespace: argocd
+spec:
+  description: Root App-of-Apps only
+  sourceRepos:
+    - https://github.com/Alphaegen/talos-kubernetes-homelab.git
+  destinations:
+    - namespace: argocd
+      server: https://kubernetes.default.svc
+  clusterResourceWhitelist: []
+  namespaceResourceWhitelist:
+    - group: argoproj.io
+      kind: Application
+    - group: argoproj.io
+      kind: AppProject

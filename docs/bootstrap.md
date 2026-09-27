@@ -156,10 +156,12 @@ External Secrets controller itself is reconciled only after the root handoff.
 
 The committed [`root Application`](../gitops/root-application.yaml) reconciles
 the existing `gitops/infra-helm` Application-generator chart. It uses Argo CD's
-built-in `default` project only long enough to create the chart-managed
-`homelab.niekvlam` AppProject. That AppProject is rendered at sync wave `-1`,
-before its child Applications, and limits those Applications to this cluster
-and the repositories used by the chart.
+built-in `default` project, which
+[`gitops/argocd/default-project.yaml`](../gitops/argocd/default-project.yaml)
+restricts to Applications and AppProjects in `argocd` from this repository, to
+create the chart-managed `platform` and `apps` AppProjects. They are rendered at sync wave `-1`,
+before their child Applications, and limit those Applications to named
+namespaces on this cluster and the repositories they use.
 
 Review and apply the root Application:
 
@@ -167,7 +169,7 @@ Review and apply the root Application:
 kubectl apply --server-side -f gitops/root-application.yaml
 ```
 
-Argo CD then creates the AppProject and reconciles the enabled platform and
+Argo CD then creates the AppProjects and reconciles the enabled platform and
 workload Applications. Subsequent changes flow from Git through this existing
 App-of-Apps hierarchy; do not separately apply the rendered child Applications.
 

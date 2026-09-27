@@ -27,6 +27,8 @@ spec:
       - SkipDryRunOnMissingResource=true
     managedNamespaceMetadata:
       labels:
+        # node-exporter (host network, PID and filesystem) and Alloy (host log
+        # files through hostPath) run here.
         pod-security.kubernetes.io/enforce: privileged
         pod-security.kubernetes.io/warn: privileged
         pod-security.kubernetes.io/audit: privileged

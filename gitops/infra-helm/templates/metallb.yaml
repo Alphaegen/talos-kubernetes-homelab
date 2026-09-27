@@ -24,6 +24,7 @@ spec:
       - CreateNamespace=true
     managedNamespaceMetadata:
       labels:
+        # The speaker DaemonSet uses the host network and NET_RAW to announce IPs.
         pod-security.kubernetes.io/enforce: privileged
         pod-security.kubernetes.io/audit: privileged
         pod-security.kubernetes.io/warn: privileged

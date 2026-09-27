@@ -27,6 +27,7 @@ spec:
       - SkipDryRunOnMissingResource=true
     managedNamespaceMetadata:
       labels:
+        # Longhorn's manager, CSI and instance-manager pods need privileged host access.
         pod-security.kubernetes.io/enforce: privileged
         pod-security.kubernetes.io/warn: privileged
         pod-security.kubernetes.io/audit: privileged

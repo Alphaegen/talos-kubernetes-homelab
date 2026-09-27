@@ -1,0 +1,25 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/kyverno/kyverno/main/schemas/json/v3/test-cli-v1alpha1.json
+apiVersion: cli.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: pss-restricted-seccomp
+policies:
+  - ../../policies/pss-restricted-seccomp.yaml
+resources:
+  - resources.yaml
+results:
+  - policy: pss-restricted-seccomp
+    isValidatingPolicy: true
+    kind: Pod
+    resources: [pod-level-runtime-default, container-level-runtime-default, localhost-profile]
+    result: pass
+  - policy: pss-restricted-seccomp
+    isValidatingPolicy: true
+    kind: Pod
+    resources: [unset, container-unconfined, container-unset-without-pod-level, init-container-unset-without-pod-level]
+    result: fail
+  - policy: pss-restricted-seccomp
+    isValidatingPolicy: true
+    kind: DaemonSet
+    resources: [unset-daemonset]
+    result: fail

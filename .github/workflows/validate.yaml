@@ -28,6 +28,9 @@ env:
   GITLEAKS_VERSION: v8.30.1
   # renovate: datasource=go depName=golang.stackrox.io/kube-linter
   KUBE_LINTER_VERSION: v0.8.3
+  # Keep in step with the Kyverno chart's app version in gitops/infra-helm/values.yaml.
+  # renovate: datasource=github-releases depName=kyverno/kyverno
+  KYVERNO_VERSION: v1.19.1
 
 jobs:
   manifests:
@@ -63,6 +66,10 @@ jobs:
             "https://github.com/yannh/kubeconform/releases/download/${KUBECONFORM_VERSION}/kubeconform-linux-amd64.tar.gz" \
             "https://github.com/yannh/kubeconform/releases/download/${KUBECONFORM_VERSION}/CHECKSUMS" \
             kubeconform
+          "$install" \
+            "https://github.com/kyverno/kyverno/releases/download/${KYVERNO_VERSION}/kyverno-cli_${KYVERNO_VERSION}_linux_x86_64.tar.gz" \
+            "https://github.com/kyverno/kyverno/releases/download/${KYVERNO_VERSION}/checksums.txt" \
+            kyverno
           # Verified through the Go checksum database.
           GOBIN="$INSTALL_DIR" go install "github.com/mikefarah/yq/v4@${YQ_VERSION}"
           GOBIN="$INSTALL_DIR" go install "golang.stackrox.io/kube-linter/cmd/kube-linter@${KUBE_LINTER_VERSION}"
@@ -101,6 +108,49 @@ jobs:
             "",
             "</details>"
           ' "$report" >>"$GITHUB_STEP_SUMMARY"
+
+      # Informational only: how the workloads rendered from this repository fare
+      # against the Kyverno policies before they reach the cluster.
+      - name: Check rendered workloads against Kyverno policies (informational)
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        env:
+          RENDER_DIR: ${{ runner.temp }}/rendered
+        run: |
+          kyverno_dir=gitops/infra-custom/kyverno
+          workloads=$RUNNER_TEMP/workloads.yaml
+          report=$RUNNER_TEMP/kyverno-report.yaml
+          # Workloads only: the CLI's fake client rejects duplicate objects, such
+          # as a Namespace that two sources both render. kube-system is excluded
+          # by every policy.
+          find "$RENDER_DIR" -name '*.yaml' -print0 | xargs -0 yq ea '
+            select((.kind == "Pod" or .kind == "Deployment" or .kind == "StatefulSet" or
+                    .kind == "DaemonSet" or .kind == "Job" or .kind == "CronJob") and
+                   .metadata.namespace != "kube-system")' >"$workloads"
+          exceptions=()
+          for file in "$kyverno_dir"/exceptions/*.yaml; do exceptions+=(--exception "$file"); done
+          kyverno apply "$kyverno_dir/policies" "${exceptions[@]}" --resource "$workloads" \
+            --policy-report --remove-color >"$report" || true
+          sed -n '/^apiVersion/,$p' "$report" | yq -o=json . | jq -r '
+            [.results // [] | .[] | select(.result == "fail")] as $fails
+            | "### Kyverno policies (informational)",
+              "",
+              "\(.summary.fail) failing, \(.summary.pass) passing and \(.summary.skip) excepted results for the workloads rendered from this repository. These do not fail the run.",
+              "",
+              "| Failures | Policy |",
+              "|---:|---|",
+              ($fails | group_by(.policy) | sort_by(-length)[] | "| \(length) | `\(.[0].policy)` |"),
+              "",
+              "<details><summary>Failures by object</summary>",
+              "",
+              "| Policy | Namespace | Kind | Name | Message |",
+              "|---|---|---|---|---|",
+              ($fails | sort_by(.policy, .resources[0].namespace, .resources[0].name)[]
+                | .resources[0] as $r
+                | "| `\(.policy)` | \($r.namespace) | \($r.kind) | \($r.name) | \(.message | gsub("\\|"; "\\|")) |"),
+              "",
+              "</details>"
+          ' >>"$GITHUB_STEP_SUMMARY"
 
   secrets:
     name: Scan new commits for secrets

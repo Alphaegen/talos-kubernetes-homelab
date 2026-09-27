@@ -1,0 +1,71 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: escalation-disabled
+  namespace: test
+spec:
+  initContainers:
+    - name: init
+      image: ghcr.io/example/init:1.2.3
+      securityContext:
+        allowPrivilegeEscalation: false
+  containers:
+    - name: app
+      image: ghcr.io/example/app:1.2.3
+      securityContext:
+        allowPrivilegeEscalation: false
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: escalation-unset
+  namespace: test
+spec:
+  containers:
+    - name: app
+      image: ghcr.io/example/app:1.2.3
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: escalation-allowed
+  namespace: test
+spec:
+  containers:
+    - name: app
+      image: ghcr.io/example/app:1.2.3
+      securityContext:
+        allowPrivilegeEscalation: true
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: ephemeral-container-escalation-unset
+  namespace: test
+spec:
+  containers:
+    - name: app
+      image: ghcr.io/example/app:1.2.3
+      securityContext:
+        allowPrivilegeEscalation: false
+  ephemeralContainers:
+    - name: debug
+      image: ghcr.io/example/debug:1.2.3
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: escalation-unset-deployment
+  namespace: test
+spec:
+  selector:
+    matchLabels:
+      app: escalation-unset-deployment
+  template:
+    metadata:
+      labels:
+        app: escalation-unset-deployment
+    spec:
+      containers:
+        - name: app
+          image: ghcr.io/example/app:1.2.3

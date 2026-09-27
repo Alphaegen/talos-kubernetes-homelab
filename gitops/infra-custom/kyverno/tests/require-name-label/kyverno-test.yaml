@@ -1,0 +1,30 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/kyverno/kyverno/main/schemas/json/v3/test-cli-v1alpha1.json
+apiVersion: cli.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: require-name-label
+policies:
+  - ../../policies/require-name-label.yaml
+resources:
+  - resources.yaml
+results:
+  - policy: require-name-label
+    isValidatingPolicy: true
+    kind: Pod
+    resources: [name-label]
+    result: pass
+  - policy: require-name-label
+    isValidatingPolicy: true
+    kind: Pod
+    resources: [no-labels, empty-name-label]
+    result: fail
+  - policy: require-name-label
+    isValidatingPolicy: true
+    kind: Deployment
+    resources: [label-on-template]
+    result: pass
+  - policy: require-name-label
+    isValidatingPolicy: true
+    kind: Deployment
+    resources: [label-only-on-deployment]
+    result: fail

@@ -1,0 +1,37 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/kyverno/kyverno/main/schemas/json/v3/test-cli-v1alpha1.json
+apiVersion: cli.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: pss-baseline
+policies:
+  - ../../policies/pss-baseline.yaml
+resources:
+  - resources.yaml
+results:
+  - policy: pss-baseline
+    isValidatingPolicy: true
+    kind: Pod
+    resources: [compliant, add-baseline-capability, safe-sysctl, selinux-container-type]
+    result: pass
+  - policy: pss-baseline
+    isValidatingPolicy: true
+    kind: Pod
+    resources:
+      - host-network
+      - privileged-container
+      - privileged-init-container
+      - privileged-ephemeral-container
+      - add-sys-admin
+      - host-path-volume
+      - host-port
+      - apparmor-unconfined
+      - selinux-custom-type
+      - unmasked-proc-mount
+      - seccomp-unconfined
+      - unsafe-sysctl
+    result: fail
+  - policy: pss-baseline
+    isValidatingPolicy: true
+    kind: Deployment
+    resources: [host-pid-deployment]
+    result: fail

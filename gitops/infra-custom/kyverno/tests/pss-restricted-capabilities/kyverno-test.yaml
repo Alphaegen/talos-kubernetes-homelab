@@ -1,0 +1,25 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/kyverno/kyverno/main/schemas/json/v3/test-cli-v1alpha1.json
+apiVersion: cli.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: pss-restricted-capabilities
+policies:
+  - ../../policies/pss-restricted-capabilities.yaml
+resources:
+  - resources.yaml
+results:
+  - policy: pss-restricted-capabilities
+    isValidatingPolicy: true
+    kind: Pod
+    resources: [drop-all, drop-all-with-net-bind-service]
+    result: pass
+  - policy: pss-restricted-capabilities
+    isValidatingPolicy: true
+    kind: Pod
+    resources: [drop-all-with-chown, no-drop, init-container-without-drop]
+    result: fail
+  - policy: pss-restricted-capabilities
+    isValidatingPolicy: true
+    kind: StatefulSet
+    resources: [no-drop-statefulset]
+    result: fail

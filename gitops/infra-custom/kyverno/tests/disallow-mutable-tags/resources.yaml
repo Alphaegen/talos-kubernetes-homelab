@@ -1,0 +1,60 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pinned-tag
+  namespace: test
+spec:
+  containers:
+    - name: app
+      image: ghcr.io/example/app:1.2.3
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pinned-digest-with-registry-port
+  namespace: test
+spec:
+  containers:
+    - name: app
+      image: registry.local:5000/example/app@sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: latest-tag
+  namespace: test
+spec:
+  containers:
+    - name: app
+      image: nginx:latest
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: untagged-init
+  namespace: test
+spec:
+  initContainers:
+    - name: init
+      image: busybox
+  containers:
+    - name: app
+      image: ghcr.io/example/app:1.2.3
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: main-branch-tag
+  namespace: test
+spec:
+  selector:
+    matchLabels:
+      app: main-branch-tag
+  template:
+    metadata:
+      labels:
+        app: main-branch-tag
+    spec:
+      containers:
+        - name: app
+          image: ghcr.io/example/app:main

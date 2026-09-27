@@ -188,7 +188,7 @@ Run the repository validation before committing a change:
 scripts/validate.sh
 ```
 
-It needs `helm`, `kustomize`, `kubeconform`, `yq`, `jq`, and `go`, and runs the same checks as the `Validate` GitHub Actions workflow: it renders the Application chart (with the real values and with every toggle on), every local chart, kustomization, and plain manifest directory the Applications use, the root Application, and the manually applied Argo CD and Cilium kustomizations, then validates everything with kubeconform. Set `RENDER_DIR=<new directory>` to keep the rendered manifests for review or for other tools such as `kube-linter lint`.
+It needs `helm`, `kustomize`, `kubeconform`, `yq`, `jq`, `go`, and `kyverno` (the CLI, matching the Kyverno version in the cluster), and runs the same checks as the `Validate` GitHub Actions workflow: it renders the Application chart (with the real values and with every toggle on), every local chart, kustomization, and plain manifest directory the Applications use, the root Application, and the manually applied Argo CD and Cilium kustomizations, then validates everything with kubeconform and runs the Kyverno policy tests. Set `RENDER_DIR=<new directory>` to keep the rendered manifests for review or for other tools such as `kube-linter lint`.
 
 Review both source changes and rendered resources, particularly when Renovate updates a Helm chart or container image.
 

@@ -1,0 +1,57 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/kyverno/kyverno/main/schemas/json/v3/test-cli-v1alpha1.json
+apiVersion: cli.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: exceptions
+policies:
+  - ../../policies/pss-baseline.yaml
+  - ../../policies/pss-restricted-run-as-non-root.yaml
+exceptions:
+  - ../../exceptions/metallb-speaker.yaml
+  - ../../exceptions/linuxserver-root.yaml
+  - ../../exceptions/longhorn.yaml
+resources:
+  - resources.yaml
+results:
+  - policy: pss-baseline
+    isValidatingPolicy: true
+    kind: DaemonSet
+    resources: [metallb-speaker]
+    result: skip
+  - policy: pss-baseline
+    isValidatingPolicy: true
+    kind: Pod
+    resources: [metallb-speaker-pod]
+    result: skip
+  - policy: pss-baseline
+    isValidatingPolicy: true
+    kind: DaemonSet
+    resources: [metallb-controller-host-network]
+    result: fail
+  - policy: pss-restricted-run-as-non-root
+    isValidatingPolicy: true
+    kind: Deployment
+    resources: [radarr]
+    result: skip
+  - policy: pss-restricted-run-as-non-root
+    isValidatingPolicy: true
+    kind: Pod
+    resources: [radarr-pod]
+    result: skip
+  # Exception matchConditions see the controller's own metadata; like
+  # media/radarr.yaml this Deployment is labelled on its template only.
+  - policy: pss-restricted-run-as-non-root
+    isValidatingPolicy: true
+    kind: Deployment
+    resources: [radarr-label-only-on-template]
+    result: skip
+  - policy: pss-restricted-run-as-non-root
+    isValidatingPolicy: true
+    kind: Deployment
+    resources: [seerr]
+    result: fail
+  - policy: pss-baseline
+    isValidatingPolicy: true
+    kind: Pod
+    resources: [longhorn-privileged]
+    result: skip

@@ -1,0 +1,25 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/kyverno/kyverno/main/schemas/json/v3/test-cli-v1alpha1.json
+apiVersion: cli.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: pss-restricted-volume-types
+policies:
+  - ../../policies/pss-restricted-volume-types.yaml
+resources:
+  - resources.yaml
+results:
+  - policy: pss-restricted-volume-types
+    isValidatingPolicy: true
+    kind: Pod
+    resources: [no-volumes, allowed-volume-types]
+    result: pass
+  - policy: pss-restricted-volume-types
+    isValidatingPolicy: true
+    kind: Pod
+    resources: [host-path-volume, nfs-volume]
+    result: fail
+  - policy: pss-restricted-volume-types
+    isValidatingPolicy: true
+    kind: Deployment
+    resources: [nfs-volume-deployment]
+    result: fail

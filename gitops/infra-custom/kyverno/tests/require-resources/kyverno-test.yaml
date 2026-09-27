@@ -1,0 +1,25 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/kyverno/kyverno/main/schemas/json/v3/test-cli-v1alpha1.json
+apiVersion: cli.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: require-resources
+policies:
+  - ../../policies/require-resources.yaml
+resources:
+  - resources.yaml
+results:
+  - policy: require-resources
+    isValidatingPolicy: true
+    kind: Pod
+    resources: [requests-and-memory-limit, requests-and-limits]
+    result: pass
+  - policy: require-resources
+    isValidatingPolicy: true
+    kind: Pod
+    resources: [no-resources, missing-memory-limit, missing-cpu-request, init-container-without-resources]
+    result: fail
+  - policy: require-resources
+    isValidatingPolicy: true
+    kind: Deployment
+    resources: [missing-memory-limit-deployment]
+    result: fail

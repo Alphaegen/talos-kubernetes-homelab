@@ -1,0 +1,117 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-level-runtime-default
+  namespace: test
+spec:
+  securityContext:
+    seccompProfile:
+      type: RuntimeDefault
+  initContainers:
+    - name: init
+      image: ghcr.io/example/init:1.2.3
+  containers:
+    - name: app
+      image: ghcr.io/example/app:1.2.3
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: container-level-runtime-default
+  namespace: test
+spec:
+  containers:
+    - name: app
+      image: ghcr.io/example/app:1.2.3
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: localhost-profile
+  namespace: test
+spec:
+  securityContext:
+    seccompProfile:
+      type: Localhost
+      localhostProfile: profiles/app.json
+  containers:
+    - name: app
+      image: ghcr.io/example/app:1.2.3
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: unset
+  namespace: test
+spec:
+  containers:
+    - name: app
+      image: ghcr.io/example/app:1.2.3
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: container-unconfined
+  namespace: test
+spec:
+  securityContext:
+    seccompProfile:
+      type: RuntimeDefault
+  containers:
+    - name: app
+      image: ghcr.io/example/app:1.2.3
+      securityContext:
+        seccompProfile:
+          type: Unconfined
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: container-unset-without-pod-level
+  namespace: test
+spec:
+  containers:
+    - name: app
+      image: ghcr.io/example/app:1.2.3
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+    - name: sidecar
+      image: ghcr.io/example/sidecar:1.2.3
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: init-container-unset-without-pod-level
+  namespace: test
+spec:
+  initContainers:
+    - name: init
+      image: ghcr.io/example/init:1.2.3
+  containers:
+    - name: app
+      image: ghcr.io/example/app:1.2.3
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: unset-daemonset
+  namespace: test
+spec:
+  selector:
+    matchLabels:
+      app: unset-daemonset
+  template:
+    metadata:
+      labels:
+        app: unset-daemonset
+    spec:
+      containers:
+        - name: app
+          image: ghcr.io/example/app:1.2.3

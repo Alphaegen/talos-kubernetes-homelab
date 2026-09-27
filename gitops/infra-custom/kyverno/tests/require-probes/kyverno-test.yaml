@@ -1,0 +1,25 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/kyverno/kyverno/main/schemas/json/v3/test-cli-v1alpha1.json
+apiVersion: cli.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: require-probes
+policies:
+  - ../../policies/require-probes.yaml
+resources:
+  - resources.yaml
+results:
+  - policy: require-probes
+    isValidatingPolicy: true
+    kind: Deployment
+    resources: [both-probes]
+    result: pass
+  - policy: require-probes
+    isValidatingPolicy: true
+    kind: Deployment
+    resources: [missing-readiness]
+    result: fail
+  - policy: require-probes
+    isValidatingPolicy: true
+    kind: StatefulSet
+    resources: [missing-liveness]
+    result: fail

@@ -2,7 +2,7 @@
 # Render every manifest source in the repository and validate it.
 # Used locally and by .github/workflows/validate.yaml.
 #
-# Needs: helm, kustomize, kubeconform, yq (mikefarah), jq, go.
+# Needs: helm, kustomize, kubeconform, yq (mikefarah), jq, go, kyverno.
 # Env:   RENDER_DIR=<dir> writes the rendered manifests there and keeps them
 #        (the directory must not exist yet), e.g. for kube-linter.
 
@@ -29,6 +29,7 @@ all_enabled_values=$infra_helm/ci/all-enabled-values.yaml
 # Standalone manifests applied by hand, outside any chart or kustomization.
 plain_manifests=(gitops/root-application.yaml)
 go_modules=(gitops/infra-custom/pi5-fan-control)
+kyverno_dir=gitops/infra-custom/kyverno
 
 failures=()
 
@@ -57,7 +58,7 @@ run() {
   rm -f "$log"
 }
 
-for tool in helm kustomize kubeconform yq jq go; do
+for tool in helm kustomize kubeconform yq jq go kyverno; do
   command -v "$tool" >/dev/null || { printf 'Missing tool: %s\n' "$tool" >&2; exit 2; }
 done
 [[ -n $kubernetes_version ]] || { printf 'Could not read KUBERNETES_VERSION from generate.sh\n' >&2; exit 2; }
@@ -155,7 +156,46 @@ run "kubeconform (Kubernetes $kubernetes_version, CRDs catalog ${crds_catalog_re
   -skip "$skip" \
   "$manifests"
 
-# 5. Go code that ships in the repository.
+# 5. Kyverno policies: every file is deployed, every exception names a policy
+# that exists, and the policy test suites pass.
+check_kyverno_wiring() {
+  local listed policies file ref status=0
+  listed=$(yq '.resources[]' "$kyverno_dir/kustomization.yaml")
+  for file in "$kyverno_dir"/policies/*.yaml "$kyverno_dir"/exceptions/*.yaml; do
+    grep -qxF "${file#"$kyverno_dir/"}" <<<"$listed" \
+      || { printf '%s is not listed in kustomization.yaml\n' "$file"; status=1; }
+  done
+  policies=$(yq -N '.kind + "/" + .metadata.name' "$kyverno_dir"/policies/*.yaml)
+  while IFS= read -r ref; do
+    grep -qxF "$ref" <<<"$policies" \
+      || { printf 'A PolicyException refers to %s, which does not exist\n' "$ref"; status=1; }
+  done < <(yq -N '.spec.policyRefs[] | .kind + "/" + .name' "$kyverno_dir"/exceptions/*.yaml | sort -u)
+  return "$status"
+}
+run "Kyverno policy and exception wiring" check_kyverno_wiring
+
+# kyverno test silently reports an expectation for a missing fixture against
+# another resource, so check the names both ways.
+check_kyverno_fixtures() {
+  local suite expected fixtures name status=0
+  for suite in "$kyverno_dir"/tests/*/; do
+    expected=$(yq -N '.results[] | .kind + "/" + .resources[]' "$suite/kyverno-test.yaml" | sort -u)
+    fixtures=$(yq -N '.kind + "/" + .metadata.name' "$suite/resources.yaml" | sort -u)
+    while IFS= read -r name; do
+      printf '%s: expectation for %s, which is not a fixture\n' "$suite" "$name"
+      status=1
+    done < <(comm -23 <(printf '%s\n' "$expected") <(printf '%s\n' "$fixtures"))
+    while IFS= read -r name; do
+      printf '%s: fixture %s has no expected result\n' "$suite" "$name"
+      status=1
+    done < <(comm -13 <(printf '%s\n' "$expected") <(printf '%s\n' "$fixtures"))
+  done
+  return "$status"
+}
+run "Kyverno test fixtures match their expectations" check_kyverno_fixtures
+run "kyverno test $kyverno_dir/tests" kyverno test --remove-color "$kyverno_dir/tests"
+
+# 6. Go code that ships in the repository.
 for module in "${go_modules[@]}"; do
   run "go vet $module" sh -c 'cd "$1" && go vet ./...' _ "$module"
   run "go test $module" sh -c 'cd "$1" && go test ./...' _ "$module"

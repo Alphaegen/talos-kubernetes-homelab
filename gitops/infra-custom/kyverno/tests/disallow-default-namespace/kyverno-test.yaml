@@ -1,0 +1,20 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/kyverno/kyverno/main/schemas/json/v3/test-cli-v1alpha1.json
+apiVersion: cli.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: disallow-default-namespace
+policies:
+  - ../../policies/disallow-default-namespace.yaml
+resources:
+  - resources.yaml
+results:
+  - policy: disallow-default-namespace
+    isValidatingPolicy: true
+    kind: Pod
+    resources: [pod-in-default]
+    result: fail
+  - policy: disallow-default-namespace
+    isValidatingPolicy: true
+    kind: Deployment
+    resources: [deployment-in-default]
+    result: fail

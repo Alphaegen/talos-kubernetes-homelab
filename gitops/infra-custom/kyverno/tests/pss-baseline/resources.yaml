@@ -1,0 +1,226 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: compliant
+  namespace: test
+spec:
+  containers:
+    - name: app
+      image: ghcr.io/example/app:1.2.3
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: add-baseline-capability
+  namespace: test
+spec:
+  containers:
+    - name: app
+      image: ghcr.io/example/app:1.2.3
+      securityContext:
+        capabilities:
+          add: [CHOWN, NET_BIND_SERVICE]
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: safe-sysctl
+  namespace: test
+spec:
+  securityContext:
+    sysctls:
+      - name: net.ipv4.ip_unprivileged_port_start
+        value: "0"
+  containers:
+    - name: app
+      image: ghcr.io/example/app:1.2.3
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: selinux-container-type
+  namespace: test
+spec:
+  securityContext:
+    seLinuxOptions:
+      type: container_t
+  containers:
+    - name: app
+      image: ghcr.io/example/app:1.2.3
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: host-network
+  namespace: test
+spec:
+  hostNetwork: true
+  containers:
+    - name: app
+      image: ghcr.io/example/app:1.2.3
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: privileged-container
+  namespace: test
+spec:
+  containers:
+    - name: app
+      image: ghcr.io/example/app:1.2.3
+      securityContext:
+        privileged: true
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: privileged-init-container
+  namespace: test
+spec:
+  initContainers:
+    - name: init
+      image: ghcr.io/example/init:1.2.3
+      securityContext:
+        privileged: true
+  containers:
+    - name: app
+      image: ghcr.io/example/app:1.2.3
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: privileged-ephemeral-container
+  namespace: test
+spec:
+  containers:
+    - name: app
+      image: ghcr.io/example/app:1.2.3
+  ephemeralContainers:
+    - name: debug
+      image: ghcr.io/example/debug:1.2.3
+      securityContext:
+        privileged: true
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: add-sys-admin
+  namespace: test
+spec:
+  containers:
+    - name: app
+      image: ghcr.io/example/app:1.2.3
+      securityContext:
+        capabilities:
+          add: [SYS_ADMIN]
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: host-path-volume
+  namespace: test
+spec:
+  containers:
+    - name: app
+      image: ghcr.io/example/app:1.2.3
+  volumes:
+    - name: host
+      hostPath:
+        path: /var/lib
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: host-port
+  namespace: test
+spec:
+  containers:
+    - name: app
+      image: ghcr.io/example/app:1.2.3
+      ports:
+        - containerPort: 8080
+          hostPort: 8080
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: apparmor-unconfined
+  namespace: test
+spec:
+  containers:
+    - name: app
+      image: ghcr.io/example/app:1.2.3
+      securityContext:
+        appArmorProfile:
+          type: Unconfined
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: selinux-custom-type
+  namespace: test
+spec:
+  containers:
+    - name: app
+      image: ghcr.io/example/app:1.2.3
+      securityContext:
+        seLinuxOptions:
+          type: spc_t
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: unmasked-proc-mount
+  namespace: test
+spec:
+  containers:
+    - name: app
+      image: ghcr.io/example/app:1.2.3
+      securityContext:
+        procMount: Unmasked
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: seccomp-unconfined
+  namespace: test
+spec:
+  securityContext:
+    seccompProfile:
+      type: Unconfined
+  containers:
+    - name: app
+      image: ghcr.io/example/app:1.2.3
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: unsafe-sysctl
+  namespace: test
+spec:
+  securityContext:
+    sysctls:
+      - name: kernel.msgmax
+        value: "65536"
+  containers:
+    - name: app
+      image: ghcr.io/example/app:1.2.3
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: host-pid-deployment
+  namespace: test
+spec:
+  selector:
+    matchLabels:
+      app: host-pid-deployment
+  template:
+    metadata:
+      labels:
+        app: host-pid-deployment
+    spec:
+      hostPID: true
+      containers:
+        - name: app
+          image: ghcr.io/example/app:1.2.3

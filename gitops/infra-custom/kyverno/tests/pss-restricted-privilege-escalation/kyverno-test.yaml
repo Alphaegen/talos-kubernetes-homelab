@@ -1,0 +1,25 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/kyverno/kyverno/main/schemas/json/v3/test-cli-v1alpha1.json
+apiVersion: cli.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: pss-restricted-privilege-escalation
+policies:
+  - ../../policies/pss-restricted-privilege-escalation.yaml
+resources:
+  - resources.yaml
+results:
+  - policy: pss-restricted-privilege-escalation
+    isValidatingPolicy: true
+    kind: Pod
+    resources: [escalation-disabled]
+    result: pass
+  - policy: pss-restricted-privilege-escalation
+    isValidatingPolicy: true
+    kind: Pod
+    resources: [escalation-unset, escalation-allowed, ephemeral-container-escalation-unset]
+    result: fail
+  - policy: pss-restricted-privilege-escalation
+    isValidatingPolicy: true
+    kind: Deployment
+    resources: [escalation-unset-deployment]
+    result: fail

@@ -1,0 +1,85 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: drop-all
+  namespace: test
+spec:
+  containers:
+    - name: app
+      image: ghcr.io/example/app:1.2.3
+      securityContext:
+        capabilities:
+          drop: [ALL]
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: drop-all-with-net-bind-service
+  namespace: test
+spec:
+  containers:
+    - name: app
+      image: ghcr.io/example/app:1.2.3
+      securityContext:
+        capabilities:
+          drop: [ALL]
+          add: [NET_BIND_SERVICE]
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: drop-all-with-chown
+  namespace: test
+spec:
+  containers:
+    - name: app
+      image: ghcr.io/example/app:1.2.3
+      securityContext:
+        capabilities:
+          drop: [ALL]
+          add: [CHOWN]
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: no-drop
+  namespace: test
+spec:
+  containers:
+    - name: app
+      image: ghcr.io/example/app:1.2.3
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: init-container-without-drop
+  namespace: test
+spec:
+  initContainers:
+    - name: init
+      image: ghcr.io/example/init:1.2.3
+  containers:
+    - name: app
+      image: ghcr.io/example/app:1.2.3
+      securityContext:
+        capabilities:
+          drop: [ALL]
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: no-drop-statefulset
+  namespace: test
+spec:
+  serviceName: no-drop-statefulset
+  selector:
+    matchLabels:
+      app: no-drop-statefulset
+  template:
+    metadata:
+      labels:
+        app: no-drop-statefulset
+    spec:
+      containers:
+        - name: app
+          image: ghcr.io/example/app:1.2.3

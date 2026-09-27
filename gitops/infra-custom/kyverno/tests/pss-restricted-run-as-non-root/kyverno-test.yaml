@@ -1,0 +1,25 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/kyverno/kyverno/main/schemas/json/v3/test-cli-v1alpha1.json
+apiVersion: cli.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: pss-restricted-run-as-non-root
+policies:
+  - ../../policies/pss-restricted-run-as-non-root.yaml
+resources:
+  - resources.yaml
+results:
+  - policy: pss-restricted-run-as-non-root
+    isValidatingPolicy: true
+    kind: Pod
+    resources: [pod-level-non-root, container-level-non-root]
+    result: pass
+  - policy: pss-restricted-run-as-non-root
+    isValidatingPolicy: true
+    kind: Pod
+    resources: [unset, container-overrides-to-root, run-as-user-zero, container-run-as-user-zero, init-container-without-non-root]
+    result: fail
+  - policy: pss-restricted-run-as-non-root
+    isValidatingPolicy: true
+    kind: CronJob
+    resources: [unset-cronjob]
+    result: fail

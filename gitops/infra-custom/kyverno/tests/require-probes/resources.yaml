@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: both-probes
+  namespace: test
+spec:
+  selector:
+    matchLabels:
+      app: both-probes
+  template:
+    metadata:
+      labels:
+        app: both-probes
+    spec:
+      containers:
+        - name: app
+          image: ghcr.io/example/app:1.2.3
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: missing-readiness
+  namespace: test
+spec:
+  selector:
+    matchLabels:
+      app: missing-readiness
+  template:
+    metadata:
+      labels:
+        app: missing-readiness
+    spec:
+      containers:
+        - name: app
+          image: ghcr.io/example/app:1.2.3
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: missing-liveness
+  namespace: test
+spec:
+  serviceName: missing-liveness
+  selector:
+    matchLabels:
+      app: missing-liveness
+  template:
+    metadata:
+      labels:
+        app: missing-liveness
+    spec:
+      containers:
+        - name: app
+          image: ghcr.io/example/app:1.2.3
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8080

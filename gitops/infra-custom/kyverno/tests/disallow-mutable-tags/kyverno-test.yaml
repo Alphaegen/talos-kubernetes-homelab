@@ -1,0 +1,25 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/kyverno/kyverno/main/schemas/json/v3/test-cli-v1alpha1.json
+apiVersion: cli.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: disallow-mutable-tags
+policies:
+  - ../../policies/disallow-mutable-tags.yaml
+resources:
+  - resources.yaml
+results:
+  - policy: disallow-mutable-tags
+    isValidatingPolicy: true
+    kind: Pod
+    resources: [pinned-tag, pinned-digest-with-registry-port]
+    result: pass
+  - policy: disallow-mutable-tags
+    isValidatingPolicy: true
+    kind: Pod
+    resources: [latest-tag, untagged-init]
+    result: fail
+  - policy: disallow-mutable-tags
+    isValidatingPolicy: true
+    kind: Deployment
+    resources: [main-branch-tag]
+    result: fail

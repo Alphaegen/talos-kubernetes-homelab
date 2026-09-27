@@ -10,6 +10,10 @@ metadata:
   namespace: {{ .Values.cluster.namespace | quote }}
   finalizers:
     - resources-finalizer.argocd.argoproj.io
+    # Argo CD adds these because the chart has PreDelete hooks, which remove
+    # Kyverno's webhooks on uninstall; declaring them keeps the root app in sync.
+    - pre-delete-finalizer.argocd.argoproj.io
+    - pre-delete-finalizer.argocd.argoproj.io/cleanup
   annotations:
     # Stage 1: optional platform add-on after monitoring CRDs.
     argocd.argoproj.io/sync-wave: "1"

@@ -16,6 +16,7 @@ This repository contains the configuration for a four-node Kubernetes homelab ru
 | eBPF networking | Cilium with kube-proxy replacement, dual-stack addressing, Hubble, and Gateway API |
 | Persistent storage | Longhorn on dedicated worker NVMe volumes; NFS for large shared datasets |
 | External secrets | External Secrets Operator authenticates to 1Password and creates Kubernetes Secrets |
+| Policy as code | Kyverno CEL policies for the restricted Pod Security Standard, image tags and resources, with documented exceptions, CI tests, and Policy Reporter behind SSO; Pod Security Admission enforces baseline on every namespace unless a documented override applies |
 | Automated certificates | cert-manager issues Let's Encrypt certificates through Cloudflare DNS-01 |
 | Metrics and logs | Prometheus, Alertmanager, Grafana, Loki, and Grafana Alloy, including Cilium, Hubble, and MetalLB metrics |
 | Resource management | Requests and memory limits sized from observed usage; PriorityClasses keep home automation running under memory pressure |
@@ -178,6 +179,14 @@ Pocket ID is the single OIDC identity provider at `id.homelab.niekvlam.nl`; peop
 
 Longhorn UI and Hubble UI have no login of their own, so each sits behind its own oauth2-proxy instance, which owns the public HTTPRoute. A CiliumNetworkPolicy lets only that proxy reach the UI pod; the platform smoke test may fetch only the Longhorn UI index page, enforced by a Cilium L7 HTTP rule. Client credentials come from 1Password through External Secrets. Break-glass access (one-time Pocket ID login links, `kubectl port-forward`, `argocd --core`, and temporarily re-enabling local admins) is documented in [`docs/auth.md`](docs/auth.md).
 
+### Policy and workload security
+
+Every namespace gets the baseline Pod Security Standard from the Talos admission defaults, with `warn` and `audit` at restricted. The few namespaces that need host access (Longhorn, MetalLB, node agents, the Tailscale router, the fan controller and the VPN sidecar in media) override it to privileged in Git, each with its reason.
+
+Kyverno then checks every workload individually against the restricted standard and a few best practices: pinned image tags, requests and a memory limit, probes for the app namespaces, no workloads in `default`, and the `app.kubernetes.io/name` label. The policies are CEL `ValidatingPolicy` resources with autogen for the pod controllers. Workloads that cannot comply, such as storage and node agents or the linuxserver.io images that start as root, get narrow `PolicyException`s that name the exact policies and record the reason; the one for the NFS provisioner expires, so its findings return if its replacement slips. The repository's own workloads and most upstream charts run non-root with seccomp, dropped capabilities and, where the image allows it, read-only root filesystems.
+
+The policies run in Audit and will move to Enforce one at a time once each has stayed clean. Each has a `kyverno test` suite that CI runs, and Policy Reporter shows the results per namespace and policy behind oauth2-proxy SSO, with Grafana dashboards. Details, the exception list, and the enforce and rollback procedure are in [`docs/policy.md`](docs/policy.md).
+
 ### Observability and operations
 
 Prometheus collects cluster and application metrics with a 30-day retention target. Alertmanager handles alert routing, while kube-state-metrics and node-exporter expose Kubernetes and node state.
@@ -267,11 +276,13 @@ The `Validate` workflow runs on every pull request and push to `main`. It uses r
 - **Observability footprint:** Prometheus, Grafana, and Loki run with retention and storage sized for the available hardware. Grafana and Loki use single replicas, so they can be unavailable during node or volume recovery.
 - **Metric cardinality:** Hubble metrics are labelled by namespace (and by workload for HTTP only), not by pod or IP address, and Envoy keeps only request, response-code, latency and upstream-health metrics. Per-pod flow detail stays available in Hubble itself. Enabling the Cilium, Hubble, MetalLB, Loki, and Alloy metrics added about 7% to the active series count.
 - **Single identity provider:** Pocket ID is small (one replica, SQLite on Longhorn) instead of an HA Keycloak with its own database, which would cost about 1 GB of memory. If it is down, SSO logins fail until it recovers; `kubectl` access, port-forwarding, and Argo CD core mode keep working as documented break-glass paths.
+- **Fail-open policy:** While the policies run in Audit, Kyverno's webhooks ignore failures, so a Kyverno outage never blocks deployments. Enforced policies will only fail closed once they have proven stable, and namespace Pod Security Admission keeps a baseline floor that does not depend on Kyverno at all.
 - **Resource sizing:** Requests track measured usage so the scheduler sees the real load, while memory limits leave room for spikes rather than packing nodes tightly. The trade-off is that the sum of limits still exceeds node memory on some workers; priorities decide which workloads give way first.
 
 ## Roadmap
 
 - Document Longhorn and application-data restore procedures.
-- Evaluate Kyverno in audit mode and measure the resource cost of Trivy Operator before enabling either component.
+- Switch the Kyverno policies from Audit to Enforce, one at a time, once each has stayed clean for several days.
+- Measure the resource cost of the Trivy Operator vulnerability scanning.
 - Test the documented control-plane recovery workflow on spare SD media.
 - Separate remaining environment-specific configuration through clearer overlays and reusable examples.

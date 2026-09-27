@@ -5,3 +5,5 @@ security:
     enabled: true
   trivy:
     enabled: true
+  policyReporter:
+    enabled: true

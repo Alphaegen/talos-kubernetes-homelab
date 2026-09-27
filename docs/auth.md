@@ -13,8 +13,9 @@ check again on their side.
 | Grafana | Native `auth.generic_oauth`, `homelab-admins` → Grafana server admin | `Grafana` |
 | Longhorn | oauth2-proxy `oauth2-proxy-longhorn` in `auth` | `Longhorn` |
 | Hubble UI | oauth2-proxy `oauth2-proxy-hubble` in `auth` | `Hubble` |
+| Policy Reporter | oauth2-proxy `oauth2-proxy-policy-reporter` in `auth` | `Policy Reporter` |
 
-Longhorn UI and Hubble UI have no login of their own, so oauth2-proxy owns
+Longhorn UI, Hubble UI and the Policy Reporter UI have no login of their own, so oauth2-proxy owns
 their HTTPRoutes and a CiliumNetworkPolicy lets only the matching proxy reach
 each UI pod. Client IDs and secrets live in 1Password and reach the cluster
 through ExternalSecrets; see the table at the end.
@@ -108,6 +109,7 @@ For the web UI, set `disable_login_form: false` in
 | `grafana-oidc` | `client-id`, `client-secret` | Grafana SSO |
 | `oauth2-proxy-longhorn` | `client-id`, `client-secret`, `cookie-secret` | Longhorn oauth2-proxy |
 | `oauth2-proxy-hubble` | `client-id`, `client-secret`, `cookie-secret` | Hubble oauth2-proxy |
+| `oauth2-proxy-policy-reporter` | `client-id`, `client-secret`, `cookie-secret` | Policy Reporter oauth2-proxy |
 
 Adding another proxied UI: create a Pocket ID client with callback
 `https://<host>/oauth2/callback` and group `homelab-admins`, a matching

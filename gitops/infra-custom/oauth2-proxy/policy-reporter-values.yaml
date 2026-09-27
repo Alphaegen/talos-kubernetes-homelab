@@ -1,0 +1,6 @@
+homelab:
+  hostname: policy-reporter.homelab.niekvlam.nl
+
+config:
+  upstreams:
+    - http://policy-reporter-ui.policy-reporter.svc.cluster.local:8080

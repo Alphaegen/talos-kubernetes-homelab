@@ -154,6 +154,7 @@ security:
     instances:
       - longhorn
       - hubble
+      - policy-reporter
 
   eso:
     enabled: true
@@ -166,6 +167,12 @@ security:
     enabled: true
     # renovate: datasource=helm depName=kyverno registryUrl=https://kyverno.github.io/kyverno/ versioning=helm
     version: "3.9.1"
+    serviceMonitorLabel: kube-prometheus-stack
+
+  policyReporter:
+    enabled: true
+    # renovate: datasource=helm depName=policy-reporter registryUrl=https://kyverno.github.io/policy-reporter/ versioning=helm
+    version: "3.10.0"
     serviceMonitorLabel: kube-prometheus-stack
 
   trivy:

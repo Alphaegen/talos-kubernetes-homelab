@@ -14,7 +14,7 @@ metadata:
     # Install the admission controller early, before policies & scanners.
     argocd.argoproj.io/sync-wave: "0"
 spec:
-  project: {{ include "infra.projectName" . }}
+  project: {{ include "infra.platformProject" . }}
   destination:
     server: {{ .Values.cluster.url | default "https://kubernetes.default.svc" | quote }}
     namespace: kyverno

@@ -13,7 +13,7 @@ metadata:
     # Stage 1: optional platform add-on after monitoring CRDs.
     argocd.argoproj.io/sync-wave: "1"
 spec:
-  project: {{ include "infra.projectName" . }}
+  project: {{ include "infra.platformProject" . }}
   destination:
     server: {{ .Values.cluster.url | default "https://kubernetes.default.svc" | quote }}
     namespace: trivy-system

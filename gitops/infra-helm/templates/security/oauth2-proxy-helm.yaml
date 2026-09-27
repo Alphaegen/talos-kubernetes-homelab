@@ -16,7 +16,7 @@ metadata:
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
-  project: {{ include "infra.projectName" $ }}
+  project: {{ include "infra.platformProject" $ }}
   destination:
     server: {{ $.Values.cluster.url | default "https://kubernetes.default.svc" | quote }}
     namespace: auth

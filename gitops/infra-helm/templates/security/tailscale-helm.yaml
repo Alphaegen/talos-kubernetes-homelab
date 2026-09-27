@@ -12,7 +12,7 @@ metadata:
     # Secrets Application. The operator and Connector stay together here.
     argocd.argoproj.io/sync-wave: "1"
 spec:
-  project: {{ include "infra.projectName" . }}
+  project: {{ include "infra.platformProject" . }}
   destination:
     server: {{ .Values.cluster.url | default "https://kubernetes.default.svc" | quote }}
     namespace: {{ .Values.security.tailscale.namespace | default "tailscale" | quote }}

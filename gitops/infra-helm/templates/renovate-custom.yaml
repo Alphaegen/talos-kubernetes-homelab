@@ -12,7 +12,7 @@ metadata:
     # External Secrets and its ClusterSecretStore are installed in wave 0.
     argocd.argoproj.io/sync-wave: "1"
 spec:
-  project: {{ include "infra.projectName" . }}
+  project: {{ include "infra.platformProject" . }}
   destination:
     server: {{ .Values.cluster.url | default "https://kubernetes.default.svc" | quote }}
     namespace: {{ .Values.renovate.namespace | default "renovate" | quote }}

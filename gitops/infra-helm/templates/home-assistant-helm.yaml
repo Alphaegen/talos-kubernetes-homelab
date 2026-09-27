@@ -16,7 +16,7 @@ metadata:
     {{- toYaml .Values.notifications | nindent 4 }}
     {{- end }}
 spec:
-  project: {{ include "infra.projectName" . }}
+  project: {{ include "infra.appsProject" . }}
   destination:
     server: {{ .Values.cluster.url | default "https://kubernetes.default.svc" | quote }}
     namespace: home-assistant

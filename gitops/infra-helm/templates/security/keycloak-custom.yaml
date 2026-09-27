@@ -13,7 +13,7 @@ metadata:
     # Stage 2: optional identity integrations. Keycloak remains disabled by default.
     argocd.argoproj.io/sync-wave: "2"
 spec:
-  project: {{ include "infra.projectName" . }}
+  project: {{ include "infra.platformProject" . }}
   destination:
     server: {{ .Values.cluster.url | default "https://kubernetes.default.svc" | quote }}
     namespace: security

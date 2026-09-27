@@ -11,7 +11,7 @@ metadata:
     # Stage 1: optional stateful platform service after storage foundations.
     argocd.argoproj.io/sync-wave: "1"
 spec:
-  project: {{ include "infra.projectName" . }}
+  project: {{ include "infra.platformProject" . }}
   destination:
     server: {{ .Values.cluster.url | default "https://kubernetes.default.svc" | quote }}
     namespace: security

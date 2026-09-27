@@ -12,7 +12,7 @@ metadata:
     # Stage 2: stateful workload after the stage-1 NFS provisioner.
     argocd.argoproj.io/sync-wave: "2"
 spec:
-  project: {{ include "infra.projectName" . }}
+  project: {{ include "infra.appsProject" . }}
   destination:
     server: {{ .Values.cluster.url | default "https://kubernetes.default.svc" | quote }}
     namespace: media

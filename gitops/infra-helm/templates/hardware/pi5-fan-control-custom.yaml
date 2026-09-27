@@ -15,7 +15,7 @@ metadata:
     argocd.argoproj.io/sync-wave: "1"
     app.kubernetes.io/part-of: infrastructure
 spec:
-  project: {{ include "infra.projectName" . }}
+  project: {{ include "infra.platformProject" . }}
   destination:
     server: {{ .Values.cluster.url | default "https://kubernetes.default.svc" | quote }}
     namespace: {{ .Values.pi5FanControl.namespace | default "pi5-fan-control" | quote }}

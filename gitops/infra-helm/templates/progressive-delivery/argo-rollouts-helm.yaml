@@ -13,7 +13,7 @@ metadata:
     # Stage 0: CRD/API provider for rollout workloads.
     argocd.argoproj.io/sync-wave: "0"
 spec:
-  project: {{ include "infra.projectName" . }}
+  project: {{ include "infra.platformProject" . }}
   destination:
     server: {{ .Values.cluster.url | default "https://kubernetes.default.svc" | quote }}
     namespace: {{ .Values.progressiveDelivery.argoRollouts.namespace | default "argo-rollouts" | quote }}

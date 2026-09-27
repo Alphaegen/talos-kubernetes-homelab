@@ -33,8 +33,9 @@ spec:
         operator:
           # Download the vulnerability DB once in trivy-server instead of in every scan job.
           builtInTrivyServer: true
+          # Finished jobs count toward this limit, so leave scanJobTTL unset and let
+          # the operator delete each job as soon as it has read the result.
           scanJobsConcurrentLimit: 1
-          scanJobTTL: 10m
           vulnerabilityScannerScanOnlyCurrentRevisions: true
           # One series per CVE is too much cardinality for this cluster.
           metricsVulnIdEnabled: false

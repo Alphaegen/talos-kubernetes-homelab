@@ -1,0 +1,30 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/refs/heads/main/argoproj.io/application_v1alpha1.json
+{{- if .Values.kubeletServingCertApprover.enabled }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ include "infra.appName" (dict "root" . "name" "kubelet-serving-cert-approver") }}
+  labels:
+    cluster: {{ .Values.cluster.name | quote }}
+    app: kubelet-serving-cert-approver
+  namespace: {{ .Values.cluster.namespace | quote }}
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  annotations:
+    # Stage 0: kubelets need signed serving certs before metrics-server can scrape them.
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  project: {{ include "infra.platformProject" . }}
+  destination:
+    server: {{ .Values.cluster.url | default "https://kubernetes.default.svc" | quote }}
+    namespace: kubelet-serving-cert-approver
+  syncPolicy:
+    {{- include "infra.syncPolicy" . | nindent 4 }}
+    syncOptions:
+      - FailOnSharedResource=true
+      - CreateNamespace=false
+  source:
+    repoURL: {{ .Values.cluster.repoURL | quote }}
+    targetRevision: {{ .Values.cluster.revision | default "main" | quote }}
+    path: gitops/infra-custom/kubelet-serving-cert-approver
+{{- end }}

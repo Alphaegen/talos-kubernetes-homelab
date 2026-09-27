@@ -1,0 +1,40 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/refs/heads/main/argoproj.io/application_v1alpha1.json
+{{- if .Values.metricsServer.enabled }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ include "infra.appName" (dict "root" . "name" "metrics-server") }}
+  labels:
+    cluster: {{ .Values.cluster.name | quote }}
+    app: metrics-server
+  namespace: {{ .Values.cluster.namespace | quote }}
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  annotations:
+    # Stage 1: after kubelet-serving-cert-approver has signed the kubelet serving certs.
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  project: {{ include "infra.platformProject" . }}
+  destination:
+    server: {{ .Values.cluster.url | default "https://kubernetes.default.svc" | quote }}
+    namespace: kube-system
+  syncPolicy:
+    {{- include "infra.syncPolicy" . | nindent 4 }}
+    syncOptions:
+      - FailOnSharedResource=true
+      - CreateNamespace=false
+  source:
+    repoURL: https://kubernetes-sigs.github.io/metrics-server/
+    chart: metrics-server
+    targetRevision: {{ .Values.metricsServer.version | quote }}
+    helm:
+      releaseName: metrics-server
+      # Chart defaults already verify kubelet TLS (certs signed by kubelet-serving-cert-approver).
+      values: |
+        resources:
+          requests:
+            cpu: 10m
+            memory: 80Mi
+          limits:
+            memory: 160Mi
+{{- end }}

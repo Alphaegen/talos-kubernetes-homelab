@@ -1,0 +1,19 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Signs the kubelet serving certificates that Talos requests with
+# rotate-server-certificates, so metrics-server can verify kubelet TLS.
+resources:
+  - https://github.com/alex1989hu/kubelet-serving-cert-approver//deploy/standalone?ref=v0.12.1
+
+patches:
+  # Upstream sets a 32Mi limit that the controller nearly reaches; no CPU limit on platform.
+  - target:
+      kind: Deployment
+      name: kubelet-serving-cert-approver
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/resources
+        value:
+          requests: {cpu: 10m, memory: 32Mi}
+          limits: {memory: 64Mi}

@@ -9,6 +9,38 @@ grafana.ini:
   server:
     # The chart derives this from ingress.hosts only while its Ingress is enabled.
     domain: grafana.homelab.niekvlam.nl
+    # OAuth redirect URIs are built from root_url; the default includes :3000.
+    root_url: https://grafana.homelab.niekvlam.nl/
+  # Sign-in through Pocket ID. The local admin login form stays available as
+  # break-glass (docs/auth.md).
+  auth.generic_oauth:
+    enabled: true
+    name: Pocket ID
+    allow_sign_up: true
+    client_id: $__file{/etc/secrets/oidc/client-id}
+    client_secret: $__file{/etc/secrets/oidc/client-secret}
+    scopes: openid email profile groups offline_access
+    auth_url: https://id.homelab.niekvlam.nl/authorize
+    token_url: https://id.homelab.niekvlam.nl/api/oidc/token
+    api_url: https://id.homelab.niekvlam.nl/api/oidc/userinfo
+    use_pkce: true
+    # Pocket ID access tokens are short-lived; refresh instead of logging out.
+    use_refresh_token: true
+    login_attribute_path: preferred_username
+    name_attribute_path: name
+    email_attribute_path: email
+    groups_attribute_path: groups
+    # homelab-admins become Grafana server admins; anyone else is refused.
+    role_attribute_path: contains(groups[*], 'homelab-admins') && 'GrafanaAdmin'
+    role_attribute_strict: true
+    allow_assign_grafana_admin: true
+
+# client-id and client-secret for auth.generic_oauth, read with $__file{}.
+extraSecretMounts:
+  - name: oidc
+    secretName: grafana-oidc
+    mountPath: /etc/secrets/oidc
+    readOnly: true
 
 serviceMonitor:
   enabled: true
@@ -146,6 +178,33 @@ extraObjects:
             - path: { type: PathPrefix, value: / }
           backendRefs:
             - { name: grafana, port: 80 }
+
+  # client-id and client-secret for auth.generic_oauth (extraSecretMounts).
+  - apiVersion: external-secrets.io/v1
+    kind: ExternalSecret
+    metadata:
+      name: grafana-oidc
+      namespace: monitoring
+    spec:
+      refreshInterval: 1h
+      secretStoreRef:
+        kind: ClusterSecretStore
+        name: onepassword
+      target:
+        name: grafana-oidc
+        creationPolicy: Owner
+        template:
+          type: Opaque
+          metadata:
+            labels:
+              managed-by: external-secrets
+      data:
+        - secretKey: client-id
+          remoteRef:
+            key: grafana-oidc/client-id
+        - secretKey: client-secret
+          remoteRef:
+            key: grafana-oidc/client-secret
 
 persistence:
   enabled: true

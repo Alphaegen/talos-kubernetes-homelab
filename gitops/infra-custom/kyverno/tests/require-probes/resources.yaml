@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: both-probes
-  namespace: test
+  namespace: media
 spec:
   selector:
     matchLabels:
@@ -28,7 +28,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: missing-readiness
-  namespace: test
+  namespace: media
 spec:
   selector:
     matchLabels:
@@ -50,7 +50,7 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: missing-liveness
-  namespace: test
+  namespace: media
 spec:
   serviceName: missing-liveness
   selector:

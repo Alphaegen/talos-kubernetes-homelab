@@ -7,7 +7,7 @@ metadata:
     policies.kyverno.io/title: Require liveness and readiness probes
     policies.kyverno.io/category: Best Practices
     policies.kyverno.io/description: >-
-      Long-running workloads need a readiness probe so traffic only reaches ready pods, and a liveness probe so a hung process is restarted.
+      Long-running workloads need a readiness probe so traffic only reaches ready pods, and a liveness probe so a hung process is restarted. Applies to the namespaces of the apps this repository runs; upstream charts ship their own probe choices, and many leader-elected controllers have no endpoint to probe.
 spec:
   validationActions: [Audit]
   failurePolicy: Ignore
@@ -15,8 +15,8 @@ spec:
     namespaceSelector:
       matchExpressions:
         - key: kubernetes.io/metadata.name
-          operator: NotIn
-          values: [kube-system]
+          operator: In
+          values: [auth, bookorbit, home-assistant, home-automation, homelab-platform, media, obsidian-livesync]
     resourceRules:
       - apiGroups: [apps]
         apiVersions: [v1]

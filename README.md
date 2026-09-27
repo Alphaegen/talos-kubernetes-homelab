@@ -11,7 +11,8 @@ This repository contains the configuration for a four-node Kubernetes homelab ru
 | Capability | Implementation |
 |---|---|
 | Immutable node operating system | Talos Linux configuration generated from versioned machine patches |
-| GitOps reconciliation | Argo CD Applications with automated sync, pruning, and self-healing |
+| GitOps reconciliation | Argo CD Applications with automated sync, pruning, and self-healing, split into `platform` and `apps` AppProjects, with sync and health notifications to ntfy |
+| Single sign-on | Pocket ID (passkeys) as the OIDC provider; Argo CD and Grafana sign in natively with group-based roles, and oauth2-proxy protects UIs without their own login |
 | eBPF networking | Cilium with kube-proxy replacement, dual-stack addressing, Hubble, and Gateway API |
 | Persistent storage | Longhorn on dedicated worker NVMe volumes; NFS for large shared datasets |
 | External secrets | External Secrets Operator authenticates to 1Password and creates Kubernetes Secrets |
@@ -56,6 +57,7 @@ flowchart TB
             certificates["cert-manager"]
             rollouts["Argo Rollouts"]
             observability["Prometheus, Grafana, Loki, Alertmanager"]
+            identity["Pocket ID and oauth2-proxy"]
         end
 
         subgraph applications["Application namespaces"]
@@ -124,6 +126,8 @@ The machine patches also configure kubelet certificate rotation, the kernel modu
 
 `gitops/infra-helm` renders an Argo CD Application for each enabled component. Applications source either an upstream Helm chart or a local path under `gitops/infra-custom` and use automated sync with pruning and self-healing.
 
+The Applications are split across two AppProjects. `platform` holds controllers, storage, networking, monitoring, and auth; it may install cluster-scoped resources, but only into its listed namespaces. `apps` holds the user-facing workloads, limited to their own namespaces and sources, with no cluster-scoped resources beyond their Namespace and NFS PersistentVolumes. The root App-of-Apps stays in Argo CD's built-in `default` project, which is restricted to creating those Applications and AppProjects. The notifications controller sends failed syncs and degraded health to ntfy at high priority, and successful deploys at low priority.
+
 Initial Talos configuration, Cilium installation, and Argo CD bootstrap sit outside normal reconciliation because Kubernetes and Argo CD must exist first. Platform services and workloads follow the GitOps path after that boundary.
 
 ## Repository structure
@@ -167,6 +171,12 @@ Home Assistant, Grafana, Loki, Mosquitto, Zigbee2MQTT, BookOrbit, and Obsidian L
 External Secrets authenticates to 1Password and creates namespace-scoped Kubernetes Secrets for workloads. Applications consume those Secrets through `secretKeyRef`, `envFrom`, or chart-specific existing-secret settings. The 1Password service account token is provided once during bootstrap because External Secrets needs it before the controller can retrieve other credentials.
 
 cert-manager uses a Cloudflare credential supplied through External Secrets to complete DNS-01 challenges. The `letsencrypt-dns` ClusterIssuer then issues the wildcard certificate served by the shared Gateway.
+
+### Identity and access
+
+Pocket ID is the single OIDC identity provider at `id.homelab.niekvlam.nl`; people sign in with passkeys, and access is granted through the `homelab-admins` group. Every OIDC client is restricted to that group in Pocket ID and checks it again on its own side. Argo CD talks OIDC to Pocket ID directly (Dex is disabled), maps the group to `role:admin` and grants nothing by default, and its local `admin` account is disabled. The CLI uses a separate public PKCE client for `argocd login --sso`. Grafana maps the group to server admin and only offers SSO on its login page.
+
+Longhorn UI and Hubble UI have no login of their own, so each sits behind its own oauth2-proxy instance, which owns the public HTTPRoute. A CiliumNetworkPolicy lets only that proxy reach the UI pod; the platform smoke test may fetch only the Longhorn UI index page, enforced by a Cilium L7 HTTP rule. Client credentials come from 1Password through External Secrets. Break-glass access (one-time Pocket ID login links, `kubectl port-forward`, `argocd --core`, and temporarily re-enabling local admins) is documented in [`docs/auth.md`](docs/auth.md).
 
 ### Observability and operations
 
@@ -256,6 +266,7 @@ The `Validate` workflow runs on every pull request and push to `main`. It uses r
 - **Validation scope:** CI proves that every repository-owned source renders and matches its schema, which keeps it fast and free of cluster credentials. Upstream charts pulled straight from their Helm repositories are rendered only by Argo CD, and runtime behaviour is still checked through Argo CD health and the monitoring stack.
 - **Observability footprint:** Prometheus, Grafana, and Loki run with retention and storage sized for the available hardware. Grafana and Loki use single replicas, so they can be unavailable during node or volume recovery.
 - **Metric cardinality:** Hubble metrics are labelled by namespace (and by workload for HTTP only), not by pod or IP address, and Envoy keeps only request, response-code, latency and upstream-health metrics. Per-pod flow detail stays available in Hubble itself. Enabling the Cilium, Hubble, MetalLB, Loki, and Alloy metrics added about 7% to the active series count.
+- **Single identity provider:** Pocket ID is small (one replica, SQLite on Longhorn) instead of an HA Keycloak with its own database, which would cost about 1 GB of memory. If it is down, SSO logins fail until it recovers; `kubectl` access, port-forwarding, and Argo CD core mode keep working as documented break-glass paths.
 - **Resource sizing:** Requests track measured usage so the scheduler sees the real load, while memory limits leave room for spikes rather than packing nodes tightly. The trade-off is that the sum of limits still exceeds node memory on some workers; priorities decide which workloads give way first.
 
 ## Roadmap

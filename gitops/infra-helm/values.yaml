@@ -44,7 +44,7 @@ metallb:
 longhorn:
   enabled: true
   # renovate: datasource=helm depName=longhorn registryUrl=https://charts.longhorn.io versioning=helm
-  version: "1.12.1"
+  version: "1.13.0"
 
 certmanager:
   enabled: true
@@ -55,7 +55,7 @@ monitoring:
   enabled: true
   grafana:
     # renovate: datasource=helm depName=grafana registryUrl=https://grafana-community.github.io/helm-charts versioning=helm
-    version: "13.2.6"
+    version: "13.2.7"
     dashboards:
       default:
         node-exporter:
@@ -90,7 +90,7 @@ monitoring:
 
   prometheus:
     # renovate: datasource=helm depName=kube-prometheus-stack registryUrl=https://prometheus-community.github.io/helm-charts versioning=helm
-    version: "91.7.0"
+    version: "91.8.2"
 
 pi5FanControl:
   enabled: true
@@ -108,7 +108,7 @@ metricsServer:
 homeassistant:
   enabled: true
   # renovate: datasource=helm depName=home-assistant registryUrl=http://pajikos.github.io/home-assistant-helm-chart/ versioning=helm
-  version: "0.3.82"
+  version: "0.3.83"
 
 homeAutomation:
   enabled: true

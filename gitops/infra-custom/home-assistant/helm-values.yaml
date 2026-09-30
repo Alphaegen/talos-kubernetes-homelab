@@ -83,7 +83,7 @@ configuration:
   enabled: true
   initContainer:
     # The chart default is the floating mikefarah/yq:4 tag.
-    image: mikefarah/yq:4.53.6
+    image: mikefarah/yq:4.54.1
     securityContext:
       runAsUser: 0
       allowPrivilegeEscalation: false

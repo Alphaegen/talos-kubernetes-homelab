@@ -90,7 +90,7 @@ monitoring:
 
   prometheus:
     # renovate: datasource=helm depName=kube-prometheus-stack registryUrl=https://prometheus-community.github.io/helm-charts versioning=helm
-    version: "91.8.2"
+    version: "91.9.0"
 
 pi5FanControl:
   enabled: true
@@ -125,7 +125,7 @@ progressiveDelivery:
     enabled: true
     namespace: argo-rollouts
     # renovate: datasource=helm depName=argo-rollouts registryUrl=https://argoproj.github.io/argo-helm versioning=helm
-    version: "2.43.2"
+    version: "2.43.5"
     serviceMonitorLabel: kube-prometheus-stack
 
 media:
@@ -150,7 +150,7 @@ security:
   oauth2Proxy:
     enabled: true
     # renovate: datasource=helm depName=oauth2-proxy registryUrl=https://oauth2-proxy.github.io/manifests versioning=helm
-    version: "10.7.0"
+    version: "10.7.1"
     instances:
       - longhorn
       - hubble

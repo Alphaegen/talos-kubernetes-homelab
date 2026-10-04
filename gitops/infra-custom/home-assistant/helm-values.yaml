@@ -36,7 +36,7 @@ securityContext:
 
 initContainers:
   - name: init-hacs
-    image: docker.io/library/python:3.14.7-alpine3.23
+    image: docker.io/library/python:3.14.8-alpine3.23
     securityContext:
       allowPrivilegeEscalation: false
     command: ["python", "-c"]

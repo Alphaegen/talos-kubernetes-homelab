@@ -15,7 +15,7 @@ cd "$repo_root"
 kubernetes_version=${KUBERNETES_VERSION:-$(sed -n 's/^KUBERNETES_VERSION="\${TALOS_KUBERNETES_VERSION:-\([0-9.]*\)}"$/\1/p' generate.sh)}
 
 # renovate: datasource=git-refs depName=https://github.com/datreeio/CRDs-catalog branch=main
-crds_catalog_ref=ad3b08c5045129d7bb1eeffd8e61719b2c8dd1e2
+crds_catalog_ref=63669a570e231d4f1f8396d229a1de512bcf0a34
 
 # Kinds with no usable published schema, neither upstream nor in the CRDs catalog.
 skip_kinds=(

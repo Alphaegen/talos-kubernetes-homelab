@@ -32,6 +32,10 @@ priorityClasses:
 obsidianLiveSync:
   enabled: true
 
+# Shared notepad for copying text between devices.
+dumbpad:
+  enabled: true
+
 # Shared Cilium Gateway (kube-system/cilium-gateway), wildcard cert and HTTPS redirect.
 gateway:
   enabled: true

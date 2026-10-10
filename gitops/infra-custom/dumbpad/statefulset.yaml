@@ -1,0 +1,128 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: dumbpad
+  namespace: dumbpad
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+  labels:
+    app.kubernetes.io/name: dumbpad
+    app.kubernetes.io/part-of: dumbpad
+spec:
+  serviceName: dumbpad
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: dumbpad
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: dumbpad
+        app.kubernetes.io/part-of: dumbpad
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        # The image's "node" user.
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
+      initContainers:
+        # DumbPad writes its PWA manifests into public/Assets at startup. Copy the
+        # shipped assets to a writable emptyDir so the root filesystem stays read-only.
+        - name: copy-assets
+          # renovate: datasource=docker depName=dumbwareio/dumbpad
+          image: dumbwareio/dumbpad:1.0.5
+          imagePullPolicy: IfNotPresent
+          command:
+            - /bin/sh
+            - -ec
+            - cp -R /app/public/Assets/. /assets/
+          resources:
+            requests:
+              cpu: 10m
+              memory: 16Mi
+            limits:
+              memory: 64Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: assets
+              mountPath: /assets
+      containers:
+        - name: dumbpad
+          # renovate: datasource=docker depName=dumbwareio/dumbpad
+          image: dumbwareio/dumbpad:1.0.5
+          imagePullPolicy: IfNotPresent
+          # Skip the image's "npm start" wrapper, which wants a writable home.
+          command:
+            - node
+            - server.js
+          ports:
+            - name: http
+              containerPort: 3000
+          env:
+            - name: BASE_URL
+              value: https://pad.homelab.niekvlam.nl
+            # Restrict CORS and WebSocket origins so other websites cannot read
+            # the notes through a visiting browser. The Gateway terminates TLS
+            # and DumbPad does not trust X-Forwarded-Proto, so it sees direct
+            # page loads as http://; that origin only serves the HTTPS redirect.
+            - name: ALLOWED_ORIGINS
+              value: https://pad.homelab.niekvlam.nl,http://pad.homelab.niekvlam.nl
+            - name: SITE_TITLE
+              value: Pad
+          startupProbe:
+            httpGet:
+              path: /api/config
+              port: http
+            periodSeconds: 2
+            failureThreshold: 30
+          readinessProbe:
+            httpGet:
+              path: /api/config
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 3
+          livenessProbe:
+            httpGet:
+              path: /api/config
+              port: http
+            periodSeconds: 30
+            timeoutSeconds: 5
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              memory: 192Mi
+          volumeMounts:
+            - name: data
+              mountPath: /app/data
+            - name: assets
+              mountPath: /app/public/Assets
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: dumbpad-data
+        - name: assets
+          emptyDir:
+            sizeLimit: 16Mi
+        - name: tmp
+          emptyDir:
+            sizeLimit: 64Mi

@@ -16,7 +16,7 @@ spec:
       matchExpressions:
         - key: kubernetes.io/metadata.name
           operator: In
-          values: [auth, bookorbit, home-assistant, home-automation, homelab-platform, media, obsidian-livesync]
+          values: [auth, bookorbit, dumbpad, home-assistant, home-automation, homelab-platform, media, obsidian-livesync]
     resourceRules:
       - apiGroups: [apps]
         apiVersions: [v1]

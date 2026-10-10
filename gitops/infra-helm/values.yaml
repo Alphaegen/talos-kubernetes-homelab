@@ -55,7 +55,7 @@ monitoring:
   enabled: true
   grafana:
     # renovate: datasource=helm depName=grafana registryUrl=https://grafana-community.github.io/helm-charts versioning=helm
-    version: "13.2.7"
+    version: "13.5.0"
     dashboards:
       default:
         node-exporter:
@@ -86,11 +86,11 @@ monitoring:
 
   alloy:
     # renovate: datasource=helm depName=alloy registryUrl=https://grafana.github.io/helm-charts versioning=helm
-    version: "1.13.0"
+    version: "1.13.1"
 
   prometheus:
     # renovate: datasource=helm depName=kube-prometheus-stack registryUrl=https://prometheus-community.github.io/helm-charts versioning=helm
-    version: "91.8.2"
+    version: "91.9.0"
 
 pi5FanControl:
   enabled: true
@@ -108,7 +108,7 @@ metricsServer:
 homeassistant:
   enabled: true
   # renovate: datasource=helm depName=home-assistant registryUrl=http://pajikos.github.io/home-assistant-helm-chart/ versioning=helm
-  version: "0.3.83"
+  version: "0.3.85"
 
 homeAutomation:
   enabled: true
@@ -125,7 +125,7 @@ progressiveDelivery:
     enabled: true
     namespace: argo-rollouts
     # renovate: datasource=helm depName=argo-rollouts registryUrl=https://argoproj.github.io/argo-helm versioning=helm
-    version: "2.43.2"
+    version: "2.43.6"
     serviceMonitorLabel: kube-prometheus-stack
 
 media:
@@ -150,7 +150,7 @@ security:
   oauth2Proxy:
     enabled: true
     # renovate: datasource=helm depName=oauth2-proxy registryUrl=https://oauth2-proxy.github.io/manifests versioning=helm
-    version: "10.7.0"
+    version: "10.7.1"
     instances:
       - longhorn
       - hubble
@@ -159,7 +159,7 @@ security:
   eso:
     enabled: true
     # renovate: datasource=helm depName=external-secrets registryUrl=https://charts.external-secrets.io versioning=helm
-    version: "2.11.0"
+    version: "2.12.0"
     serviceMonitorLabel: kube-prometheus-stack
     bootstrap: true
 
@@ -172,13 +172,13 @@ security:
   policyReporter:
     enabled: true
     # renovate: datasource=helm depName=policy-reporter registryUrl=https://kyverno.github.io/policy-reporter/ versioning=helm
-    version: "3.10.0"
+    version: "3.11.0"
     serviceMonitorLabel: kube-prometheus-stack
 
   trivy:
     enabled: true
     # renovate: datasource=helm depName=trivy-operator registryUrl=https://aquasecurity.github.io/helm-charts/ versioning=helm
-    version: "0.36.0"
+    version: "0.37.0"
     serviceMonitorLabel: kube-prometheus-stack
 
   tailscale:

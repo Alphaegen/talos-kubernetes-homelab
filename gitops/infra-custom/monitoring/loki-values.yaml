@@ -52,7 +52,7 @@ sidecar:
   # Chart 7.3.0 still pins 2.5.0; match the version the Grafana chart ships.
   image:
     repository: kiwigrid/k8s-sidecar
-    tag: 2.11.2
+    tag: 2.14.1
   resources:
     requests: {cpu: 5m, memory: 112Mi}
     limits: {memory: 224Mi}

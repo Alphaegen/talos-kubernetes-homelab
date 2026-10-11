@@ -6,7 +6,7 @@
 image:
   registry: quay.io
   repository: oauth2-proxy/oauth2-proxy
-  tag: v7.15.4
+  tag: v7.15.5
 
 config:
   # client-id, client-secret and cookie-secret from the ExternalSecret below.

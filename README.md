@@ -26,7 +26,7 @@ This repository contains the configuration for a four-node Kubernetes homelab ru
 | Progressive delivery | Argo Rollouts canaries with analysis steps against a dedicated smoke-test workload |
 | Dependency maintenance | Self-hosted Renovate runs in the cluster and groups Helm chart, container-image, GitHub Actions, and CI tool updates into reviewable pull requests |
 | Repository validation | GitHub Actions renders every Application source, validates schemas with kubeconform, and scans new commits with gitleaks |
-| Workloads | Home Assistant, Zigbee2MQTT, media services, BookOrbit, and Obsidian LiveSync |
+| Workloads | Home Assistant, Zigbee2MQTT, media services, BookOrbit, Obsidian LiveSync, and DumbPad |
 
 ## Architecture
 
@@ -82,12 +82,14 @@ flowchart TB
             media["Media services"]
             bookorbit["BookOrbit and PostgreSQL"]
             livesync["Obsidian LiveSync and CouchDB"]
+            dumbpad["DumbPad"]
             smoke["Platform smoke test"]
             appentry --> homeassistant
             appentry --> automation
             appentry --> media
             appentry --> bookorbit
             appentry --> livesync
+            appentry --> dumbpad
             appentry --> smoke
         end
 
@@ -185,7 +187,7 @@ The Tailscale operator provides remote access through a home-LAN subnet router a
 
 Longhorn stores Kubernetes-managed application state on dedicated worker NVMe volumes formatted with XFS. Large shared media and book datasets remain on the NAS and are provisioned through NFS. Talos system disks are kept separate from Longhorn data volumes.
 
-Home Assistant, Mosquitto, Zigbee2MQTT, BookOrbit, Obsidian LiveSync, the media configuration volumes, Pocket ID, Prometheus, Grafana, and Loki use Longhorn-backed claims. Media applications consume shared NFS storage through the NFS subdir external provisioner.
+Home Assistant, Mosquitto, Zigbee2MQTT, BookOrbit, Obsidian LiveSync, DumbPad, the media configuration volumes, Pocket ID, Prometheus, Grafana, and Loki use Longhorn-backed claims. Media applications consume shared NFS storage through the NFS subdir external provisioner.
 
 ### Backups and recovery
 
@@ -258,6 +260,10 @@ BookOrbit runs with a dedicated PostgreSQL StatefulSet, Longhorn-backed applicat
 ### Obsidian Self-hosted LiveSync
 
 Self-hosted LiveSync uses a dedicated single-node CouchDB StatefulSet with Longhorn-backed storage, External Secrets-managed credentials, LiveSync-compatible CORS configuration, and TLS ingress. CouchDB provides the cluster endpoint; the LiveSync plugin and end-to-end encryption settings remain on each Obsidian client.
+
+### DumbPad
+
+DumbPad is a shared notepad at `pad.homelab.niekvlam.nl` for moving text between devices. Notes are plain files on a Longhorn volume, and open tabs see each other's edits live over a WebSocket. It runs non-root with a read-only root filesystem, accepts traffic only from the Gateway, and restricts CORS and WebSocket origins to its own hostname. It has no login yet and relies on the Gateway being reachable only from the LAN and the tailnet.
 
 ## Deployment model
 

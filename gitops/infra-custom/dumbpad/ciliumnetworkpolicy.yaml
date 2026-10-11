@@ -1,0 +1,21 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: dumbpad-gateway
+  namespace: dumbpad
+  labels:
+    app.kubernetes.io/name: dumbpad
+    app.kubernetes.io/part-of: dumbpad
+spec:
+  # Traffic proxied by the shared Cilium Gateway (Envoy) carries the reserved
+  # "ingress" identity, which a namespace-based NetworkPolicy cannot match.
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: dumbpad
+  ingress:
+    - fromEntities:
+        - ingress
+      toPorts:
+        - ports:
+            - port: "3000"
+              protocol: TCP

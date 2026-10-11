@@ -56,7 +56,7 @@ spec:
   - {{ .Values.cluster.repoURL | quote }}
   - http://pajikos.github.io/home-assistant-helm-chart/
   destinations:
-  {{- range list "bookorbit" "home-assistant" "home-automation" "homelab-platform" "media" "obsidian-livesync" }}
+  {{- range list "bookorbit" "dumbpad" "home-assistant" "home-automation" "homelab-platform" "media" "obsidian-livesync" }}
   - namespace: {{ . }}
     server: {{ $server }}
   {{- end }}

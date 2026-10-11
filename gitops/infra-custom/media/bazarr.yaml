@@ -21,7 +21,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: bazarr
-          image: lscr.io/linuxserver/bazarr:v1.6.2-ls366
+          image: lscr.io/linuxserver/bazarr:v1.6.2-ls367
           # s6-overlay starts as root, fixes ownership, then drops to PUID/PGID.
           securityContext:
             allowPrivilegeEscalation: false

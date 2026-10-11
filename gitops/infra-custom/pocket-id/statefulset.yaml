@@ -35,7 +35,7 @@ spec:
       containers:
         - name: pocket-id
           # renovate: datasource=docker depName=ghcr.io/pocket-id/pocket-id
-          image: ghcr.io/pocket-id/pocket-id:v2.16.0-distroless
+          image: ghcr.io/pocket-id/pocket-id:v2.18.0-distroless
           imagePullPolicy: IfNotPresent
           ports:
             - name: http

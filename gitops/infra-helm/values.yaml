@@ -59,7 +59,7 @@ monitoring:
   enabled: true
   grafana:
     # renovate: datasource=helm depName=grafana registryUrl=https://grafana-community.github.io/helm-charts versioning=helm
-    version: "13.5.0"
+    version: "14.0.1"
     dashboards:
       default:
         node-exporter:

@@ -35,7 +35,7 @@ env:
 jobs:
   manifests:
     name: Render and validate manifests
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 15
     steps:
       - name: Check out
@@ -154,7 +154,7 @@ jobs:
 
   secrets:
     name: Scan new commits for secrets
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 10
     steps:
       - name: Check out

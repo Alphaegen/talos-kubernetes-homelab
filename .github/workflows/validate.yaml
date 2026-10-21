@@ -30,7 +30,7 @@ env:
   KUBE_LINTER_VERSION: v0.8.3
   # Keep in step with the Kyverno chart's app version in gitops/infra-helm/values.yaml.
   # renovate: datasource=github-releases depName=kyverno/kyverno
-  KYVERNO_VERSION: v1.19.1
+  KYVERNO_VERSION: v1.19.2
 
 jobs:
   manifests:

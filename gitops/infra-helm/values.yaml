@@ -53,7 +53,7 @@ longhorn:
 certmanager:
   enabled: true
   # renovate: datasource=helm depName=cert-manager registryUrl=https://charts.jetstack.io versioning=helm
-  version: "v1.21.2"
+  version: "v1.21.3"
 
 monitoring:
   enabled: true
@@ -86,11 +86,11 @@ monitoring:
 
   loki:
     # renovate: datasource=helm depName=loki registryUrl=https://grafana.github.io/helm-charts versioning=helm
-    version: "7.3.0"
+    version: "7.5.0"
 
   alloy:
     # renovate: datasource=helm depName=alloy registryUrl=https://grafana.github.io/helm-charts versioning=helm
-    version: "1.14.0"
+    version: "1.14.3"
 
   prometheus:
     # renovate: datasource=helm depName=kube-prometheus-stack registryUrl=https://prometheus-community.github.io/helm-charts versioning=helm
@@ -112,7 +112,7 @@ metricsServer:
 homeassistant:
   enabled: true
   # renovate: datasource=helm depName=home-assistant registryUrl=http://pajikos.github.io/home-assistant-helm-chart/ versioning=helm
-  version: "0.3.87"
+  version: "0.3.88"
 
 homeAutomation:
   enabled: true
@@ -163,14 +163,14 @@ security:
   eso:
     enabled: true
     # renovate: datasource=helm depName=external-secrets registryUrl=https://charts.external-secrets.io versioning=helm
-    version: "2.13.0"
+    version: "2.14.0"
     serviceMonitorLabel: kube-prometheus-stack
     bootstrap: true
 
   kyverno:
     enabled: true
     # renovate: datasource=helm depName=kyverno registryUrl=https://kyverno.github.io/kyverno/ versioning=helm
-    version: "3.9.1"
+    version: "3.9.2"
     serviceMonitorLabel: kube-prometheus-stack
 
   policyReporter:
@@ -188,7 +188,7 @@ security:
   tailscale:
     enabled: true
     # renovate: datasource=helm depName=tailscale-operator registryUrl=https://pkgs.tailscale.com/helmcharts versioning=helm
-    version: "1.104.1"
+    version: "1.104.2"
     namespace: tailscale
     repoURL: https://pkgs.tailscale.com/helmcharts
     chart: tailscale-operator

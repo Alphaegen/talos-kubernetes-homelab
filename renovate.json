@@ -167,7 +167,7 @@
         "manual-apply"
       ],
       "prBodyNotes": [
-        "> [!WARNING]\n> **Manual apply.** Merging does NOT deploy Cilium. Follow `cilium/README.md` (Gateway API prerequisite, render, diff, preflight, apply) and refresh `cilium/crds/` from the matching upstream tag per `cilium/crds/SOURCE.md`."
+        "> [!WARNING]\n> **Manual apply.** Merging does NOT deploy Cilium. Follow `cilium/README.md` (Gateway API prerequisite, render, diff, preflight, apply)."
       ]
     },
     {

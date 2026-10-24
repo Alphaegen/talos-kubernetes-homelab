@@ -24,6 +24,10 @@ HTTPRoute conditions. Then render `cilium/` with `kustomize build --enable-helm`
 review the diff and server-side dry-run, run the target Cilium preflight, and
 apply that same reviewed manifest as described below.
 
+The Cilium CRDs are not kept in this repo: the operator creates and updates the
+CRDs for enabled features on startup (`skipCRDCreation` is left at `false`).
+Never delete a Cilium CRD by hand; that deletes every resource of its kind.
+
 ## Apply a configuration change
 
 Render once and split the output, so the reviewed files are exactly what gets

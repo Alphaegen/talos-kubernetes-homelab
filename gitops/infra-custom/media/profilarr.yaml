@@ -28,7 +28,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: profilarr
-          image: ghcr.io/dictionarry-hub/profilarr:2.2.0
+          image: ghcr.io/dictionarry-hub/profilarr:2.3.1
           imagePullPolicy: IfNotPresent
           resources:
             requests:
@@ -80,7 +80,7 @@ spec:
             - name: config
               mountPath: /config
         - name: parser
-          image: ghcr.io/dictionarry-hub/profilarr-parser:2.2.0
+          image: ghcr.io/dictionarry-hub/profilarr-parser:2.3.1
           imagePullPolicy: IfNotPresent
           resources:
             requests:

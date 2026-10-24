@@ -37,7 +37,7 @@ spec:
               type: RuntimeDefault
           containers:
             - name: renovate
-              image: ghcr.io/renovatebot/renovate:44.173.1@sha256:047258466c0bbc5c6e8adfc1ae25bdcef5f8781ba90f7e12904af6656e35e59f
+              image: ghcr.io/renovatebot/renovate:44.181.1@sha256:823dc5036b911696c27faacf7664219b28e6e15826405720df29aad208d19f25
               imagePullPolicy: IfNotPresent
               securityContext:
                 allowPrivilegeEscalation: false

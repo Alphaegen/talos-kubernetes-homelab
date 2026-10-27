@@ -86,8 +86,20 @@ spec:
             periodSeconds: 10
             timeoutSeconds: 5
             failureThreshold: 3
+          # Gluetun never retries port forwarding when the first attempt after an
+          # internal VPN restart fails, leaving qBittorrent bound to "lo" by the DOWN
+          # command. Restart the sidecar once no port has been forwarded for 10 minutes.
           livenessProbe:
-            exec: { command: ["/gluetun-entrypoint", "healthcheck"] }
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  /gluetun-entrypoint healthcheck || exit 1
+                  since=/tmp/port-forward-missing-since
+                  if [ -s /tmp/gluetun/forwarded_port ]; then rm -f "$since"; exit 0; fi
+                  [ -f "$since" ] || date +%s > "$since"
+                  [ $(( $(date +%s) - $(cat "$since") )) -lt 600 ]
             periodSeconds: 10
             timeoutSeconds: 5
             failureThreshold: 6

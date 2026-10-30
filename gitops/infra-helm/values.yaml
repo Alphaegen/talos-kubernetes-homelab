@@ -59,7 +59,7 @@ monitoring:
   enabled: true
   grafana:
     # renovate: datasource=helm depName=grafana registryUrl=https://grafana-community.github.io/helm-charts versioning=helm
-    version: "14.0.1"
+    version: "14.2.0"
     dashboards:
       default:
         node-exporter:
@@ -90,11 +90,11 @@ monitoring:
 
   alloy:
     # renovate: datasource=helm depName=alloy registryUrl=https://grafana.github.io/helm-charts versioning=helm
-    version: "1.14.3"
+    version: "1.15.0"
 
   prometheus:
     # renovate: datasource=helm depName=kube-prometheus-stack registryUrl=https://prometheus-community.github.io/helm-charts versioning=helm
-    version: "92.13.1"
+    version: "92.16.0"
 
 pi5FanControl:
   enabled: true
@@ -112,7 +112,7 @@ metricsServer:
 homeassistant:
   enabled: true
   # renovate: datasource=helm depName=home-assistant registryUrl=http://pajikos.github.io/home-assistant-helm-chart/ versioning=helm
-  version: "0.3.88"
+  version: "0.3.89"
 
 homeAutomation:
   enabled: true
@@ -176,13 +176,13 @@ security:
   policyReporter:
     enabled: true
     # renovate: datasource=helm depName=policy-reporter registryUrl=https://kyverno.github.io/policy-reporter/ versioning=helm
-    version: "3.11.1"
+    version: "3.11.2"
     serviceMonitorLabel: kube-prometheus-stack
 
   trivy:
     enabled: true
     # renovate: datasource=helm depName=trivy-operator registryUrl=https://aquasecurity.github.io/helm-charts/ versioning=helm
-    version: "0.37.0"
+    version: "0.38.1"
     serviceMonitorLabel: kube-prometheus-stack
 
   tailscale:

@@ -6,6 +6,9 @@ template:
   - triggers:
       - trigger: homeassistant
         event: start
+      # After "Template entities" is reloaded, instead of waiting for the hour.
+      - trigger: event
+        event_type: event_template_reloaded
       - trigger: time_pattern
         hours: "/1"
       # Right after midnight, so "morgen" becomes "vandaag" on time.

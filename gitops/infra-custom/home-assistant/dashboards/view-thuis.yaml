@@ -16,12 +16,134 @@ badges:
     tap_action:
       action: navigate
       navigation_path: '#afval'
-  - type: power-total
+  # What the house uses now (solar included) and today (packages/energie.yaml).
+  - type: entity
+    entity: sensor.stroomverbruik_nu
+    name: Verbruik
+    show_name: true
+    state_content:
+      - state
+      - vandaag
+    tap_action:
+      action: navigate
+      navigation_path: /dashboard-thuis/energie
   # No person badges: Home Assistant is only reachable at home, so the phones
   # can never report being away.
 
 sections:
-  # Most used first, so it is on top on a phone.
+  # On a phone the sections stack in this order.
+  - type: grid
+    cards:
+      - type: heading
+        heading: Weer
+        icon: mdi:weather-partly-cloudy
+      - type: weather-forecast
+        entity: weather.forecast_home
+        show_current: true
+        show_forecast: true
+        forecast_type: daily
+
+  - type: grid
+    cards:
+      - type: heading
+        heading: Afval
+        icon: mdi:trash-can
+        tap_action:
+          action: navigate
+          navigation_path: '#afval'
+      # Titled with the next bin type itself (packages/afval.yaml), in its
+      # colour, with the day and countdown underneath.
+      - type: custom:bubble-card
+        card_type: button
+        button_type: state
+        entity: sensor.afval_ophaalschema
+        name: Afval
+        icon: mdi:trash-can
+        show_state: true
+        card_layout: large
+        grid_options:
+          columns: full
+        button_action:
+          tap_action:
+            action: navigate
+            navigation_path: '#afval'
+        styles: |
+          .bubble-main-icon-container {
+            background-color: rgba(var(--afval-kleur, 158, 158, 158), 0.22) !important;
+          }
+          .bubble-main-icon {
+            color: rgb(var(--afval-kleur, 158, 158, 158)) !important;
+          }
+          ${(() => {
+            const s = hass.states['sensor.afval_ophaalschema'];
+            const soort = (s?.state || '').split(' + ')[0];
+            const kleur = {
+              GFT: '76, 175, 80',
+              PMD: '255, 152, 0',
+              Papier: '66, 133, 244',
+              Restafval: '158, 158, 158',
+            }[soort];
+            if (kleur) card.style.setProperty('--afval-kleur', kleur);
+            else card.style.removeProperty('--afval-kleur');
+            const naam = card.querySelector('.bubble-name');
+            if (naam && s) naam.innerText = s.state;
+            const tekst = card.querySelector('.bubble-state');
+            if (tekst && s) tekst.innerText = s.attributes.wanneer || '';
+            const icoon = card.querySelector('.bubble-main-icon');
+            if (icoon && s?.attributes.icoon) icoon.setAttribute('icon', s.attributes.icoon);
+            return '';
+          })()}
+
+  # Today's totals from packages/energie.yaml, two by two.
+  - type: grid
+    cards:
+      - type: heading
+        heading: Energie vandaag
+        icon: mdi:lightning-bolt
+        tap_action:
+          action: navigate
+          navigation_path: /dashboard-thuis/energie
+      - type: tile
+        entity: sensor.zon_opgewekt_vandaag
+        name: Zon opgewekt
+        icon: mdi:solar-power-variant
+        color: amber
+        grid_options:
+          columns: 6
+        tap_action:
+          action: navigate
+          navigation_path: /dashboard-thuis/energie
+      - type: tile
+        entity: sensor.stroomverbruik_vandaag
+        name: Verbruikt
+        icon: mdi:home-lightning-bolt
+        color: teal
+        grid_options:
+          columns: 6
+        tap_action:
+          action: navigate
+          navigation_path: /dashboard-thuis/energie
+      - type: tile
+        entity: sensor.stroom_teruggeleverd_vandaag
+        name: Teruggeleverd
+        icon: mdi:transmission-tower-export
+        color: purple
+        grid_options:
+          columns: 6
+        tap_action:
+          action: navigate
+          navigation_path: /dashboard-thuis/energie
+      - type: tile
+        entity: sensor.stroom_afgenomen_vandaag
+        name: Afgenomen
+        icon: mdi:transmission-tower-import
+        color: blue
+        grid_options:
+          columns: 6
+        tap_action:
+          action: navigate
+          navigation_path: /dashboard-thuis/energie
+
   - type: grid
     cards:
       - type: heading
@@ -180,99 +302,6 @@ sections:
             })()} !important;
             color: var(--text-primary-color) !important;
           }
-
-  - type: grid
-    cards:
-      - type: heading
-        heading: Weer
-        icon: mdi:weather-partly-cloudy
-      - type: weather-forecast
-        entity: weather.forecast_home
-        show_current: true
-        show_forecast: true
-        forecast_type: daily
-
-  - type: grid
-    cards:
-      - type: heading
-        heading: Energie nu
-        icon: mdi:lightning-bolt
-        tap_action:
-          action: navigate
-          navigation_path: /dashboard-thuis/energie
-      - type: tile
-        entity: sensor.home_total_output_power
-        name: Zonnepanelen
-        icon: mdi:solar-power-variant
-        color: amber
-        tap_action:
-          action: navigate
-          navigation_path: /dashboard-thuis/energie
-      - type: tile
-        entity: sensor.p1_meter_power
-        name: Net
-        icon: mdi:transmission-tower
-        tap_action:
-          action: navigate
-          navigation_path: /dashboard-thuis/energie
-      - type: tile
-        entity: sensor.home_total_energy_today
-        name: Zon vandaag
-        icon: mdi:solar-power
-        color: amber
-        grid_options:
-          columns: full
-
-  - type: grid
-    cards:
-      - type: heading
-        heading: Afval
-        icon: mdi:trash-can
-        tap_action:
-          action: navigate
-          navigation_path: '#afval'
-      # Titled with the next bin type itself (packages/afval.yaml), in its
-      # colour, with the day and countdown underneath.
-      - type: custom:bubble-card
-        card_type: button
-        button_type: state
-        entity: sensor.afval_ophaalschema
-        name: Afval
-        icon: mdi:trash-can
-        show_state: true
-        card_layout: large
-        grid_options:
-          columns: full
-        button_action:
-          tap_action:
-            action: navigate
-            navigation_path: '#afval'
-        styles: |
-          .bubble-main-icon-container {
-            background-color: rgba(var(--afval-kleur, 158, 158, 158), 0.22) !important;
-          }
-          .bubble-main-icon {
-            color: rgb(var(--afval-kleur, 158, 158, 158)) !important;
-          }
-          ${(() => {
-            const s = hass.states['sensor.afval_ophaalschema'];
-            const soort = (s?.state || '').split(' + ')[0];
-            const kleur = {
-              GFT: '76, 175, 80',
-              PMD: '255, 152, 0',
-              Papier: '66, 133, 244',
-              Restafval: '158, 158, 158',
-            }[soort];
-            if (kleur) card.style.setProperty('--afval-kleur', kleur);
-            else card.style.removeProperty('--afval-kleur');
-            const naam = card.querySelector('.bubble-name');
-            if (naam && s) naam.innerText = s.state;
-            const tekst = card.querySelector('.bubble-state');
-            if (tekst && s) tekst.innerText = s.attributes.wanneer || '';
-            const icoon = card.querySelector('.bubble-main-icon');
-            if (icoon && s?.attributes.icoon) icoon.setAttribute('icon', s.attributes.icoon);
-            return '';
-          })()}
 
   # Only while watering, so it does not take space otherwise.
   - type: grid

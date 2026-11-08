@@ -1,0 +1,134 @@
+# Today's electricity totals for the "Energie nu" block and the usage badge on
+# the Thuis dashboard. The P1 meter only reports lifetime totals, so the
+# meter readings at midnight are looked up in the recorder's statistics; that
+# is right straight after a restart or reload, unlike a utility_meter, which
+# would only count from the moment it was created.
+template:
+  - triggers:
+      - trigger: homeassistant
+        event: start
+      # After "Template entities" is reloaded, instead of waiting.
+      - trigger: event
+        event_type: event_template_reloaded
+      - trigger: time_pattern
+        minutes: "/15"
+      # Right after midnight, so the totals start again from zero.
+      - trigger: time
+        at: "00:00:10"
+    actions:
+      - action: recorder.get_statistics
+        continue_on_error: true
+        data:
+          statistic_ids:
+            - sensor.p1_meter_energy_import
+            - sensor.p1_meter_energy_export
+          start_time: "{{ today_at() }}"
+          period: 5minute
+          types: [change, state]
+        response_variable: stats
+      # Reading at midnight = the last 5-minute reading minus today's change.
+      # Without rows yet (just after midnight) the current reading is the
+      # start; without a response the sensor keeps its last values.
+      - variables:
+          beginstand: >-
+            {% if stats is not defined or stats.statistics is not defined %}
+              {{ none }}
+            {% else %}
+              {% set ns = namespace(b={}) %}
+              {% for key, id in [('afgenomen', 'sensor.p1_meter_energy_import'),
+                                 ('teruggeleverd', 'sensor.p1_meter_energy_export')] %}
+                {% set rows = stats.statistics.get(id, []) %}
+                {% set b = (rows | last).state - (rows | map(attribute='change') | sum)
+                     if rows else states(id) | float(none) %}
+                {% set ns.b = dict(ns.b, **{key: b | round(3) if b is number else none}) %}
+              {% endfor %}
+              {{ ns.b }}
+            {% endif %}
+    sensor:
+      - name: Stroom beginstand vandaag
+        unique_id: stroom_beginstand_vandaag
+        icon: mdi:counter
+        # The date the readings belong to.
+        state: >-
+          {{ now().date().isoformat() if beginstand is not none else this.state }}
+        attributes:
+          afgenomen: >-
+            {{ beginstand.afgenomen if beginstand is not none and beginstand.afgenomen is number
+               else this.attributes.get('afgenomen') }}
+          teruggeleverd: >-
+            {{ beginstand.teruggeleverd if beginstand is not none and beginstand.teruggeleverd is number
+               else this.attributes.get('teruggeleverd') }}
+
+  - sensor:
+      - name: Stroom afgenomen vandaag
+        unique_id: stroom_afgenomen_vandaag
+        icon: mdi:transmission-tower-import
+        unit_of_measurement: kWh
+        device_class: energy
+        state: >-
+          {% set b = state_attr('sensor.stroom_beginstand_vandaag', 'afgenomen') %}
+          {{ [states('sensor.p1_meter_energy_import') | float - b, 0] | max | round(2) }}
+        availability: >-
+          {{ is_number(states('sensor.p1_meter_energy_import'))
+             and state_attr('sensor.stroom_beginstand_vandaag', 'afgenomen') is number }}
+
+      - name: Stroom teruggeleverd vandaag
+        unique_id: stroom_teruggeleverd_vandaag
+        icon: mdi:transmission-tower-export
+        unit_of_measurement: kWh
+        device_class: energy
+        state: >-
+          {% set b = state_attr('sensor.stroom_beginstand_vandaag', 'teruggeleverd') %}
+          {{ [states('sensor.p1_meter_energy_export') | float - b, 0] | max | round(2) }}
+        availability: >-
+          {{ is_number(states('sensor.p1_meter_energy_export'))
+             and state_attr('sensor.stroom_beginstand_vandaag', 'teruggeleverd') is number }}
+
+      # The Growatt day total resets about a minute after midnight and is
+      # sometimes briefly unavailable in the night: before its reset it counts
+      # as 0, and while unavailable the last value is kept.
+      - name: Zon opgewekt vandaag
+        unique_id: zon_opgewekt_vandaag
+        icon: mdi:solar-power-variant
+        unit_of_measurement: kWh
+        device_class: energy
+        state: >-
+          {% set s = states.sensor.home_total_energy_today %}
+          {% if s is not none and is_number(s.state) %}
+            {{ s.state | float if as_local(s.last_changed).date() == now().date() else 0 }}
+          {% else %}
+            {{ this.state | float(0) }}
+          {% endif %}
+
+      # Everything the house used: from the grid plus from the panels.
+      - name: Stroomverbruik vandaag
+        unique_id: stroomverbruik_vandaag
+        icon: mdi:home-lightning-bolt
+        unit_of_measurement: kWh
+        device_class: energy
+        state: >-
+          {{ (states('sensor.stroom_afgenomen_vandaag') | float
+              + states('sensor.zon_opgewekt_vandaag') | float
+              - states('sensor.stroom_teruggeleverd_vandaag') | float) | round(2) }}
+        availability: >-
+          {{ is_number(states('sensor.stroom_afgenomen_vandaag'))
+             and is_number(states('sensor.stroom_teruggeleverd_vandaag'))
+             and is_number(states('sensor.zon_opgewekt_vandaag')) }}
+
+      # What the house uses right now. The P1 power is negative while
+      # exporting, so adding the solar output gives the actual use.
+      - name: Stroomverbruik nu
+        unique_id: stroomverbruik_nu
+        icon: mdi:home-lightning-bolt-outline
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        state: >-
+          {{ (states('sensor.p1_meter_power') | float
+              + states('sensor.home_total_output_power') | float(0)) | round(0) }}
+        availability: "{{ is_number(states('sensor.p1_meter_power')) }}"
+        attributes:
+          # For the Thuis badge, which shows it next to the state.
+          vandaag: >-
+            {% set v = states('sensor.stroomverbruik_vandaag') %}
+            {{ '%.1f kWh vandaag' | format(v | float) if is_number(v) else '' }}

@@ -5,7 +5,8 @@ This directory contains Kubernetes manifests that are applied into the
 
 ## RainBird Irrigation
 
-`packages/rainbird.yaml`, `packages/airco.yaml` and `packages/afval.yaml` are rendered into the
+`packages/rainbird.yaml`, `packages/airco.yaml`, `packages/afval.yaml` and
+`packages/energie.yaml` are rendered into the
 `home-assistant-packages` ConfigMap and mounted read-only under
 `/config/packages`.
 
@@ -101,7 +102,7 @@ block in `helm-values.yaml` registers it in YAML mode for every user. The
 
 | View | Contents |
 |---|---|
-| Thuis | Woonkamer lamp switch, both airco units with filter life and automation toggle, weather, energy now, next waste pickup, Rain Bird status while watering |
+| Thuis | Weather, next waste pickup, today's solar, usage, export and import, Woonkamer lamp switch, both airco units with filter life and automation toggle, Rain Bird status while watering |
 | Klimaat | Every control of both rooms: thermostat, ionizer, jet mode, display light, filter, automation, day and night maxima, sleep period, maintenance fan level |
 | Energie | The energy dashboard cards: distribution, live power, electricity, solar, gas, water, devices, self-sufficiency |
 | Tuin | Rain Bird status, manual zones, and the program |
@@ -139,6 +140,19 @@ Dutch day and countdown (`wanneer`), an icon, and every pickup in the window
 (`ophalingen`, with `week` 0 for this week and 1 for next week) for the
 pop-up's list. If the calendar is not loaded yet after a restart, the sensor
 keeps its last value until the next hourly run.
+
+### Energy today
+
+`packages/energie.yaml` adds today's electricity totals for the Thuis view:
+`sensor.zon_opgewekt_vandaag`, `sensor.stroomverbruik_vandaag`,
+`sensor.stroom_teruggeleverd_vandaag` and `sensor.stroom_afgenomen_vandaag`
+(kWh), plus `sensor.stroomverbruik_nu` (W, P1 power plus solar output) for
+the usage badge. The P1 meter only reports lifetime totals, so every 15
+minutes, and just after midnight, `sensor.stroom_beginstand_vandaag` looks up
+the meter readings at midnight in the recorder's 5-minute statistics. The
+day totals are the current readings minus those. Solar comes from the Growatt
+day total, which resets a minute after midnight. Usage is import plus solar
+minus export.
 
 New or changed packages are not picked up by a running Home Assistant: run
 **Developer tools → YAML → Template entities** (or restart) after Argo CD

@@ -14,3 +14,10 @@ highlight_current_view: true
 4_name: Tuin
 4_icon: mdi:sprinkler-variant
 4_link: /dashboard-thuis/tuin
+# With names the four buttons need ~460px; on a phone show icons only so they
+# all fit. Bubble re-measures the buttons and repositions them.
+styles: |
+  @media (max-width: 480px) {
+    .bubble-name { display: none !important; }
+    .bubble-button { padding: 0 22px !important; }
+  }

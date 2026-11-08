@@ -84,10 +84,6 @@ sections:
       - type: energy-grid-neutrality-gauge
         grid_options:
           columns: 4
-      - type: tile
-        entity: sensor.home_total_total_money_today
-        name: Zon-opbrengst vandaag
-        icon: mdi:cash
 
   - type: grid
     cards:

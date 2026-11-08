@@ -1,112 +1,190 @@
 # All controls for one room, shown inline on Klimaat and in the Thuis pop-up.
 # airco-boven.yaml is the same file with beneden -> boven; keep them in step.
-- type: thermostat
-  entity: climate.airco_beneden
-  name: Airco beneden
-  show_current_as_primary: true
-  features:
-    - type: climate-hvac-modes
-    - type: climate-fan-modes
-      style: dropdown
-    - type: climate-swing-modes
-      style: dropdown
-    - type: climate-swing-horizontal-modes
-      style: dropdown
+# Grouped as: the unit itself, its extra functions, the automation and its
+# settings (only while it is on), and the filter and power use.
 
+# The unit: on/off and mode, target temperature, fan speed and the louvres.
+- type: custom:bubble-card
+  card_type: climate
+  entity: climate.airco_beneden
+  name: Airco
+  icon: mdi:air-conditioner
+  state_color: true
+  show_state: true
+  show_attribute: true
+  attribute: current_temperature
+  step: 1
+  card_layout: large
+  # Two rows high, so the selectors fit below the name; inside a stack there
+  # is no section grid to size it.
+  rows: 2
+  sub_button:
+    bottom:
+      - entity: climate.airco_beneden
+        name: Modus
+        select_attribute: hvac_modes
+        show_state: true
+        show_arrow: false
+      - entity: climate.airco_beneden
+        name: Ventilator
+        icon: mdi:fan
+        select_attribute: fan_modes
+        show_attribute: true
+        attribute: fan_mode
+        show_arrow: false
+      - entity: climate.airco_beneden
+        name: Verticaal
+        icon: mdi:arrow-up-down
+        select_attribute: swing_modes
+        show_attribute: true
+        attribute: swing_mode
+        show_arrow: false
+      - entity: climate.airco_beneden
+        name: Horizontaal
+        icon: mdi:arrow-left-right
+        select_attribute: swing_horizontal_modes
+        show_attribute: true
+        attribute: swing_horizontal_mode
+        show_arrow: false
+
+- type: heading
+  heading: Functies
+  heading_style: subtitle
 - type: grid
   columns: 2
   square: false
   cards:
     - type: tile
-      entity: input_boolean.airco_beneden_automation
-      name: Automatisch
-      icon: mdi:robot
-      tap_action:
-        action: toggle
-    - type: tile
       entity: switch.airco_beneden_ionizer
       name: Ionisator
-      tap_action:
-        action: toggle
-    - type: tile
-      entity: switch.airco_beneden_jet_mode
-      name: Jet-modus
-      icon: mdi:weather-windy
+      icon: mdi:pine-tree
       tap_action:
         action: toggle
     - type: tile
       entity: switch.airco_beneden_display_light
-      name: Displaylicht
+      name: Display
       icon: mdi:led-on
       tap_action:
         action: toggle
+    # The unit only offers jet mode while it is cooling.
+    - type: conditional
+      conditions:
+        - condition: state
+          entity: switch.airco_beneden_jet_mode
+          state_not: unavailable
+      card:
+        type: tile
+        entity: switch.airco_beneden_jet_mode
+        name: Jet
+        icon: mdi:weather-windy
+        tap_action:
+          action: toggle
 
+- type: heading
+  heading: Automatisch
+  heading_style: subtitle
+- type: custom:bubble-card
+  card_type: button
+  button_type: switch
+  entity: input_boolean.airco_beneden_automation
+  name: Automatisch koelen
+  icon: mdi:robot
+  show_state: true
+  # Says what the automation aims for right now, or that it is off.
+  styles: |
+    ${(() => {
+      const nacht = hass.states['binary_sensor.airco_beneden_slaapperiode']?.state === 'on';
+      const max = hass.states[nacht ? 'input_number.airco_beneden_sleep_target' : 'input_number.airco_beneden_day_limit']?.state;
+      const el = card.querySelector('.bubble-state');
+      if (el) el.innerText = state === 'on'
+        ? `Aan · ${nacht ? 'nacht' : 'overdag'}, max. ${parseFloat(max)} °C`
+        : 'Uit · je bedient de airco zelf';
+      return '';
+    })()}
+# The settings only matter while the automation is on.
+- type: conditional
+  conditions:
+    - condition: state
+      entity: input_boolean.airco_beneden_automation
+      state: "on"
+  card:
+    type: vertical-stack
+    cards:
+      - type: grid
+        columns: 2
+        square: false
+        cards:
+          - type: tile
+            entity: input_number.airco_beneden_day_limit
+            name: Max. overdag
+            icon: mdi:white-balance-sunny
+            features_position: bottom
+            features:
+              - type: numeric-input
+                style: buttons
+          - type: tile
+            entity: input_number.airco_beneden_sleep_target
+            name: Max. 's nachts
+            icon: mdi:weather-night
+            features_position: bottom
+            features:
+              - type: numeric-input
+                style: buttons
+          - type: tile
+            entity: input_datetime.airco_beneden_sleep_start
+            name: Nacht vanaf
+            icon: mdi:bed-clock
+            tap_action:
+              action: more-info
+          - type: tile
+            entity: input_datetime.airco_beneden_sleep_end
+            name: Nacht tot
+            icon: mdi:alarm
+            tap_action:
+              action: more-info
+      # 0-4 maps to the unit's fan speeds; the state line shows the name.
+      - type: custom:bubble-card
+        card_type: button
+        button_type: slider
+        entity: input_number.airco_beneden_maintenance_fan_level
+        name: Ventilator bij onderhoud
+        icon: mdi:fan-chevron-up
+        show_state: true
+        styles: |
+          ${(() => {
+            const namen = ['laag', 'laag-midden', 'midden', 'midden-hoog', 'hoog'];
+            const el = card.querySelector('.bubble-state');
+            if (el) el.innerText = namen[parseInt(state)] ?? state;
+            return '';
+          })()}
+
+- type: heading
+  heading: Filter en verbruik
+  heading_style: subtitle
 - type: grid
   columns: 2
   square: false
   cards:
-    - type: gauge
+    # Green above 30%, orange below, red below 10% (when a notification goes out).
+    - type: custom:bubble-card
+      card_type: button
+      button_type: state
       entity: sensor.airco_beneden_filter_remaining_life
       name: Filter
-      needle: true
-      severity:
-        green: 30
-        yellow: 10
-        red: 0
-    - type: tile
+      icon: mdi:air-filter
+      show_state: true
+      styles: |
+        .bubble-main-icon {
+          color: ${(() => {
+            const life = parseFloat(state);
+            if (isNaN(life)) return '';
+            return life < 10 ? 'var(--error-color)' : life < 30 ? 'var(--warning-color)' : 'var(--success-color)';
+          })()} !important;
+        }
+    - type: custom:bubble-card
+      card_type: button
+      button_type: state
       entity: sensor.airco_beneden_energy_current
       name: Verbruik nu
       icon: mdi:flash
-
-- type: heading
-  heading: Automatisering
-  heading_style: subtitle
-  icon: mdi:robot
-
-- type: grid
-  columns: 2
-  square: false
-  cards:
-    - type: tile
-      entity: input_number.airco_beneden_day_limit
-      name: Max. overdag
-      icon: mdi:white-balance-sunny
-      features_position: bottom
-      features:
-        - type: numeric-input
-          style: buttons
-    - type: tile
-      entity: input_number.airco_beneden_sleep_target
-      name: Max. 's nachts
-      icon: mdi:weather-night
-      features_position: bottom
-      features:
-        - type: numeric-input
-          style: buttons
-    - type: tile
-      entity: input_datetime.airco_beneden_sleep_start
-      name: Nacht vanaf
-      tap_action:
-        action: more-info
-    - type: tile
-      entity: input_datetime.airco_beneden_sleep_end
-      name: Nacht tot
-      tap_action:
-        action: more-info
-
-- type: tile
-  entity: input_number.airco_beneden_maintenance_fan_level
-  name: Onderhoudsniveau ventilator
-  icon: mdi:fan-chevron-up
-  features_position: bottom
-  features:
-    - type: numeric-input
-      style: buttons
-
-- type: markdown
-  text_only: true
-  content: >-
-    {% set modes = ['low', 'LOW_MID', 'medium', 'MID_HIGH', 'high'] %}
-    {% set level = states('input_number.airco_beneden_maintenance_fan_level') | int(0) %}
-    Nu **{{ modes[level] if level < modes | count else level }}**
-    · 0 = low, 1 = LOW_MID, 2 = medium, 3 = MID_HIGH, 4 = high
+      show_state: true

@@ -5,25 +5,8 @@ type: sections
 max_columns: 2
 dense_section_placement: true
 theme: Homelab
-badges:
-  - type: entity
-    entity: sensor.airco_boven_filter_remaining_life
-    name: Filter boven
-    show_name: true
-    icon: mdi:air-filter
-  - type: entity
-    entity: sensor.airco_beneden_filter_remaining_life
-    name: Filter beneden
-    show_name: true
-    icon: mdi:air-filter
-  - type: entity
-    entity: binary_sensor.airco_boven_slaapperiode
-    name: Nacht boven
-    show_name: true
-  - type: entity
-    entity: binary_sensor.airco_beneden_slaapperiode
-    name: Nacht beneden
-    show_name: true
+# No view badges: each room shows its own filter, and its heading shows when
+# the night period is active.
 
 sections:
   # One room per column: side by side on a tablet or laptop, stacked on a phone.
@@ -32,6 +15,15 @@ sections:
       - type: heading
         heading: Boven
         icon: mdi:stairs-up
+        badges:
+          - type: entity
+            entity: binary_sensor.airco_boven_slaapperiode
+            show_state: true
+            color: indigo
+            visibility:
+              - condition: state
+                entity: binary_sensor.airco_boven_slaapperiode
+                state: "on"
       - type: vertical-stack
         grid_options:
           columns: full
@@ -42,6 +34,15 @@ sections:
       - type: heading
         heading: Beneden
         icon: mdi:stairs-down
+        badges:
+          - type: entity
+            entity: binary_sensor.airco_beneden_slaapperiode
+            show_state: true
+            color: indigo
+            visibility:
+              - condition: state
+                entity: binary_sensor.airco_beneden_slaapperiode
+                state: "on"
       - type: vertical-stack
         grid_options:
           columns: full

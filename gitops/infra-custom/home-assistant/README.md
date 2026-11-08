@@ -104,7 +104,7 @@ block in `helm-values.yaml` registers it in YAML mode for every user. The
 |---|---|
 | Thuis | Weather, next waste pickup, today's solar, usage, export and import, Woonkamer lamp switch, both airco units with filter life and automation toggle, Rain Bird status while watering |
 | Energie | The energy dashboard cards: distribution, live power, electricity, solar, gas, water, devices, self-sufficiency |
-| Klimaat | Every control of both rooms: thermostat, ionizer, jet mode, display light, filter, automation, day and night maxima, sleep period, maintenance fan level |
+| Klimaat | Per room, in groups: the unit (mode, target, fan, both louvre directions), functions (ionizer, display light, jet mode while cooling), the automation with its settings while it is on (day and night maxima, night period, maintenance fan level), and filter and power use |
 | Tuin | Rain Bird status, manual zones, and the program |
 
 Pop-ups (`popup-*.yaml`) open from the Thuis view: all lights and scenes, each

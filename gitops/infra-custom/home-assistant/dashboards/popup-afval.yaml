@@ -3,9 +3,27 @@ card_type: pop-up
 hash: '#afval'
 name: Afval
 icon: mdi:trash-can
-entity: sensor.circulus_eerstvolgende
+entity: sensor.afval_ophaalschema
 width_desktop: 560px
 cards:
+  # The rest of this week and all of next week (packages/afval.yaml).
+  - type: markdown
+    content: |-
+      {% set items = state_attr('sensor.afval_ophaalschema', 'ophalingen') or [] %}
+      {% for week, label in [(0, 'Deze week'), (1, 'Volgende week')] %}
+      ### {{ label }}
+      {% for i in items | selectattr('week', 'eq', week) %}
+      - <ha-icon icon="{{ i.icoon }}"></ha-icon> **{{ i.soort }}** · {{ i.dag }} ({{ i.wanneer }})
+      {% else %}
+      - Geen ophaling
+      {% endfor %}
+      {% endfor %}
+
+  # Next date per bin, also when it is further away than next week.
+  - type: custom:bubble-card
+    card_type: separator
+    name: Per soort
+    icon: mdi:delete-variant
   - type: grid
     columns: 2
     square: false
@@ -14,19 +32,19 @@ cards:
         entity: sensor.circulus_gft
         name: GFT
         icon: mdi:leaf
+        color: green
       - type: tile
         entity: sensor.circulus_pmd
         name: PMD
         icon: mdi:recycle
+        color: orange
       - type: tile
         entity: sensor.circulus_papier
         name: Papier
         icon: mdi:package-variant
+        color: blue
       - type: tile
         entity: sensor.circulus_restafval
         name: Restafval
         icon: mdi:trash-can
-  - type: calendar
-    initial_view: listWeek
-    entities:
-      - calendar.afvalbeheer_circulus
+        color: grey

@@ -5,7 +5,7 @@ This directory contains Kubernetes manifests that are applied into the
 
 ## RainBird Irrigation
 
-`packages/rainbird.yaml` and `packages/airco.yaml` are rendered into the
+`packages/rainbird.yaml`, `packages/airco.yaml` and `packages/afval.yaml` are rendered into the
 `home-assistant-packages` ConfigMap and mounted read-only under
 `/config/packages`.
 
@@ -107,7 +107,7 @@ block in `helm-values.yaml` registers it in YAML mode for every user. The
 | Tuin | Rain Bird status, manual zones, and the program |
 
 Pop-ups (`popup-*.yaml`) open from the Thuis view: all lights and scenes, each
-airco unit, and the waste calendar. `airco-boven.yaml` and
+airco unit, and the waste pickups. `airco-boven.yaml` and
 `airco-beneden.yaml` hold the room controls once for both the Klimaat view
 and the pop-ups. Keep the two files identical apart from the room name.
 
@@ -128,6 +128,21 @@ Requirements and editing:
 - To switch over, each person can pick the dashboard as their default in
   **Settings → Dashboards** or in their profile on each device. The old
   dashboard keeps working until it is removed.
+
+### Waste pickups
+
+`packages/afval.yaml` adds `sensor.afval_ophaalschema`. Every hour, and just
+after midnight, it reads the Circulus calendar from today through Sunday of
+next week. Its state is the next bin type (`GFT`, or `GFT + Papier` when two
+share a day), which the Thuis card uses as its title. Its attributes hold the
+Dutch day and countdown (`wanneer`), an icon, and every pickup in the window
+(`ophalingen`, with `week` 0 for this week and 1 for next week) for the
+pop-up's list. If the calendar is not loaded yet after a restart, the sensor
+keeps its last value until the next hourly run.
+
+New or changed packages are not picked up by a running Home Assistant: run
+**Developer tools → YAML → Template entities** (or restart) after Argo CD
+syncs.
 
 ## Air Conditioning
 

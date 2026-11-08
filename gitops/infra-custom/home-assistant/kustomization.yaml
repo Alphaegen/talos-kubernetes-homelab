@@ -8,6 +8,7 @@ configMapGenerator:
     files:
       - rainbird.yaml=packages/rainbird.yaml
       - airco.yaml=packages/airco.yaml
+      - afval.yaml=packages/afval.yaml
     options:
       labels:
         app.kubernetes.io/component: packages

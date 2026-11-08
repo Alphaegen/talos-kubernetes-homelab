@@ -1,0 +1,95 @@
+# Waste pickups from today through Sunday of next week, read from the Circulus
+# calendar, for the Afval cards on the Thuis dashboard. The state is the next
+# bin type ("GFT", or "GFT + Papier" on a shared day), so it can be shown as
+# the card's title.
+template:
+  - triggers:
+      - trigger: homeassistant
+        event: start
+      - trigger: time_pattern
+        hours: "/1"
+      # Right after midnight, so "morgen" becomes "vandaag" on time.
+      - trigger: time
+        at: "00:00:10"
+    actions:
+      - action: calendar.get_events
+        # The calendar may not be loaded yet right after a restart; the
+        # sensor then keeps its last value until the next hourly run.
+        continue_on_error: true
+        target:
+          entity_id: calendar.afvalbeheer_circulus
+        data:
+          start_date_time: "{{ today_at() }}"
+          # Monday is weekday 0: this ends at the Monday after next week.
+          end_date_time: "{{ today_at() + timedelta(days=14 - now().weekday()) }}"
+        response_variable: agenda
+      - variables:
+          dagen: >-
+            {{ ['maandag', 'dinsdag', 'woensdag', 'donderdag', 'vrijdag',
+                'zaterdag', 'zondag'] }}
+          maanden: >-
+            {{ ['januari', 'februari', 'maart', 'april', 'mei', 'juni', 'juli',
+                'augustus', 'september', 'oktober', 'november', 'december'] }}
+          iconen: >-
+            {{ {'GFT': 'mdi:leaf', 'PMD': 'mdi:recycle',
+                'Papier': 'mdi:package-variant', 'Restafval': 'mdi:trash-can'} }}
+          ophalingen: >-
+            {% set fetched = agenda is defined
+                 and 'calendar.afvalbeheer_circulus' in agenda %}
+            {% if not fetched %}
+              {{ none }}
+            {% else %}
+              {% set monday = (today_at() - timedelta(days=now().weekday())).date() %}
+              {% set ns = namespace(items=[]) %}
+              {% for event in agenda['calendar.afvalbeheer_circulus'].events
+                   | sort(attribute='start') %}
+                {% set d = as_datetime(event.start).date() %}
+                {% set until = (d - now().date()).days %}
+                {% set ns.items = ns.items + [{
+                  'datum': d.isoformat(),
+                  'soort': event.summary,
+                  'icoon': iconen.get(event.summary, 'mdi:trash-can'),
+                  'week': ((d - monday).days // 7),
+                  'dag': dagen[d.weekday()] ~ ' ' ~ d.day ~ ' ' ~ maanden[d.month - 1],
+                  'wanneer': 'vandaag' if until == 0
+                    else 'morgen' if until == 1
+                    else 'over ' ~ until ~ ' dagen'
+                }] %}
+              {% endfor %}
+              {{ ns.items }}
+            {% endif %}
+    sensor:
+      - name: Afval ophaalschema
+        unique_id: afval_ophaalschema
+        icon: mdi:trash-can
+        state: >-
+          {% if ophalingen is none %}
+            {{ this.state if this.state not in ['unknown', 'unavailable'] else 'Geen' }}
+          {% elif ophalingen | count == 0 %}
+            Geen
+          {% else %}
+            {{ ophalingen | selectattr('datum', 'eq', ophalingen[0].datum)
+               | map(attribute='soort') | join(' + ') }}
+          {% endif %}
+        attributes:
+          # Next pickup, e.g. "woensdag 11 november · over 3 dagen".
+          wanneer: >-
+            {% if ophalingen is none %}
+              {{ this.attributes.get('wanneer', '') }}
+            {% elif ophalingen | count == 0 %}
+              Niets tot en met volgende week
+            {% else %}
+              {{ ophalingen[0].dag }} · {{ ophalingen[0].wanneer }}
+            {% endif %}
+          icoon: >-
+            {% if ophalingen is none %}
+              {{ this.attributes.get('icoon', 'mdi:trash-can') }}
+            {% elif ophalingen | count == 0 %}
+              mdi:trash-can-outline
+            {% else %}
+              {{ ophalingen[0].icoon }}
+            {% endif %}
+          # Every pickup in the window; week 0 is this week, 1 is next week.
+          ophalingen: >-
+            {{ this.attributes.get('ophalingen', []) if ophalingen is none
+               else ophalingen }}

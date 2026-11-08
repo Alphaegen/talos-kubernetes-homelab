@@ -1,0 +1,106 @@
+# The energy cards read the sources from Settings > Dashboards > Energy (P1,
+# Growatt solar, gas, watermeter, device plugs). One date picker drives every
+# card on this dashboard.
+title: Energie
+path: energie
+icon: mdi:lightning-bolt
+type: sections
+max_columns: 4
+dense_section_placement: true
+theme: Homelab
+badges:
+  - type: power-total
+  - type: gas-total
+  - type: water-total
+  - type: entity
+    entity: sensor.electricity_maps_co2_intensity
+    name: CO₂ stroomnet
+    show_name: true
+
+sections:
+  - type: grid
+    column_span: 2
+    cards:
+      - type: energy-date-selection
+        grid_options:
+          columns: full
+      - type: energy-distribution
+        link_dashboard: true
+        grid_options:
+          columns: full
+
+  - type: grid
+    column_span: 2
+    cards:
+      - type: heading
+        heading: Nu
+        icon: mdi:flash
+      - type: power-sankey
+        grid_options:
+          columns: full
+      - type: tile
+        entity: sensor.home_total_output_power
+        name: Zonnepanelen
+        icon: mdi:solar-power-variant
+        color: amber
+      - type: tile
+        entity: sensor.p1_meter_power
+        name: Net
+        icon: mdi:transmission-tower
+
+  - type: grid
+    column_span: 2
+    cards:
+      - type: heading
+        heading: Stroom
+        icon: mdi:transmission-tower
+      - type: energy-usage-graph
+        grid_options:
+          columns: full
+      - type: energy-solar-graph
+        grid_options:
+          columns: full
+
+  - type: grid
+    column_span: 2
+    cards:
+      - type: heading
+        heading: Gas en water
+        icon: mdi:fire
+      - type: energy-gas-graph
+        grid_options:
+          columns: full
+      - type: energy-water-graph
+        grid_options:
+          columns: full
+
+  - type: grid
+    column_span: 2
+    cards:
+      - type: heading
+        heading: Zelfvoorziening
+        icon: mdi:solar-power
+      - type: energy-self-sufficiency-gauge
+      - type: energy-solar-consumed-gauge
+      - type: energy-grid-neutrality-gauge
+      - type: tile
+        entity: sensor.home_total_total_money_today
+        name: Zon-opbrengst vandaag
+        icon: mdi:cash
+
+  - type: grid
+    column_span: 2
+    cards:
+      - type: heading
+        heading: Apparaten
+        icon: mdi:power-plug
+      - type: energy-devices-graph
+        grid_options:
+          columns: full
+      - type: energy-sources-table
+        grid_options:
+          columns: full
+
+  - type: grid
+    cards:
+      - !include nav.yaml

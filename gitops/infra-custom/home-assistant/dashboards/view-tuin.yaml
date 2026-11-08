@@ -1,0 +1,198 @@
+# Rain Bird controls from packages/rainbird.yaml. Zones are only started
+# through the scripts, never through the raw switches, so they stay mutually
+# exclusive. Starts ask for confirmation; stops do not.
+title: Tuin
+path: tuin
+icon: mdi:sprinkler-variant
+type: sections
+max_columns: 4
+dense_section_placement: true
+theme: Homelab
+badges:
+  - type: entity
+    entity: sensor.rainbird_status
+    name: Rain Bird
+    show_name: true
+  - type: entity
+    entity: binary_sensor.rain_bird_controller_rainsensor
+    name: Regen
+    show_name: true
+    icon: mdi:weather-rainy
+
+sections:
+  - type: grid
+    cards:
+      - type: heading
+        heading: Status
+        icon: mdi:sprinkler-variant
+      - type: tile
+        entity: sensor.rainbird_status
+        name: Status
+      - type: tile
+        entity: timer.rainbird_time_left
+        name: Resterende tijd
+      - type: tile
+        entity: sensor.rainbird_active_zone
+        name: Actieve zone
+        grid_options:
+          columns: full
+      - type: markdown
+        text_only: true
+        grid_options:
+          columns: full
+        content: |
+          **Nog in programma:** {{ states('sensor.rainbird_program_remaining') }}
+
+          **Laatste melding:** {{ states('sensor.rainbird_last_message') }}
+      - type: tile
+        entity: binary_sensor.rain_bird_controller_rainsensor
+        name: Regen gedetecteerd
+        icon: mdi:weather-rainy
+      - type: tile
+        entity: number.rain_bird_controller_rain_delay
+        name: Regenvertraging
+        icon: mdi:timer-pause-outline
+        features_position: bottom
+        features:
+          - type: numeric-input
+      - type: tile
+        entity: script.rainbird_stop_all_zones
+        name: Alles stoppen
+        icon: mdi:stop-circle-outline
+        color: red
+        hide_state: true
+        grid_options:
+          columns: full
+        tap_action:
+          action: perform-action
+          perform_action: script.rainbird_stop_all_zones
+          data:
+            cancel_program: true
+
+  - type: grid
+    cards:
+      - type: heading
+        heading: Handmatig
+        icon: mdi:gesture-tap
+      - type: tile
+        entity: input_number.rainbird_duration
+        name: Duur
+        grid_options:
+          columns: full
+        features_position: bottom
+        features:
+          - type: numeric-input
+      - type: button
+        name: Gras
+        icon: mdi:grass
+        tap_action:
+          action: perform-action
+          perform_action: script.rainbird_start_single_zone
+          data:
+            zone_switch: switch.rain_bird_sprinkler_1
+          confirmation:
+            text: Zone Gras starten?
+      - type: button
+        name: Achtertuin
+        icon: mdi:flower
+        tap_action:
+          action: perform-action
+          perform_action: script.rainbird_start_single_zone
+          data:
+            zone_switch: switch.rain_bird_sprinkler_2
+          confirmation:
+            text: Zone Achtertuin starten?
+      - type: button
+        name: Voortuin + zijkant
+        icon: mdi:home-variant-outline
+        tap_action:
+          action: perform-action
+          perform_action: script.rainbird_start_single_zone
+          data:
+            zone_switch: switch.rain_bird_sprinkler_3
+          confirmation:
+            text: Zone Voortuin + zijkant starten?
+      - type: button
+        name: Druppelslang
+        icon: mdi:water-outline
+        tap_action:
+          action: perform-action
+          perform_action: script.rainbird_start_single_zone
+          data:
+            zone_switch: switch.rain_bird_sprinkler_4
+          confirmation:
+            text: Zone Druppelslang starten?
+      - type: tile
+        entity: script.rainbird_stop_all_zones
+        name: Zone stoppen
+        icon: mdi:stop-circle-outline
+        color: red
+        hide_state: true
+        grid_options:
+          columns: full
+        tap_action:
+          action: perform-action
+          perform_action: script.rainbird_stop_all_zones
+          data:
+            cancel_program: false
+
+  - type: grid
+    cards:
+      - type: heading
+        heading: Programma
+        icon: mdi:playlist-play
+      - type: tile
+        entity: sensor.rainbird_program_total_duration
+        name: Totale duur
+        grid_options:
+          columns: full
+      - type: tile
+        entity: input_number.rainbird_program_zone_1_duration
+        name: Gras
+        features_position: bottom
+        features:
+          - type: numeric-input
+      - type: tile
+        entity: input_number.rainbird_program_zone_2_duration
+        name: Achtertuin
+        features_position: bottom
+        features:
+          - type: numeric-input
+      - type: tile
+        entity: input_number.rainbird_program_zone_3_duration
+        name: Voortuin + zijkant
+        features_position: bottom
+        features:
+          - type: numeric-input
+      - type: tile
+        entity: input_number.rainbird_program_zone_4_duration
+        name: Druppelslang
+        features_position: bottom
+        features:
+          - type: numeric-input
+      - type: tile
+        entity: script.rainbird_run_program
+        name: Programma starten
+        icon: mdi:playlist-play
+        color: green
+        hide_state: true
+        tap_action:
+          action: perform-action
+          perform_action: script.rainbird_run_program
+          confirmation:
+            text: Het sproeiprogramma starten?
+      - type: tile
+        entity: script.rainbird_stop_all_zones
+        name: Programma stoppen
+        icon: mdi:playlist-remove
+        color: red
+        hide_state: true
+        tap_action:
+          action: perform-action
+          perform_action: script.rainbird_stop_all_zones
+          data:
+            cancel_program: true
+
+  - type: grid
+    cards:
+      - !include nav.yaml

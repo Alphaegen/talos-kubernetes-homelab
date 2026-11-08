@@ -90,6 +90,45 @@ Use these snippets on the RainBird page in the main Home Assistant dashboard:
 managed in Home Assistant storage, so these files are the source-of-truth
 snippets to paste into that page when the RainBird controls change.
 
+## Thuis Dashboard
+
+`dashboards/` holds a second, Git-managed dashboard, **Thuis (nieuw)** at
+`/dashboard-thuis`, built for phones first. It sits next to the
+storage-managed main dashboard, which it does not change. The `lovelace:`
+block in `helm-values.yaml` registers it in YAML mode for every user. The
+`home-assistant-dashboards` ConfigMap mounts the files flat at
+`/config/dashboards`, so `!include` takes plain file names.
+
+| View | Contents |
+|---|---|
+| Thuis | Woonkamer lamp switch, both airco units with filter life and automation toggle, weather, energy now, next waste pickup, Rain Bird status while watering |
+| Klimaat | Every control of both rooms: thermostat, ionizer, jet mode, display light, filter, automation, day and night maxima, sleep period, maintenance fan level |
+| Energie | The energy dashboard cards: distribution, live power, electricity, solar, gas, water, devices, self-sufficiency |
+| Tuin | Rain Bird status, manual zones, and the program |
+
+Pop-ups (`popup-*.yaml`) open from the Thuis view: all lights and scenes, each
+airco unit, and the waste calendar. `airco-boven.yaml` and
+`airco-beneden.yaml` hold the room controls once for both the Klimaat view
+and the pop-ups. Keep the two files identical apart from the room name.
+
+Requirements and editing:
+
+- The dashboard needs **Bubble Card**, installed through HACS (Frontend). Like
+  the other HACS cards, its resource lives in Home Assistant storage, not in
+  Git.
+- A new file must be listed under `home-assistant-dashboards` in
+  `kustomization.yaml`. `scripts/validate.sh` checks this, that every file
+  parses, and that every `!include` target is shipped.
+- After Argo CD syncs a change, the mounted files update within about a
+  minute. Then use **⋮ → Refresh** on the dashboard. Only changes to the
+  `lovelace:` block itself restart Home Assistant.
+- The `Homelab` theme (`themes/homelab.yaml`, mounted at `/config/themes`) is
+  set per view, with light and dark modes. After a theme change, run the
+  `frontend.reload_themes` action.
+- To switch over, each person can pick the dashboard as their default in
+  **Settings → Dashboards** or in their profile on each device. The old
+  dashboard keeps working until it is removed.
+
 ## Air Conditioning
 
 `packages/airco.yaml` manages the two LG air conditioners exposed by the

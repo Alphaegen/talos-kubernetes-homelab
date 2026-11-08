@@ -30,6 +30,7 @@ all_enabled_values=$infra_helm/ci/all-enabled-values.yaml
 plain_manifests=(gitops/root-application.yaml)
 go_modules=(gitops/infra-custom/pi5-fan-control)
 kyverno_dir=gitops/infra-custom/kyverno
+ha_dashboard_dir=gitops/infra-custom/home-assistant
 
 failures=()
 
@@ -195,7 +196,27 @@ check_kyverno_fixtures() {
 run "Kyverno test fixtures match their expectations" check_kyverno_fixtures
 run "kyverno test $kyverno_dir/tests" kyverno test --remove-color "$kyverno_dir/tests"
 
-# 6. Go code that ships in the repository.
+# 6. Home Assistant YAML dashboard: Home Assistant only reports a broken file or
+# a missing !include when the dashboard is opened, so check that every file
+# parses, ships in the ConfigMap, and only includes files that ship too.
+check_ha_dashboard() {
+  local listed file target status=0
+  listed=$(yq '.configMapGenerator[] | select(.name == "home-assistant-dashboards") | .files[]' \
+    "$ha_dashboard_dir/kustomization.yaml")
+  for file in "$ha_dashboard_dir"/dashboards/*.yaml; do
+    yq '.' "$file" >/dev/null || { printf '%s does not parse\n' "$file"; status=1; }
+    grep -qxF "${file#"$ha_dashboard_dir/"}" <<<"$listed" \
+      || { printf '%s is not in the home-assistant-dashboards ConfigMap\n' "$file"; status=1; }
+    while IFS= read -r target; do
+      grep -qxF "dashboards/$target" <<<"$listed" \
+        || { printf '%s includes %s, which is not in the ConfigMap\n' "$file" "$target"; status=1; }
+    done < <(grep -vE '^[[:space:]]*#' "$file" | grep -oE '!include [^ #]+\.ya?ml' | awk '{print $2}')
+  done
+  return "$status"
+}
+run "Home Assistant dashboard files and includes" check_ha_dashboard
+
+# 7. Go code that ships in the repository.
 for module in "${go_modules[@]}"; do
   run "go vet $module" sh -c 'cd "$1" && go vet ./...' _ "$module"
   run "go test $module" sh -c 'cd "$1" && go test ./...' _ "$module"

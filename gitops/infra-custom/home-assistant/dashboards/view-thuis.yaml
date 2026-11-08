@@ -1,0 +1,256 @@
+title: Thuis
+path: thuis
+icon: mdi:home
+type: sections
+max_columns: 4
+dense_section_placement: true
+theme: Homelab
+badges:
+  - type: entity
+    entity: weather.forecast_home
+    show_name: false
+  - type: entity
+    entity: sensor.circulus_eerstvolgende
+    name: Afval
+    icon: mdi:trash-can
+    show_name: true
+    state_content: Upcoming_waste_types
+    tap_action:
+      action: navigate
+      navigation_path: '#afval'
+  - type: power-total
+  - type: entity
+    entity: person.niek
+    show_entity_picture: true
+  - type: entity
+    entity: person.marc
+    show_entity_picture: true
+  - type: entity
+    entity: person.wil
+    show_entity_picture: true
+
+sections:
+  # Most used first, so it is on top on a phone.
+  - type: grid
+    cards:
+      - type: heading
+        heading: Licht
+        icon: mdi:lamps
+      - type: custom:bubble-card
+        card_type: button
+        button_type: switch
+        entity: light.woonkamer_lampen
+        name: Woonkamer
+        icon: mdi:lamps
+        grid_options:
+          columns: full
+          rows: 2
+        card_layout: large
+        sub_button:
+          - name: Alle lampen
+            icon: mdi:tune-variant
+            show_background: true
+            tap_action:
+              action: navigate
+              navigation_path: '#verlichting'
+
+  - type: grid
+    cards:
+      - type: heading
+        heading: Airco
+        icon: mdi:air-conditioner
+        badges:
+          - type: entity
+            entity: binary_sensor.airco_boven_slaapperiode
+            show_state: true
+            color: indigo
+            visibility:
+              - condition: state
+                entity: binary_sensor.airco_boven_slaapperiode
+                state: "on"
+      - type: custom:bubble-card
+        card_type: climate
+        entity: climate.airco_boven
+        name: Boven
+        icon: mdi:stairs-up
+        state_color: true
+        step: 1
+        card_layout: large
+        grid_options:
+          columns: full
+        button_action:
+          tap_action:
+            action: navigate
+            navigation_path: '#airco-boven'
+        sub_button:
+          - entity: sensor.airco_boven_filter_remaining_life
+            name: Filter
+            icon: mdi:air-filter
+            show_state: true
+            show_background: true
+            tap_action:
+              action: navigate
+              navigation_path: '#airco-boven'
+          - entity: input_boolean.airco_boven_automation
+            name: Automatisch
+            icon: mdi:robot
+            show_background: true
+            state_background: true
+            tap_action:
+              action: toggle
+        styles: |
+          .bubble-sub-button-1 {
+            background-color: ${(() => {
+              const life = parseFloat(hass.states['sensor.airco_boven_filter_remaining_life']?.state);
+              if (isNaN(life)) return '';
+              return life < 10 ? 'var(--error-color)' : life < 30 ? 'var(--warning-color)' : 'var(--success-color)';
+            })()} !important;
+            color: var(--text-primary-color) !important;
+          }
+      - type: custom:bubble-card
+        card_type: climate
+        entity: climate.airco_beneden
+        name: Beneden
+        icon: mdi:stairs-down
+        state_color: true
+        step: 1
+        card_layout: large
+        grid_options:
+          columns: full
+        button_action:
+          tap_action:
+            action: navigate
+            navigation_path: '#airco-beneden'
+        sub_button:
+          - entity: sensor.airco_beneden_filter_remaining_life
+            name: Filter
+            icon: mdi:air-filter
+            show_state: true
+            show_background: true
+            tap_action:
+              action: navigate
+              navigation_path: '#airco-beneden'
+          - entity: input_boolean.airco_beneden_automation
+            name: Automatisch
+            icon: mdi:robot
+            show_background: true
+            state_background: true
+            tap_action:
+              action: toggle
+        styles: |
+          .bubble-sub-button-1 {
+            background-color: ${(() => {
+              const life = parseFloat(hass.states['sensor.airco_beneden_filter_remaining_life']?.state);
+              if (isNaN(life)) return '';
+              return life < 10 ? 'var(--error-color)' : life < 30 ? 'var(--warning-color)' : 'var(--success-color)';
+            })()} !important;
+            color: var(--text-primary-color) !important;
+          }
+
+  - type: grid
+    cards:
+      - type: heading
+        heading: Weer
+        icon: mdi:weather-partly-cloudy
+      - type: weather-forecast
+        entity: weather.forecast_home
+        show_current: true
+        show_forecast: true
+        forecast_type: daily
+
+  - type: grid
+    cards:
+      - type: heading
+        heading: Energie nu
+        icon: mdi:lightning-bolt
+        tap_action:
+          action: navigate
+          navigation_path: /dashboard-thuis/energie
+      - type: tile
+        entity: sensor.home_total_output_power
+        name: Zonnepanelen
+        icon: mdi:solar-power-variant
+        color: amber
+        tap_action:
+          action: navigate
+          navigation_path: /dashboard-thuis/energie
+      - type: tile
+        entity: sensor.p1_meter_power
+        name: Net (+ afname, − teruglevering)
+        icon: mdi:transmission-tower
+        tap_action:
+          action: navigate
+          navigation_path: /dashboard-thuis/energie
+      - type: tile
+        entity: sensor.home_total_energy_today
+        name: Zon vandaag
+        icon: mdi:solar-power
+        color: amber
+      - type: tile
+        entity: sensor.home_total_total_money_today
+        name: Opbrengst vandaag
+        icon: mdi:cash
+
+  - type: grid
+    cards:
+      - type: heading
+        heading: Afval
+        icon: mdi:trash-can
+        tap_action:
+          action: navigate
+          navigation_path: '#afval'
+      - type: tile
+        entity: sensor.circulus_eerstvolgende
+        name: Eerstvolgende
+        icon: mdi:calendar-clock
+        grid_options:
+          columns: full
+        tap_action:
+          action: navigate
+          navigation_path: '#afval'
+
+  # Only while watering, so it does not take space otherwise.
+  - type: grid
+    visibility:
+      - condition: state
+        entity: binary_sensor.rainbird_busy
+        state: "on"
+    cards:
+      - type: heading
+        heading: Tuin
+        icon: mdi:sprinkler-variant
+        tap_action:
+          action: navigate
+          navigation_path: /dashboard-thuis/tuin
+      - type: tile
+        entity: sensor.rainbird_active_zone
+        name: Actieve zone
+        tap_action:
+          action: navigate
+          navigation_path: /dashboard-thuis/tuin
+      - type: tile
+        entity: timer.rainbird_time_left
+        name: Resterend
+      - type: tile
+        entity: script.rainbird_stop_all_zones
+        name: Stop sproeien
+        icon: mdi:stop-circle-outline
+        color: red
+        hide_state: true
+        grid_options:
+          columns: full
+        tap_action:
+          action: perform-action
+          perform_action: script.rainbird_stop_all_zones
+          data:
+            cancel_program: true
+
+  # Pop-ups and navigation: they render as overlays, and the navigation bar
+  # must be the last card of the view.
+  - type: grid
+    cards:
+      - !include popup-verlichting.yaml
+      - !include popup-airco-boven.yaml
+      - !include popup-airco-beneden.yaml
+      - !include popup-afval.yaml
+      - !include nav.yaml

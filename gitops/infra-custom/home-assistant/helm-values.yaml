@@ -109,6 +109,18 @@ configuration:
     automation: !include automations.yaml
     script: !include scripts.yaml
     scene: !include scenes.yaml
+
+    # The main dashboard stays in UI storage; this adds the Git-managed one
+    # (home-assistant-dashboards ConfigMap) next to it.
+    lovelace:
+      dashboards:
+        dashboard-thuis:
+          mode: yaml
+          filename: dashboards/thuis.yaml
+          title: Thuis (nieuw)
+          icon: mdi:home-heart
+          show_in_sidebar: true
+          require_admin: false
 ingress:
   # Routed by the shared Cilium Gateway (httproute.yaml). external keeps the
   # chart's reverse-proxy settings (use_x_forwarded_for, trusted_proxies).
@@ -132,7 +144,21 @@ additionalVolumes:
   - name: home-assistant-packages
     configMap:
       name: home-assistant-packages
+  - name: home-assistant-dashboards
+    configMap:
+      name: home-assistant-dashboards
+  - name: home-assistant-themes
+    configMap:
+      name: home-assistant-themes
+# Whole-directory mounts (no subPath), so ConfigMap edits reach the pod
+# without a restart.
 additionalMounts:
   - mountPath: /config/packages
     name: home-assistant-packages
+    readOnly: true
+  - mountPath: /config/dashboards
+    name: home-assistant-dashboards
+    readOnly: true
+  - mountPath: /config/themes
+    name: home-assistant-themes
     readOnly: true

@@ -1,0 +1,121 @@
+type: custom:bubble-card
+card_type: pop-up
+hash: '#verlichting'
+name: Verlichting
+icon: mdi:lamps
+entity: light.woonkamer_lampen
+width_desktop: 560px
+cards:
+  - type: custom:bubble-card
+    card_type: separator
+    name: Woonkamer
+    icon: mdi:sofa
+  - type: custom:bubble-card
+    card_type: button
+    button_type: switch
+    entity: light.woonkamer_lampen
+    name: Alle woonkamerlampen
+    icon: mdi:lamps
+  - type: grid
+    columns: 2
+    square: false
+    cards:
+      - type: tile
+        entity: light.chinese_lamp
+        name: Chinese lamp
+        tap_action:
+          action: toggle
+      - type: tile
+        entity: switch.woonkamer_sfeerverlichting
+        name: Sfeerverlichting
+        icon: mdi:string-lights
+        tap_action:
+          action: toggle
+      - type: tile
+        entity: light.living_room_hoek_w1
+        name: Hoek W1
+        tap_action:
+          action: toggle
+      - type: tile
+        entity: light.living_room_hoek_w2
+        name: Hoek W2
+        tap_action:
+          action: toggle
+      - type: tile
+        entity: light.living_room_hoek_w3
+        name: Hoek W3
+        tap_action:
+          action: toggle
+      - type: tile
+        entity: light.living_room_hoek_w4
+        name: Hoek W4
+        tap_action:
+          action: toggle
+
+  - type: custom:bubble-card
+    card_type: separator
+    name: Eettafel
+    icon: mdi:table-chair
+  - type: grid
+    columns: 2
+    square: false
+    cards:
+      - type: tile
+        entity: light.eettafel1
+        name: Eettafel 1
+        tap_action:
+          action: toggle
+      - type: tile
+        entity: light.eettafel2
+        name: Eettafel 2
+        tap_action:
+          action: toggle
+
+  - type: custom:bubble-card
+    card_type: separator
+    name: Scènes
+    icon: mdi:palette
+  - type: grid
+    columns: 2
+    square: false
+    cards:
+      - type: tile
+        entity: scene.standaard
+        name: Standaard
+        icon: mdi:lightbulb-on-50
+        hide_state: true
+        tap_action:
+          action: perform-action
+          perform_action: scene.turn_on
+          target:
+            entity_id: scene.standaard
+      - type: tile
+        entity: scene.extra_fel
+        name: Extra fel
+        icon: mdi:lightbulb-on
+        hide_state: true
+        tap_action:
+          action: perform-action
+          perform_action: scene.turn_on
+          target:
+            entity_id: scene.extra_fel
+      - type: tile
+        entity: scene.alles_aan
+        name: Alles aan
+        icon: mdi:lightbulb-group
+        hide_state: true
+        tap_action:
+          action: perform-action
+          perform_action: scene.turn_on
+          target:
+            entity_id: scene.alles_aan
+      - type: tile
+        entity: scene.alles_uit
+        name: Alles uit
+        icon: mdi:lightbulb-group-off
+        hide_state: true
+        tap_action:
+          action: perform-action
+          perform_action: scene.turn_on
+          target:
+            entity_id: scene.alles_uit

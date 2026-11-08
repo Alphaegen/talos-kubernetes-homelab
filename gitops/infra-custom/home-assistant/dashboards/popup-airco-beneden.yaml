@@ -1,0 +1,10 @@
+type: custom:bubble-card
+card_type: pop-up
+hash: '#airco-beneden'
+name: Airco beneden
+icon: mdi:air-conditioner
+entity: climate.airco_beneden
+width_desktop: 560px
+cards:
+  - type: vertical-stack
+    cards: !include airco-beneden.yaml

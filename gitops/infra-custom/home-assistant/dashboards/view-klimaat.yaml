@@ -1,0 +1,55 @@
+title: Klimaat
+path: klimaat
+icon: mdi:air-conditioner
+type: sections
+max_columns: 4
+dense_section_placement: true
+theme: Homelab
+badges:
+  - type: entity
+    entity: sensor.airco_boven_filter_remaining_life
+    name: Filter boven
+    show_name: true
+    icon: mdi:air-filter
+  - type: entity
+    entity: sensor.airco_beneden_filter_remaining_life
+    name: Filter beneden
+    show_name: true
+    icon: mdi:air-filter
+  - type: entity
+    entity: binary_sensor.airco_boven_slaapperiode
+    name: Nacht boven
+    show_name: true
+  - type: entity
+    entity: binary_sensor.airco_beneden_slaapperiode
+    name: Nacht beneden
+    show_name: true
+
+sections:
+  # Two columns wide each, so on a laptop the rooms sit side by side and on a
+  # phone they stack.
+  - type: grid
+    column_span: 2
+    cards:
+      - type: heading
+        heading: Boven
+        icon: mdi:stairs-up
+      - type: vertical-stack
+        grid_options:
+          columns: full
+        cards: !include airco-boven.yaml
+
+  - type: grid
+    column_span: 2
+    cards:
+      - type: heading
+        heading: Beneden
+        icon: mdi:stairs-down
+      - type: vertical-stack
+        grid_options:
+          columns: full
+        cards: !include airco-beneden.yaml
+
+  - type: grid
+    cards:
+      - !include nav.yaml

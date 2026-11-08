@@ -8,10 +8,37 @@ configMapGenerator:
     files:
       - rainbird.yaml=packages/rainbird.yaml
       - airco.yaml=packages/airco.yaml
+    options:
+      labels:
+        app.kubernetes.io/component: packages
+  # "Thuis (nieuw)" YAML dashboard, mounted flat at /config/dashboards.
+  - name: home-assistant-dashboards
+    files:
+      - dashboards/thuis.yaml
+      - dashboards/nav.yaml
+      - dashboards/view-thuis.yaml
+      - dashboards/view-klimaat.yaml
+      - dashboards/view-energie.yaml
+      - dashboards/view-tuin.yaml
+      - dashboards/airco-boven.yaml
+      - dashboards/airco-beneden.yaml
+      - dashboards/popup-airco-boven.yaml
+      - dashboards/popup-airco-beneden.yaml
+      - dashboards/popup-verlichting.yaml
+      - dashboards/popup-afval.yaml
+    options:
+      labels:
+        app.kubernetes.io/component: dashboards
+  - name: home-assistant-themes
+    files:
+      - themes/homelab.yaml
+    options:
+      labels:
+        app.kubernetes.io/component: themes
+# No name hash: the mounted files then update in place without a restart.
 generatorOptions:
   disableNameSuffixHash: true
   annotations:
     argocd.argoproj.io/sync-wave: "-1"
   labels:
     app.kubernetes.io/name: home-assistant
-    app.kubernetes.io/component: packages

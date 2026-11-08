@@ -1,0 +1,36 @@
+# Theme for the "Thuis (nieuw)" dashboard, set per view with `theme: Homelab`,
+# so other dashboards and user profiles keep their own theme. Light and dark
+# follow the device. Reload with the frontend.reload_themes action after edits.
+Homelab:
+  ha-card-border-radius: 20px
+  ha-card-border-width: 0px
+  ha-card-box-shadow: none
+  bubble-border-radius: 20px
+  bubble-pop-up-border-radius: 28px
+  modes:
+    light:
+      primary-color: "#2563eb"
+      accent-color: "#f59e0b"
+      primary-background-color: "#eef1f6"
+      lovelace-background: "#eef1f6"
+      card-background-color: "#ffffff"
+      ha-card-background: "#ffffff"
+      primary-text-color: "#111827"
+      secondary-text-color: "#6b7280"
+      bubble-main-background-color: "#e7ebf2"
+      bubble-secondary-background-color: "#dde3ec"
+      bubble-pop-up-background-color: "rgba(238, 241, 246, 0.94)"
+      bubble-accent-color: "#2563eb"
+    dark:
+      primary-color: "#60a5fa"
+      accent-color: "#fbbf24"
+      primary-background-color: "#0e1116"
+      lovelace-background: "#0e1116"
+      card-background-color: "#171b22"
+      ha-card-background: "#171b22"
+      primary-text-color: "#e6e9ef"
+      secondary-text-color: "#9aa3b2"
+      bubble-main-background-color: "#222833"
+      bubble-secondary-background-color: "#2b3240"
+      bubble-pop-up-background-color: "rgba(23, 27, 34, 0.94)"
+      bubble-accent-color: "#60a5fa"

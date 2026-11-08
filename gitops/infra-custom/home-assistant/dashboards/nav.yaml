@@ -1,0 +1,16 @@
+# Bottom navigation. Bubble Card requires it to be the last card of the view.
+type: custom:bubble-card
+card_type: horizontal-buttons-stack
+highlight_current_view: true
+1_name: Thuis
+1_icon: mdi:home
+1_link: /dashboard-thuis/thuis
+2_name: Klimaat
+2_icon: mdi:air-conditioner
+2_link: /dashboard-thuis/klimaat
+3_name: Energie
+3_icon: mdi:lightning-bolt
+3_link: /dashboard-thuis/energie
+4_name: Tuin
+4_icon: mdi:sprinkler-variant
+4_link: /dashboard-thuis/tuin

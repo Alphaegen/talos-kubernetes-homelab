@@ -1,0 +1,32 @@
+type: custom:bubble-card
+card_type: pop-up
+hash: '#afval'
+name: Afval
+icon: mdi:trash-can
+entity: sensor.circulus_eerstvolgende
+width_desktop: 560px
+cards:
+  - type: grid
+    columns: 2
+    square: false
+    cards:
+      - type: tile
+        entity: sensor.circulus_gft
+        name: GFT
+        icon: mdi:leaf
+      - type: tile
+        entity: sensor.circulus_pmd
+        name: PMD
+        icon: mdi:recycle
+      - type: tile
+        entity: sensor.circulus_papier
+        name: Papier
+        icon: mdi:package-variant
+      - type: tile
+        entity: sensor.circulus_restafval
+        name: Restafval
+        icon: mdi:trash-can
+  - type: calendar
+    initial_view: listWeek
+    entities:
+      - calendar.afvalbeheer_circulus

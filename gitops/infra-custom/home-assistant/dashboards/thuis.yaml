@@ -1,0 +1,9 @@
+# "Thuis (nieuw)": YAML-mode dashboard, registered under lovelace.dashboards in
+# helm-values.yaml. Every file here is mounted flat into /config/dashboards, so
+# !include paths are plain file names. Needs Bubble Card (HACS); see README.md.
+title: Thuis
+views:
+  - !include view-thuis.yaml
+  - !include view-klimaat.yaml
+  - !include view-energie.yaml
+  - !include view-tuin.yaml

@@ -90,8 +90,20 @@
   name: Automatisch koelen
   icon: mdi:robot
   show_state: true
-  # Says what the automation aims for right now, or that it is off.
+  # Light blue with dark text when on, readable in light and dark mode (the
+  # same pattern as the Woonkamer lamp), and the state line says what the
+  # automation aims for right now, or that it is off.
   styles: |
+    .bubble-button-background {
+      background-color: ${state === 'on' ? 'rgb(96, 165, 250)' : ''} !important;
+      opacity: ${state === 'on' ? '1' : ''} !important;
+    }
+    .bubble-main-icon-container {
+      background-color: ${state === 'on' ? 'rgba(255, 255, 255, 0.4)' : ''} !important;
+    }
+    .bubble-main-icon, .bubble-name, .bubble-state {
+      color: ${state === 'on' ? '#0b1f3a' : ''} !important;
+    }
     ${(() => {
       const nacht = hass.states['binary_sensor.airco_beneden_slaapperiode']?.state === 'on';
       const max = hass.states[nacht ? 'input_number.airco_beneden_sleep_target' : 'input_number.airco_beneden_day_limit']?.state;

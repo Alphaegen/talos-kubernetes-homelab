@@ -74,6 +74,7 @@
       features_position: bottom
       features:
         - type: numeric-input
+          style: buttons
     - type: tile
       entity: input_number.airco_boven_sleep_target
       name: Max. 's nachts
@@ -81,6 +82,7 @@
       features_position: bottom
       features:
         - type: numeric-input
+          style: buttons
     - type: tile
       entity: input_datetime.airco_boven_sleep_start
       name: Nacht vanaf
@@ -99,6 +101,7 @@
   features_position: bottom
   features:
     - type: numeric-input
+      style: buttons
 
 - type: markdown
   text_only: true

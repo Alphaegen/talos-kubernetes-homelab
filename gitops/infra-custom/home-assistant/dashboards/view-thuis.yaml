@@ -22,12 +22,15 @@ badges:
   - type: entity
     entity: person.niek
     show_entity_picture: true
+    show_name: true
   - type: entity
     entity: person.marc
     show_entity_picture: true
+    show_name: true
   - type: entity
     entity: person.wil
     show_entity_picture: true
+    show_name: true
 
 sections:
   # Most used first, so it is on top on a phone.
@@ -42,6 +45,7 @@ sections:
         entity: light.woonkamer_lampen
         name: Woonkamer
         icon: mdi:lamps
+        show_state: true
         grid_options:
           columns: full
           rows: 2
@@ -55,6 +59,8 @@ sections:
               navigation_path: '#verlichting'
 
   - type: grid
+    # Full width on a tablet; at half width the climate controls squeeze the name.
+    column_span: 2
     cards:
       - type: heading
         heading: Airco
@@ -74,6 +80,9 @@ sections:
         name: Boven
         icon: mdi:stairs-up
         state_color: true
+        show_state: true
+        show_attribute: true
+        attribute: current_temperature
         step: 1
         card_layout: large
         grid_options:
@@ -113,6 +122,9 @@ sections:
         name: Beneden
         icon: mdi:stairs-down
         state_color: true
+        show_state: true
+        show_attribute: true
+        attribute: current_temperature
         step: 1
         card_layout: large
         grid_options:
@@ -176,7 +188,7 @@ sections:
           navigation_path: /dashboard-thuis/energie
       - type: tile
         entity: sensor.p1_meter_power
-        name: Net (+ afname, − teruglevering)
+        name: Net
         icon: mdi:transmission-tower
         tap_action:
           action: navigate
@@ -186,10 +198,8 @@ sections:
         name: Zon vandaag
         icon: mdi:solar-power
         color: amber
-      - type: tile
-        entity: sensor.home_total_total_money_today
-        name: Opbrengst vandaag
-        icon: mdi:cash
+        grid_options:
+          columns: full
 
   - type: grid
     cards:
@@ -240,6 +250,11 @@ sections:
         grid_options:
           columns: full
         tap_action:
+          action: perform-action
+          perform_action: script.rainbird_stop_all_zones
+          data:
+            cancel_program: true
+        icon_tap_action:
           action: perform-action
           perform_action: script.rainbird_stop_all_zones
           data:

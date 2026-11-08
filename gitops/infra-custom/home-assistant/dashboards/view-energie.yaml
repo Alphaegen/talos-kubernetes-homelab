@@ -5,7 +5,7 @@ title: Energie
 path: energie
 icon: mdi:lightning-bolt
 type: sections
-max_columns: 4
+max_columns: 2
 dense_section_placement: true
 theme: Homelab
 badges:
@@ -19,7 +19,6 @@ badges:
 
 sections:
   - type: grid
-    column_span: 2
     cards:
       - type: energy-date-selection
         grid_options:
@@ -30,7 +29,6 @@ sections:
           columns: full
 
   - type: grid
-    column_span: 2
     cards:
       - type: heading
         heading: Nu
@@ -49,7 +47,6 @@ sections:
         icon: mdi:transmission-tower
 
   - type: grid
-    column_span: 2
     cards:
       - type: heading
         heading: Stroom
@@ -62,7 +59,6 @@ sections:
           columns: full
 
   - type: grid
-    column_span: 2
     cards:
       - type: heading
         heading: Gas en water
@@ -75,21 +71,25 @@ sections:
           columns: full
 
   - type: grid
-    column_span: 2
     cards:
       - type: heading
         heading: Zelfvoorziening
         icon: mdi:solar-power
       - type: energy-self-sufficiency-gauge
+        grid_options:
+          columns: 4
       - type: energy-solar-consumed-gauge
+        grid_options:
+          columns: 4
       - type: energy-grid-neutrality-gauge
+        grid_options:
+          columns: 4
       - type: tile
         entity: sensor.home_total_total_money_today
         name: Zon-opbrengst vandaag
         icon: mdi:cash
 
   - type: grid
-    column_span: 2
     cards:
       - type: heading
         heading: Apparaten

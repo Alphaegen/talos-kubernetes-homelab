@@ -55,6 +55,7 @@ sections:
         features_position: bottom
         features:
           - type: numeric-input
+            style: buttons
       - type: tile
         entity: script.rainbird_stop_all_zones
         name: Alles stoppen
@@ -64,6 +65,11 @@ sections:
         grid_options:
           columns: full
         tap_action:
+          action: perform-action
+          perform_action: script.rainbird_stop_all_zones
+          data:
+            cancel_program: true
+        icon_tap_action:
           action: perform-action
           perform_action: script.rainbird_stop_all_zones
           data:
@@ -82,9 +88,13 @@ sections:
         features_position: bottom
         features:
           - type: numeric-input
-      - type: button
+            style: buttons
+      - type: tile
+        entity: script.rainbird_start_single_zone
         name: Gras
         icon: mdi:grass
+        color: blue
+        hide_state: true
         tap_action:
           action: perform-action
           perform_action: script.rainbird_start_single_zone
@@ -92,9 +102,19 @@ sections:
             zone_switch: switch.rain_bird_sprinkler_1
           confirmation:
             text: Zone Gras starten?
-      - type: button
+        icon_tap_action:
+          action: perform-action
+          perform_action: script.rainbird_start_single_zone
+          data:
+            zone_switch: switch.rain_bird_sprinkler_1
+          confirmation:
+            text: Zone Gras starten?
+      - type: tile
+        entity: script.rainbird_start_single_zone
         name: Achtertuin
         icon: mdi:flower
+        color: blue
+        hide_state: true
         tap_action:
           action: perform-action
           perform_action: script.rainbird_start_single_zone
@@ -102,9 +122,19 @@ sections:
             zone_switch: switch.rain_bird_sprinkler_2
           confirmation:
             text: Zone Achtertuin starten?
-      - type: button
+        icon_tap_action:
+          action: perform-action
+          perform_action: script.rainbird_start_single_zone
+          data:
+            zone_switch: switch.rain_bird_sprinkler_2
+          confirmation:
+            text: Zone Achtertuin starten?
+      - type: tile
+        entity: script.rainbird_start_single_zone
         name: Voortuin + zijkant
         icon: mdi:home-variant-outline
+        color: blue
+        hide_state: true
         tap_action:
           action: perform-action
           perform_action: script.rainbird_start_single_zone
@@ -112,10 +142,27 @@ sections:
             zone_switch: switch.rain_bird_sprinkler_3
           confirmation:
             text: Zone Voortuin + zijkant starten?
-      - type: button
+        icon_tap_action:
+          action: perform-action
+          perform_action: script.rainbird_start_single_zone
+          data:
+            zone_switch: switch.rain_bird_sprinkler_3
+          confirmation:
+            text: Zone Voortuin + zijkant starten?
+      - type: tile
+        entity: script.rainbird_start_single_zone
         name: Druppelslang
         icon: mdi:water-outline
+        color: blue
+        hide_state: true
         tap_action:
+          action: perform-action
+          perform_action: script.rainbird_start_single_zone
+          data:
+            zone_switch: switch.rain_bird_sprinkler_4
+          confirmation:
+            text: Zone Druppelslang starten?
+        icon_tap_action:
           action: perform-action
           perform_action: script.rainbird_start_single_zone
           data:
@@ -131,6 +178,11 @@ sections:
         grid_options:
           columns: full
         tap_action:
+          action: perform-action
+          perform_action: script.rainbird_stop_all_zones
+          data:
+            cancel_program: false
+        icon_tap_action:
           action: perform-action
           perform_action: script.rainbird_stop_all_zones
           data:
@@ -152,24 +204,28 @@ sections:
         features_position: bottom
         features:
           - type: numeric-input
+            style: buttons
       - type: tile
         entity: input_number.rainbird_program_zone_2_duration
         name: Achtertuin
         features_position: bottom
         features:
           - type: numeric-input
+            style: buttons
       - type: tile
         entity: input_number.rainbird_program_zone_3_duration
         name: Voortuin + zijkant
         features_position: bottom
         features:
           - type: numeric-input
+            style: buttons
       - type: tile
         entity: input_number.rainbird_program_zone_4_duration
         name: Druppelslang
         features_position: bottom
         features:
           - type: numeric-input
+            style: buttons
       - type: tile
         entity: script.rainbird_run_program
         name: Programma starten
@@ -181,6 +237,11 @@ sections:
           perform_action: script.rainbird_run_program
           confirmation:
             text: Het sproeiprogramma starten?
+        icon_tap_action:
+          action: perform-action
+          perform_action: script.rainbird_run_program
+          confirmation:
+            text: Het sproeiprogramma starten?
       - type: tile
         entity: script.rainbird_stop_all_zones
         name: Programma stoppen
@@ -188,6 +249,11 @@ sections:
         color: red
         hide_state: true
         tap_action:
+          action: perform-action
+          perform_action: script.rainbird_stop_all_zones
+          data:
+            cancel_program: true
+        icon_tap_action:
           action: perform-action
           perform_action: script.rainbird_stop_all_zones
           data:

@@ -52,24 +52,38 @@ cards:
         tap_action:
           action: toggle
 
-  - type: custom:bubble-card
-    card_type: separator
-    name: Eettafel
-    icon: mdi:table-chair
-  - type: grid
-    columns: 2
-    square: false
-    cards:
-      - type: tile
-        entity: light.eettafel1
-        name: Eettafel 1
-        tap_action:
-          action: toggle
-      - type: tile
-        entity: light.eettafel2
-        name: Eettafel 2
-        tap_action:
-          action: toggle
+  # Hidden while the eettafel lamps are unreachable.
+  - type: conditional
+    conditions:
+      - condition: or
+        conditions:
+          - condition: state
+            entity: light.eettafel1
+            state_not: unavailable
+          - condition: state
+            entity: light.eettafel2
+            state_not: unavailable
+    card:
+      type: vertical-stack
+      cards:
+        - type: custom:bubble-card
+          card_type: separator
+          name: Eettafel
+          icon: mdi:table-chair
+        - type: grid
+          columns: 2
+          square: false
+          cards:
+            - type: tile
+              entity: light.eettafel1
+              name: Eettafel 1
+              tap_action:
+                action: toggle
+            - type: tile
+              entity: light.eettafel2
+              name: Eettafel 2
+              tap_action:
+                action: toggle
 
   - type: custom:bubble-card
     card_type: separator

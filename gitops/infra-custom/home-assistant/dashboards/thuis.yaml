@@ -4,6 +4,6 @@
 title: Thuis
 views:
   - !include view-thuis.yaml
-  - !include view-klimaat.yaml
   - !include view-energie.yaml
+  - !include view-klimaat.yaml
   - !include view-tuin.yaml

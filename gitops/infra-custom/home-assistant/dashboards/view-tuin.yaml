@@ -1,12 +1,13 @@
-# Rain Bird from packages/rainbird.yaml, in three blocks: what runs now with
-# the zones to start by hand, the automatic schedule, and the log. Zones only
+# Rain Bird from packages/rainbird.yaml, in two columns: what runs now, the
+# zones to start by hand and the log; and the automatic schedule. On a phone
+# they stack in that order. Zones only
 # start through the scripts, never through the raw switches, so they stay
 # mutually exclusive and always get a duration the controller enforces.
 title: Tuin
 path: tuin
 icon: mdi:sprinkler-variant
 type: sections
-max_columns: 3
+max_columns: 2
 dense_section_placement: true
 theme: Homelab
 # Only when they matter: rain stops the schedule for the day, a rain delay
@@ -44,8 +45,8 @@ sections:
       - type: heading
         heading: Zone starten
         heading_style: subtitle
-      # Tap a zone for its pop-up with the duration and Start. The state line
-      # says when it last ran, from sensor.rainbird_logboek.
+      # Tap a zone (or Start) for its pop-up with the duration and Start. The
+      # state line says when it last ran, from sensor.rainbird_logboek.
       - type: custom:bubble-card
         card_type: button
         button_type: state
@@ -54,12 +55,17 @@ sections:
         icon: mdi:grass
         show_state: true
         grid_options:
-          columns: 6
+          columns: full
         tap_action: &zone-1
           action: navigate
           navigation_path: '#zone-1'
         button_action:
           tap_action: *zone-1
+        sub_button:
+          - name: Start
+            icon: mdi:play
+            show_name: true
+            tap_action: *zone-1
         styles: &zone |
           .bubble-button-background {
             background-color: ${state === 'on' ? 'rgb(96, 165, 250)' : ''} !important;
@@ -98,12 +104,17 @@ sections:
         icon: mdi:flower
         show_state: true
         grid_options:
-          columns: 6
+          columns: full
         tap_action: &zone-2
           action: navigate
           navigation_path: '#zone-2'
         button_action:
           tap_action: *zone-2
+        sub_button:
+          - name: Start
+            icon: mdi:play
+            show_name: true
+            tap_action: *zone-2
         styles: *zone
       - type: custom:bubble-card
         card_type: button
@@ -113,12 +124,17 @@ sections:
         icon: mdi:home-variant-outline
         show_state: true
         grid_options:
-          columns: 6
+          columns: full
         tap_action: &zone-3
           action: navigate
           navigation_path: '#zone-3'
         button_action:
           tap_action: *zone-3
+        sub_button:
+          - name: Start
+            icon: mdi:play
+            show_name: true
+            tap_action: *zone-3
         styles: *zone
       - type: custom:bubble-card
         card_type: button
@@ -128,13 +144,69 @@ sections:
         icon: mdi:water-outline
         show_state: true
         grid_options:
-          columns: 6
+          columns: full
         tap_action: &zone-4
           action: navigate
           navigation_path: '#zone-4'
         button_action:
           tap_action: *zone-4
+        sub_button:
+          - name: Start
+            icon: mdi:play
+            show_name: true
+            tap_action: *zone-4
         styles: *zone
+
+      - type: heading
+        heading: Logboek
+        icon: mdi:history
+        tap_action: &logboek
+          action: navigate
+          navigation_path: '#logboek'
+        badges:
+          - type: entity
+            entity: sensor.rainbird_logboek
+            show_state: false
+            icon: mdi:arrow-expand
+            tap_action: *logboek
+      # The last 8 entries of sensor.rainbird_logboek per day, with an icon
+      # per kind; the last 50 and the full history (calendar.tuin) in the
+      # pop-up.
+      - type: markdown
+        grid_options:
+          columns: full
+        content: |-
+          {%- set aantal = 8 %}
+          {%- set runs = state_attr('sensor.rainbird_logboek', 'runs') or [] %}
+          {%- set dagen = ['maandag', 'dinsdag', 'woensdag', 'donderdag', 'vrijdag',
+                           'zaterdag', 'zondag'] %}
+          {%- set maanden = ['jan', 'feb', 'mrt', 'apr', 'mei', 'jun', 'jul', 'aug',
+                             'sep', 'okt', 'nov', 'dec'] %}
+          {%- set iconen = {
+               'beurt': 'mdi:water', 'overgeslagen': 'mdi:debug-step-over',
+               'mislukt': 'mdi:alert-circle-outline', 'pauze': 'mdi:pause',
+               'hervat': 'mdi:play', 'uit': 'mdi:calendar-remove',
+               'aan': 'mdi:calendar-check'} %}
+          {%- set ns = namespace(dag='') %}
+          {%- for r in runs[:aantal] %}
+          {%- set t = as_local(as_datetime(r.start)) %}
+          {%- set d = (now().date() - t.date()).days %}
+          {%- set dag = 'Vandaag' if d == 0 else 'Gisteren' if d == 1
+                else dagen[t.weekday()] ~ ' ' ~ t.day ~ ' ' ~ maanden[t.month - 1] %}
+          {%- set wat = r.wat if r.soort == 'beurt' else '*' ~ r.wat ~ '*' %}
+          {%- set door = ' · ' ~ r.bron if r.bron and r.soort != 'overgeslagen' else '' %}
+          {%- if dag != ns.dag %}
+          {%- set ns.dag = dag %}
+
+          **{{ dag }}**<br>
+          {%- else %}<br>
+          {%- endif %}
+          <ha-icon icon="{{ iconen.get(r.soort, 'mdi:information-outline') }}"></ha-icon> {{ t.strftime('%H:%M') }} **{{ r.naam }}** · {{ wat }}{{ door }}
+          {%- endfor %}
+          {%- if runs %}
+          {%- else %}
+          Nog niets gesproeid. Ook beurten van de Rain Bird zelf of de app komen hier.
+          {%- endif %}
 
   - type: grid
     cards:
@@ -271,7 +343,7 @@ sections:
             const nr = entity.match(/zone_(\d)_/)?.[1];
             const pauze = hass.states[`input_boolean.rainbird_pauze_zone_${nr}`]?.state === 'on';
             const min = parseInt(state) || 0;
-            const tekst = pauze ? `Gepauzeerd · ${min} min` : min > 0 ? `${min} min` : 'Overslaan';
+            const tekst = pauze ? `Gepauzeerd · ${min} min` : min > 0 ? `${min} min` : '0 min · overslaan';
             const el = card.querySelector('.bubble-state');
             if (el) el.innerText = tekst;
             return '';
@@ -371,9 +443,9 @@ sections:
         grid_options:
           columns: full
         content: >-
-          De zones sproeien na elkaar. Zet een zone op 0 om hem over te slaan,
-          of op Pauze om hem een tijd over te slaan en de minuten te bewaren.
-          Bij regen of een regenpauze slaat het schema de dag over.
+          Zones sproeien na elkaar. 0 min slaat een zone over, Pauze tijdelijk
+          (de minuten blijven bewaard). Bij regen of een regenpauze vervalt de
+          hele beurt.
       - type: tile
         entity: script.rainbird_run_program
         name: Schema nu starten
@@ -399,49 +471,10 @@ sections:
         color: blue
         grid_options:
           columns: full
-        features_position: bottom
+        features_position: inline
         features:
           - type: numeric-input
             style: buttons
-
-  - type: grid
-    cards:
-      - type: heading
-        heading: Logboek
-        icon: mdi:history
-        tap_action: &logboek
-          action: navigate
-          navigation_path: '#logboek'
-        badges:
-          - type: entity
-            entity: sensor.rainbird_logboek
-            show_state: false
-            icon: mdi:arrow-expand
-            tap_action: *logboek
-      # The last 8 entries of sensor.rainbird_logboek; the last 50 and the
-      # full history (calendar.tuin) in the pop-up.
-      - type: markdown
-        grid_options:
-          columns: full
-        content: |-
-          {%- set aantal = 8 %}
-          {%- set runs = state_attr('sensor.rainbird_logboek', 'runs') or [] %}
-          {%- set dagen = ['ma', 'di', 'wo', 'do', 'vr', 'za', 'zo'] %}
-          {%- if runs %}
-          | Wanneer | Zone | Wat | Door |
-          | :-- | :-- | :-- | :-- |
-          {%- for r in runs[:aantal] %}
-          {%- set t = as_local(as_datetime(r.start)) %}
-          {%- set d = (now().date() - t.date()).days %}
-          {%- set dag = 'Vandaag' if d == 0 else 'Gisteren' if d == 1
-                else dagen[t.weekday()] ~ ' ' ~ t.day ~ '-' ~ t.month %}
-          {%- set wat = r.wat if r.soort == 'beurt' else '*' ~ r.wat ~ '*' %}
-          | {{ dag }} {{ t.strftime('%H:%M') }} | {{ r.naam }} | {{ wat }} | {{ r.bron }} |
-          {%- endfor %}
-          {%- else %}
-          Nog niets gesproeid sinds het logboek bijhoudt. Ook beurten die de
-          Rain Bird zelf of de Rain Bird-app start, komen hier te staan.
-          {%- endif %}
 
   # Pop-ups and navigation: they render as overlays, and the navigation bar
   # must be the last card of the view.
@@ -464,22 +497,44 @@ sections:
             name: Hoe lang?
             icon: mdi:timer-outline
             color: blue
+            grid_options:
+              columns: full
             features_position: bottom
             features:
               - type: numeric-input
                 style: buttons
-          - type: tile
-            entity: switch.rain_bird_sprinkler_1
-            name: Start Gras
+          - type: custom:bubble-card
+            card_type: button
+            button_type: name
+            name: Start
             icon: mdi:play
-            color: green
-            hide_state: true
+            grid_options:
+              columns: full
             tap_action: &start-1
               action: perform-action
               perform_action: script.rainbird_start_single_zone
               data:
                 zone_switch: switch.rain_bird_sprinkler_1
-            icon_tap_action: *start-1
+            button_action:
+              tap_action: *start-1
+            # Green, with the chosen minutes in the name.
+            styles: &start |
+              .bubble-button-background {
+                background-color: var(--success-color) !important;
+                opacity: 1 !important;
+              }
+              .bubble-main-icon-container {
+                background-color: rgba(255, 255, 255, 0.35) !important;
+              }
+              .bubble-main-icon, .bubble-name {
+                color: #fff !important;
+              }
+              ${(() => {
+                const min = parseInt(hass.states['input_number.rainbird_duration']?.state) || 0;
+                const el = card.querySelector('.bubble-name');
+                if (el) el.innerText = `Start · ${min} min`;
+                return '';
+              })()}
       - type: custom:bubble-card
         card_type: pop-up
         hash: '#zone-2'
@@ -490,18 +545,21 @@ sections:
         cards:
           - !include tuin-nu.yaml
           - *duur
-          - type: tile
-            entity: switch.rain_bird_sprinkler_2
-            name: Start Achtertuin
+          - type: custom:bubble-card
+            card_type: button
+            button_type: name
+            name: Start
             icon: mdi:play
-            color: green
-            hide_state: true
+            grid_options:
+              columns: full
             tap_action: &start-2
               action: perform-action
               perform_action: script.rainbird_start_single_zone
               data:
                 zone_switch: switch.rain_bird_sprinkler_2
-            icon_tap_action: *start-2
+            button_action:
+              tap_action: *start-2
+            styles: *start
       - type: custom:bubble-card
         card_type: pop-up
         hash: '#zone-3'
@@ -512,18 +570,21 @@ sections:
         cards:
           - !include tuin-nu.yaml
           - *duur
-          - type: tile
-            entity: switch.rain_bird_sprinkler_3
-            name: Start Voortuin + zijkant
+          - type: custom:bubble-card
+            card_type: button
+            button_type: name
+            name: Start
             icon: mdi:play
-            color: green
-            hide_state: true
+            grid_options:
+              columns: full
             tap_action: &start-3
               action: perform-action
               perform_action: script.rainbird_start_single_zone
               data:
                 zone_switch: switch.rain_bird_sprinkler_3
-            icon_tap_action: *start-3
+            button_action:
+              tap_action: *start-3
+            styles: *start
       - type: custom:bubble-card
         card_type: pop-up
         hash: '#zone-4'
@@ -534,18 +595,21 @@ sections:
         cards:
           - !include tuin-nu.yaml
           - *duur
-          - type: tile
-            entity: switch.rain_bird_sprinkler_4
-            name: Start Druppelslang
+          - type: custom:bubble-card
+            card_type: button
+            button_type: name
+            name: Start
             icon: mdi:play
-            color: green
-            hide_state: true
+            grid_options:
+              columns: full
             tap_action: &start-4
               action: perform-action
               perform_action: script.rainbird_start_single_zone
               data:
                 zone_switch: switch.rain_bird_sprinkler_4
-            icon_tap_action: *start-4
+            button_action:
+              tap_action: *start-4
+            styles: *start
       - type: custom:bubble-card
         card_type: pop-up
         hash: '#logboek'
@@ -568,24 +632,37 @@ sections:
             content: |-
               {%- set aantal = 50 %}
               {%- set runs = state_attr('sensor.rainbird_logboek', 'runs') or [] %}
-              {%- set dagen = ['ma', 'di', 'wo', 'do', 'vr', 'za', 'zo'] %}
-              {%- if runs %}
-              | Wanneer | Zone | Wat | Door |
-              | :-- | :-- | :-- | :-- |
+              {%- set dagen = ['maandag', 'dinsdag', 'woensdag', 'donderdag', 'vrijdag',
+                               'zaterdag', 'zondag'] %}
+              {%- set maanden = ['jan', 'feb', 'mrt', 'apr', 'mei', 'jun', 'jul', 'aug',
+                                 'sep', 'okt', 'nov', 'dec'] %}
+              {%- set iconen = {
+                   'beurt': 'mdi:water', 'overgeslagen': 'mdi:debug-step-over',
+                   'mislukt': 'mdi:alert-circle-outline', 'pauze': 'mdi:pause',
+                   'hervat': 'mdi:play', 'uit': 'mdi:calendar-remove',
+                   'aan': 'mdi:calendar-check'} %}
+              {%- set ns = namespace(dag='') %}
               {%- for r in runs[:aantal] %}
               {%- set t = as_local(as_datetime(r.start)) %}
               {%- set d = (now().date() - t.date()).days %}
               {%- set dag = 'Vandaag' if d == 0 else 'Gisteren' if d == 1
-                    else dagen[t.weekday()] ~ ' ' ~ t.day ~ '-' ~ t.month %}
+                    else dagen[t.weekday()] ~ ' ' ~ t.day ~ ' ' ~ maanden[t.month - 1] %}
               {%- set wat = r.wat if r.soort == 'beurt' else '*' ~ r.wat ~ '*' %}
-              | {{ dag }} {{ t.strftime('%H:%M') }} | {{ r.naam }} | {{ wat }} | {{ r.bron }} |
-              {%- endfor %}
+              {%- set door = ' · ' ~ r.bron if r.bron and r.soort != 'overgeslagen' else '' %}
+              {%- if dag != ns.dag %}
+              {%- set ns.dag = dag %}
 
-              *Door*: Handmatig is een zone hier gestart, Schema het automatisch
-              sproeien, Schema (nu) met Schema nu starten, Rain Bird door de
-              Rain Bird zelf of de Rain Bird-app, en een naam bij pauzes en het
-              aan- of uitzetten van het schema.
+              **{{ dag }}**<br>
+              {%- else %}<br>
+              {%- endif %}
+              <ha-icon icon="{{ iconen.get(r.soort, 'mdi:information-outline') }}"></ha-icon> {{ t.strftime('%H:%M') }} **{{ r.naam }}** · {{ wat }}{{ door }}
+              {%- endfor %}
+              {%- if runs %}
+
+              *Door*: Handmatig is een zone hier gestart, Schema het automatisch sproeien,
+              Schema (nu) met Schema nu starten, Rain Bird de Rain Bird zelf of de app, en
+              een naam bij pauzes en het schema aan- of uitzetten.
               {%- else %}
-              Nog niets gesproeid sinds het logboek bijhoudt.
+              Nog niets gesproeid. Ook beurten van de Rain Bird zelf of de app komen hier.
               {%- endif %}
       - !include nav.yaml

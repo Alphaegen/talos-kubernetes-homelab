@@ -24,7 +24,7 @@ watering schedule. The main entities:
   `sensor.rainbird_program_remaining`, `sensor.rainbird_volgende_beurt` and
   `binary_sensor.rainbird_bezig` (Dutch, with the zone names)
 - `sensor.rainbird_logboek` (the log) and `timer.rainbird_time_left`
-- `automation.rainbird_schema`, `automation.rainbird_instellingen_logboek` and
+- `automation.rainbird_schema`, `automation.rainbird_instellingen_in_logboek` and
   `automation.rainbird_stop_when_shared_timer_finishes`
 
 Starting a zone turns off all zones, sends `rainbird.start_irrigation` with
@@ -52,7 +52,7 @@ then off again. **Turn the controller's own programs off in the Rain Bird
 app**, or zones water twice.
 
 While the schedule is off, nothing is logged per day (a winter would fill the
-log). `automation.rainbird_instellingen_logboek` logs switching the schedule
+log). `automation.rainbird_instellingen_in_logboek` logs switching the schedule
 off or on and pausing or resuming a zone instead, with the person who did it.
 
 ### Log
@@ -137,7 +137,7 @@ block in `helm-values.yaml` registers it in YAML mode for every user. The
 | Thuis | Weather, next waste pickup, today's solar, usage, export and import, Woonkamer lamp switch, both airco units with filter life and automation toggle, the Tuin status card with Stop while watering |
 | Energie | The energy dashboard cards: distribution, live power, electricity, solar, gas, water, devices, self-sufficiency |
 | Klimaat | Per room, in groups: the unit (mode, target, fan, both louvre directions), functions (ionizer, display light, jet mode while cooling), the automation with its settings while it is on (day and night maxima, night period, maintenance fan level), and filter and power use |
-| Tuin | What runs now with Stop, the zones to start by hand (pop-up per zone with the minutes), the automatic schedule (days, start time, minutes and pause per zone, rain delay), and the log with its full history |
+| Tuin | What runs now with Stop, the zones to start by hand (pop-up per zone with the minutes) and the log per day; next to it the automatic schedule (days, start time, minutes and pause per zone, rain delay). The log pop-up has the last 50 and the full history |
 | Meldingen | The viewer's own notification toggles (see below) |
 
 Pop-ups (`popup-*.yaml`) open from the Thuis view: all lights and scenes, each

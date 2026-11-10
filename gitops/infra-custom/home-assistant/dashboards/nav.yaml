@@ -17,10 +17,18 @@ highlight_current_view: true
 5_name: Meldingen
 5_icon: mdi:bell
 5_link: /dashboard-thuis/meldingen
-# With names the five buttons need ~580px; on a phone show icons only so they
-# all fit. Bubble re-measures the buttons and repositions them.
+# Bubble caps the bar at ~490px and scrolls the rest, too narrow for five
+# labelled buttons (~590px): let it grow to 640px. When the bar itself is
+# narrower than that (a phone, or a tablet with the sidebar open), show icons
+# only. Bubble re-measures the buttons and repositions them.
 styles: |
-  @media (max-width: 600px) {
+  .horizontal-buttons-stack-card {
+    container-type: inline-size;
+  }
+  .horizontal-buttons-stack-card .card-content {
+    max-width: min(640px, calc(100% - 16px)) !important;
+  }
+  @container (max-width: 640px) {
     .bubble-name { display: none !important; }
     .bubble-button { padding: 0 16px !important; }
   }

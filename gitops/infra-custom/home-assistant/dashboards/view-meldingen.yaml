@@ -6,8 +6,8 @@ title: Meldingen
 path: meldingen
 icon: mdi:bell
 type: sections
-max_columns: 2
-dense_section_placement: true
+# One column: full width on a phone, a centred list on a tablet or laptop.
+max_columns: 1
 theme: Homelab
 
 sections:
@@ -26,9 +26,7 @@ sections:
         text_only: true
         grid_options:
           columns: full
-        content: >-
-          Kies welke meldingen je op je telefoon krijgt. Dit geldt alleen
-          voor jou.
+        content: Kies welke meldingen je op je telefoon krijgt. Dit geldt alleen voor jou.
       - type: custom:bubble-card
         card_type: button
         button_type: switch
@@ -38,8 +36,10 @@ sections:
         show_state: true
         grid_options:
           columns: full
-        # Light blue with dark text when on, as the other switches.
-        styles: &aan-stijl |
+        # Light blue with dark text when on, as the other switches. The state
+        # line says when the notification comes, looked up by the <melding>
+        # part of input_boolean.melding_<melding>_<persoon>.
+        styles: &schakelaar |
           .bubble-button-background {
             background-color: ${state === 'on' ? 'rgb(96, 165, 250)' : ''} !important;
             opacity: ${state === 'on' ? '1' : ''} !important;
@@ -50,6 +50,16 @@ sections:
           .bubble-main-icon, .bubble-name, .bubble-state {
             color: ${state === 'on' ? '#0b1f3a' : ''} !important;
           }
+          ${(() => {
+            const melding = entity.replace(/^input_boolean\.melding_/, '').replace(/_[a-z]+$/, '');
+            const wanneer = {
+              afval: 'de avond voor de ophaaldag, 19:00',
+              aircofilter: 'als een filter onder 10% komt',
+            }[melding];
+            const el = card.querySelector('.bubble-state');
+            if (el) el.innerText = (state === 'on' ? 'Aan' : 'Uit') + (wanneer ? ` · ${wanneer}` : '');
+            return '';
+          })()}
       - type: custom:bubble-card
         card_type: button
         button_type: switch
@@ -59,16 +69,7 @@ sections:
         show_state: true
         grid_options:
           columns: full
-        styles: *aan-stijl
-      - &wanneer
-        type: markdown
-        text_only: true
-        grid_options:
-          columns: full
-        content: |
-          **Afval aan straat:** de avond voor een ophaaldag om 19:00.
-
-          **Aircofilter:** zodra een filter onder 10% levensduur komt.
+        styles: *schakelaar
 
   - type: grid
     visibility:
@@ -87,7 +88,7 @@ sections:
         show_state: true
         grid_options:
           columns: full
-        styles: *aan-stijl
+        styles: *schakelaar
       - type: custom:bubble-card
         card_type: button
         button_type: switch
@@ -97,8 +98,7 @@ sections:
         show_state: true
         grid_options:
           columns: full
-        styles: *aan-stijl
-      - *wanneer
+        styles: *schakelaar
 
   - type: grid
     visibility:
@@ -117,7 +117,7 @@ sections:
         show_state: true
         grid_options:
           columns: full
-        styles: *aan-stijl
+        styles: *schakelaar
       - type: custom:bubble-card
         card_type: button
         button_type: switch
@@ -127,8 +127,7 @@ sections:
         show_state: true
         grid_options:
           columns: full
-        styles: *aan-stijl
-      - *wanneer
+        styles: *schakelaar
 
   - type: grid
     cards:

@@ -557,31 +557,48 @@ sections:
               columns: full
             sub_button:
               bottom:
-                - &dag
-                  entity: input_boolean.rainbird_zone_1_ma
+                - entity: input_boolean.rainbird_zone_1_ma
                   name: ma
                   show_name: true
                   show_icon: false
                   tap_action:
                     action: toggle
-                - <<: *dag
-                  entity: input_boolean.rainbird_zone_1_di
+                - entity: input_boolean.rainbird_zone_1_di
                   name: di
-                - <<: *dag
-                  entity: input_boolean.rainbird_zone_1_wo
+                  show_name: true
+                  show_icon: false
+                  tap_action:
+                    action: toggle
+                - entity: input_boolean.rainbird_zone_1_wo
                   name: wo
-                - <<: *dag
-                  entity: input_boolean.rainbird_zone_1_do
+                  show_name: true
+                  show_icon: false
+                  tap_action:
+                    action: toggle
+                - entity: input_boolean.rainbird_zone_1_do
                   name: do
-                - <<: *dag
-                  entity: input_boolean.rainbird_zone_1_vr
+                  show_name: true
+                  show_icon: false
+                  tap_action:
+                    action: toggle
+                - entity: input_boolean.rainbird_zone_1_vr
                   name: vr
-                - <<: *dag
-                  entity: input_boolean.rainbird_zone_1_za
+                  show_name: true
+                  show_icon: false
+                  tap_action:
+                    action: toggle
+                - entity: input_boolean.rainbird_zone_1_za
                   name: za
-                - <<: *dag
-                  entity: input_boolean.rainbird_zone_1_zo
+                  show_name: true
+                  show_icon: false
+                  tap_action:
+                    action: toggle
+                - entity: input_boolean.rainbird_zone_1_zo
                   name: zo
+                  show_name: true
+                  show_icon: false
+                  tap_action:
+                    action: toggle
           - type: custom:bubble-card
             card_type: separator
             name: Tijden
@@ -712,27 +729,48 @@ sections:
               columns: full
             sub_button:
               bottom:
-                - <<: *dag
-                  entity: input_boolean.rainbird_zone_2_ma
+                - entity: input_boolean.rainbird_zone_2_ma
                   name: ma
-                - <<: *dag
-                  entity: input_boolean.rainbird_zone_2_di
+                  show_name: true
+                  show_icon: false
+                  tap_action:
+                    action: toggle
+                - entity: input_boolean.rainbird_zone_2_di
                   name: di
-                - <<: *dag
-                  entity: input_boolean.rainbird_zone_2_wo
+                  show_name: true
+                  show_icon: false
+                  tap_action:
+                    action: toggle
+                - entity: input_boolean.rainbird_zone_2_wo
                   name: wo
-                - <<: *dag
-                  entity: input_boolean.rainbird_zone_2_do
+                  show_name: true
+                  show_icon: false
+                  tap_action:
+                    action: toggle
+                - entity: input_boolean.rainbird_zone_2_do
                   name: do
-                - <<: *dag
-                  entity: input_boolean.rainbird_zone_2_vr
+                  show_name: true
+                  show_icon: false
+                  tap_action:
+                    action: toggle
+                - entity: input_boolean.rainbird_zone_2_vr
                   name: vr
-                - <<: *dag
-                  entity: input_boolean.rainbird_zone_2_za
+                  show_name: true
+                  show_icon: false
+                  tap_action:
+                    action: toggle
+                - entity: input_boolean.rainbird_zone_2_za
                   name: za
-                - <<: *dag
-                  entity: input_boolean.rainbird_zone_2_zo
+                  show_name: true
+                  show_icon: false
+                  tap_action:
+                    action: toggle
+                - entity: input_boolean.rainbird_zone_2_zo
                   name: zo
+                  show_name: true
+                  show_icon: false
+                  tap_action:
+                    action: toggle
           - type: custom:bubble-card
             card_type: separator
             name: Tijden
@@ -823,27 +861,48 @@ sections:
               columns: full
             sub_button:
               bottom:
-                - <<: *dag
-                  entity: input_boolean.rainbird_zone_3_ma
+                - entity: input_boolean.rainbird_zone_3_ma
                   name: ma
-                - <<: *dag
-                  entity: input_boolean.rainbird_zone_3_di
+                  show_name: true
+                  show_icon: false
+                  tap_action:
+                    action: toggle
+                - entity: input_boolean.rainbird_zone_3_di
                   name: di
-                - <<: *dag
-                  entity: input_boolean.rainbird_zone_3_wo
+                  show_name: true
+                  show_icon: false
+                  tap_action:
+                    action: toggle
+                - entity: input_boolean.rainbird_zone_3_wo
                   name: wo
-                - <<: *dag
-                  entity: input_boolean.rainbird_zone_3_do
+                  show_name: true
+                  show_icon: false
+                  tap_action:
+                    action: toggle
+                - entity: input_boolean.rainbird_zone_3_do
                   name: do
-                - <<: *dag
-                  entity: input_boolean.rainbird_zone_3_vr
+                  show_name: true
+                  show_icon: false
+                  tap_action:
+                    action: toggle
+                - entity: input_boolean.rainbird_zone_3_vr
                   name: vr
-                - <<: *dag
-                  entity: input_boolean.rainbird_zone_3_za
+                  show_name: true
+                  show_icon: false
+                  tap_action:
+                    action: toggle
+                - entity: input_boolean.rainbird_zone_3_za
                   name: za
-                - <<: *dag
-                  entity: input_boolean.rainbird_zone_3_zo
+                  show_name: true
+                  show_icon: false
+                  tap_action:
+                    action: toggle
+                - entity: input_boolean.rainbird_zone_3_zo
                   name: zo
+                  show_name: true
+                  show_icon: false
+                  tap_action:
+                    action: toggle
           - type: custom:bubble-card
             card_type: separator
             name: Tijden
@@ -934,27 +993,48 @@ sections:
               columns: full
             sub_button:
               bottom:
-                - <<: *dag
-                  entity: input_boolean.rainbird_zone_4_ma
+                - entity: input_boolean.rainbird_zone_4_ma
                   name: ma
-                - <<: *dag
-                  entity: input_boolean.rainbird_zone_4_di
+                  show_name: true
+                  show_icon: false
+                  tap_action:
+                    action: toggle
+                - entity: input_boolean.rainbird_zone_4_di
                   name: di
-                - <<: *dag
-                  entity: input_boolean.rainbird_zone_4_wo
+                  show_name: true
+                  show_icon: false
+                  tap_action:
+                    action: toggle
+                - entity: input_boolean.rainbird_zone_4_wo
                   name: wo
-                - <<: *dag
-                  entity: input_boolean.rainbird_zone_4_do
+                  show_name: true
+                  show_icon: false
+                  tap_action:
+                    action: toggle
+                - entity: input_boolean.rainbird_zone_4_do
                   name: do
-                - <<: *dag
-                  entity: input_boolean.rainbird_zone_4_vr
+                  show_name: true
+                  show_icon: false
+                  tap_action:
+                    action: toggle
+                - entity: input_boolean.rainbird_zone_4_vr
                   name: vr
-                - <<: *dag
-                  entity: input_boolean.rainbird_zone_4_za
+                  show_name: true
+                  show_icon: false
+                  tap_action:
+                    action: toggle
+                - entity: input_boolean.rainbird_zone_4_za
                   name: za
-                - <<: *dag
-                  entity: input_boolean.rainbird_zone_4_zo
+                  show_name: true
+                  show_icon: false
+                  tap_action:
+                    action: toggle
+                - entity: input_boolean.rainbird_zone_4_zo
                   name: zo
+                  show_name: true
+                  show_icon: false
+                  tap_action:
+                    action: toggle
           - type: custom:bubble-card
             card_type: separator
             name: Tijden

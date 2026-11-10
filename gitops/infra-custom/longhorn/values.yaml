@@ -12,6 +12,17 @@ defaultSettings:
   concurrentVolumeBackupRestorePerNodeLimit: 1
   backupConcurrentLimit: 1
   restoreConcurrentLimit: 1
+  # Without a memory limit on every container the CSI pods are BestEffort and
+  # the first pick of the Talos OOM handler, which skips pods with a limit.
+  # Requests from observed use (14d peak + 15%), memory limit about 2x.
+  systemManagedCSIComponentsResourceLimits: >-
+    {"longhorn-csi-plugin": {"requests": {"cpu": "5m", "memory": "48Mi"}, "limits": {"memory": "128Mi"}},
+    "node-driver-registrar": {"requests": {"cpu": "5m", "memory": "24Mi"}, "limits": {"memory": "48Mi"}},
+    "longhorn-liveness-probe": {"requests": {"cpu": "5m", "memory": "32Mi"}, "limits": {"memory": "64Mi"}},
+    "csi-attacher": {"requests": {"cpu": "5m", "memory": "40Mi"}, "limits": {"memory": "80Mi"}},
+    "csi-provisioner": {"requests": {"cpu": "5m", "memory": "56Mi"}, "limits": {"memory": "112Mi"}},
+    "csi-resizer": {"requests": {"cpu": "5m", "memory": "32Mi"}, "limits": {"memory": "64Mi"}},
+    "csi-snapshotter": {"requests": {"cpu": "5m", "memory": "32Mi"}, "limits": {"memory": "64Mi"}}}
 defaultBackupStore:
   backupTarget: "nfs://192.168.60.137:/volume1/longhorn-backups"
   backupTargetCredentialSecret: ""

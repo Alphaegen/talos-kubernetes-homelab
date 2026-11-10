@@ -582,15 +582,12 @@ automation:
            if trigger.entity_id == 'sensor.airco_boven_filter_remaining_life'
            else 'Airco beneden' }}
     actions:
-      - action: notify.send_message
-        target:
-          entity_id:
-            - notify.alpha_mobile
-            - notify.m_j_vlam_iphone
-            - notify.wil_mobiel
+      # Only to the people who have this switched on (packages/meldingen.yaml).
+      - action: script.melding_versturen
         data:
-          title: Aircofilter bijna op
-          message: >-
+          melding: aircofilter
+          titel: Aircofilter bijna op
+          bericht: >-
             {{ airco_name }} heeft nog
             {{ trigger.to_state.state | float(0) | round(0) | int }}%
             filterlevensduur. Maak het filter schoon.

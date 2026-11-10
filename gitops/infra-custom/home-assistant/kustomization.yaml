@@ -10,6 +10,7 @@ configMapGenerator:
       - airco.yaml=packages/airco.yaml
       - afval.yaml=packages/afval.yaml
       - energie.yaml=packages/energie.yaml
+      - meldingen.yaml=packages/meldingen.yaml
     options:
       labels:
         app.kubernetes.io/component: packages
@@ -22,6 +23,7 @@ configMapGenerator:
       - dashboards/view-klimaat.yaml
       - dashboards/view-energie.yaml
       - dashboards/view-tuin.yaml
+      - dashboards/view-meldingen.yaml
       - dashboards/airco-boven.yaml
       - dashboards/airco-beneden.yaml
       - dashboards/popup-airco-boven.yaml

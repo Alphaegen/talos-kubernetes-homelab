@@ -7,3 +7,4 @@ views:
   - !include view-energie.yaml
   - !include view-klimaat.yaml
   - !include view-tuin.yaml
+  - !include view-meldingen.yaml

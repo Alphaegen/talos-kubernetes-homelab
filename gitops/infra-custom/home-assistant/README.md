@@ -5,8 +5,8 @@ This directory contains Kubernetes manifests that are applied into the
 
 ## RainBird Irrigation
 
-`packages/rainbird.yaml`, `packages/airco.yaml`, `packages/afval.yaml` and
-`packages/energie.yaml` are rendered into the
+`packages/rainbird.yaml`, `packages/airco.yaml`, `packages/afval.yaml`,
+`packages/energie.yaml` and `packages/meldingen.yaml` are rendered into the
 `home-assistant-packages` ConfigMap and mounted read-only under
 `/config/packages`.
 
@@ -106,6 +106,7 @@ block in `helm-values.yaml` registers it in YAML mode for every user. The
 | Energie | The energy dashboard cards: distribution, live power, electricity, solar, gas, water, devices, self-sufficiency |
 | Klimaat | Per room, in groups: the unit (mode, target, fan, both louvre directions), functions (ionizer, display light, jet mode while cooling), the automation with its settings while it is on (day and night maxima, night period, maintenance fan level), and filter and power use |
 | Tuin | Rain Bird status, manual zones, and the program |
+| Meldingen | The viewer's own notification toggles (see below) |
 
 Pop-ups (`popup-*.yaml`) open from the Thuis view: all lights and scenes, each
 airco unit, and the waste pickups. `airco-boven.yaml` and
@@ -140,6 +141,26 @@ Dutch day and countdown (`wanneer`), an icon, and every pickup in the window
 (`ophalingen`, with `week` 0 for this week and 1 for next week) for the
 pop-up's list. If the calendar is not loaded yet after a restart, the sensor
 keeps its last value until the next hourly run.
+
+### Notifications
+
+`packages/meldingen.yaml` lets each person choose which phone notifications
+they get. Every notification has an `input_boolean.melding_<melding>_<persoon>`
+per person (`niek`, `marc`, `wil`), and automations send through
+`script.melding_versturen`, which maps each person to their phone and only
+notifies the people whose helper is on. The Meldingen view has one section per
+person, shown only to that person's Home Assistant user, so everyone sees and
+switches their own toggles.
+
+| Melding | When |
+|---|---|
+| `afval` | 19:00 the evening before a pickup, e.g. "GFT moet morgen aan straat!" |
+| `aircofilter` | When an airco filter drops below 10% life |
+
+New helpers start off. To add a notification, add its helpers, a toggle in
+each person's section of `dashboards/view-meldingen.yaml`, and call the script
+with the new key. To add a person, add their helpers, their phone under
+`telefoons` in the script, and a section with their user id.
 
 ### Energy today
 
@@ -210,9 +231,9 @@ controller waits for the `cool` state and then gives the LG unit five seconds
 to become ready before sending its temperature and fan settings.
 
 When either air conditioner's remaining filter life drops below 10%, Home
-Assistant sends a notification to every registered mobile: `alpha-mobile`,
-`M.J.Vlam iPhone`, and `Wil Mobiel`. The notification identifies whether the
-upstairs or downstairs filter needs attention.
+Assistant notifies everyone who has the `aircofilter` notification switched on
+(see Notifications above). The notification identifies whether the upstairs or
+downstairs filter needs attention.
 
 `lovelace-airco-card.yaml` is a standalone Lovelace card containing both
 thermostats, automation toggles, targets, and sleep schedules. Paste it into a

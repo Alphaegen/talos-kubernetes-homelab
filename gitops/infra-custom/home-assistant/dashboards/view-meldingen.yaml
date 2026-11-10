@@ -1,0 +1,135 @@
+# Per-person notification toggles from packages/meldingen.yaml. Every person
+# has their own section, shown only to their Home Assistant user, so the view
+# always shows the toggles of whoever is looking at it. Keep the sections the
+# same apart from the user id and the helper suffix.
+title: Meldingen
+path: meldingen
+icon: mdi:bell
+type: sections
+max_columns: 2
+dense_section_placement: true
+theme: Homelab
+
+sections:
+  - type: grid
+    visibility:
+      - condition: user
+        users:
+          - 2915e854358e42efae2c5fc03f110df5 # Niek
+    cards:
+      - &kop
+        type: heading
+        heading: Mijn meldingen
+        icon: mdi:bell-cog
+      - &uitleg
+        type: markdown
+        text_only: true
+        grid_options:
+          columns: full
+        content: >-
+          Kies welke meldingen je op je telefoon krijgt. Dit geldt alleen
+          voor jou.
+      - type: custom:bubble-card
+        card_type: button
+        button_type: switch
+        entity: input_boolean.melding_afval_niek
+        name: Afval aan straat
+        icon: mdi:trash-can
+        show_state: true
+        grid_options:
+          columns: full
+        # Light blue with dark text when on, as the other switches.
+        styles: &aan-stijl |
+          .bubble-button-background {
+            background-color: ${state === 'on' ? 'rgb(96, 165, 250)' : ''} !important;
+            opacity: ${state === 'on' ? '1' : ''} !important;
+          }
+          .bubble-main-icon-container {
+            background-color: ${state === 'on' ? 'rgba(255, 255, 255, 0.4)' : ''} !important;
+          }
+          .bubble-main-icon, .bubble-name, .bubble-state {
+            color: ${state === 'on' ? '#0b1f3a' : ''} !important;
+          }
+      - type: custom:bubble-card
+        card_type: button
+        button_type: switch
+        entity: input_boolean.melding_aircofilter_niek
+        name: Aircofilter
+        icon: mdi:air-filter
+        show_state: true
+        grid_options:
+          columns: full
+        styles: *aan-stijl
+      - &wanneer
+        type: markdown
+        text_only: true
+        grid_options:
+          columns: full
+        content: |
+          **Afval aan straat:** de avond voor een ophaaldag om 19:00.
+
+          **Aircofilter:** zodra een filter onder 10% levensduur komt.
+
+  - type: grid
+    visibility:
+      - condition: user
+        users:
+          - 6882354bf01f4788b10f175d5acbffa1 # Marc
+    cards:
+      - *kop
+      - *uitleg
+      - type: custom:bubble-card
+        card_type: button
+        button_type: switch
+        entity: input_boolean.melding_afval_marc
+        name: Afval aan straat
+        icon: mdi:trash-can
+        show_state: true
+        grid_options:
+          columns: full
+        styles: *aan-stijl
+      - type: custom:bubble-card
+        card_type: button
+        button_type: switch
+        entity: input_boolean.melding_aircofilter_marc
+        name: Aircofilter
+        icon: mdi:air-filter
+        show_state: true
+        grid_options:
+          columns: full
+        styles: *aan-stijl
+      - *wanneer
+
+  - type: grid
+    visibility:
+      - condition: user
+        users:
+          - f649d42eef9e444ab651afb52ed8c7f0 # Wil
+    cards:
+      - *kop
+      - *uitleg
+      - type: custom:bubble-card
+        card_type: button
+        button_type: switch
+        entity: input_boolean.melding_afval_wil
+        name: Afval aan straat
+        icon: mdi:trash-can
+        show_state: true
+        grid_options:
+          columns: full
+        styles: *aan-stijl
+      - type: custom:bubble-card
+        card_type: button
+        button_type: switch
+        entity: input_boolean.melding_aircofilter_wil
+        name: Aircofilter
+        icon: mdi:air-filter
+        show_state: true
+        grid_options:
+          columns: full
+        styles: *aan-stijl
+      - *wanneer
+
+  - type: grid
+    cards:
+      - !include nav.yaml

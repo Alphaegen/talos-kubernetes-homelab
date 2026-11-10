@@ -1,0 +1,104 @@
+# Phone notifications that each person switches on or off for themselves on
+# the Meldingen view of the Thuis dashboard. Every notification has one
+# input_boolean per person, named melding_<melding>_<persoon>; automations
+# send through script.melding_versturen, which only reaches the phones of the
+# people who have that notification on.
+#
+# A new notification: add one input_boolean per person here, a toggle in each
+# person's section of dashboards/view-meldingen.yaml, and call the script with
+# the new <melding> key. A new person: add their helpers, their phone to
+# `telefoons` below and a section with their user id to the view.
+input_boolean:
+  melding_afval_niek:
+    name: Melding afval (Niek)
+    icon: mdi:trash-can
+  melding_afval_marc:
+    name: Melding afval (Marc)
+    icon: mdi:trash-can
+  melding_afval_wil:
+    name: Melding afval (Wil)
+    icon: mdi:trash-can
+  melding_aircofilter_niek:
+    name: Melding aircofilter (Niek)
+    icon: mdi:air-filter
+  melding_aircofilter_marc:
+    name: Melding aircofilter (Marc)
+    icon: mdi:air-filter
+  melding_aircofilter_wil:
+    name: Melding aircofilter (Wil)
+    icon: mdi:air-filter
+
+script:
+  melding_versturen:
+    alias: Melding versturen
+    description: >-
+      Sends a notification to the phones of everyone who has this
+      notification switched on.
+    mode: queued
+    fields:
+      melding:
+        description: The notification key, e.g. afval or aircofilter.
+        required: true
+        example: afval
+        selector:
+          text:
+      titel:
+        required: true
+        selector:
+          text:
+      bericht:
+        required: true
+        selector:
+          text:
+    variables:
+      # Person (the suffix of the helpers) to the mobile app of their phone.
+      telefoons:
+        niek: notify.alpha_mobile
+        marc: notify.m_j_vlam_iphone
+        wil: notify.wil_mobiel
+      ontvangers: >-
+        {% set ns = namespace(lijst=[]) %}
+        {% for persoon, telefoon in telefoons.items()
+             if is_state('input_boolean.melding_' ~ melding ~ '_' ~ persoon, 'on') %}
+          {% set ns.lijst = ns.lijst + [telefoon] %}
+        {% endfor %}
+        {{ ns.lijst }}
+    sequence:
+      - condition: template
+        value_template: "{{ ontvangers | count > 0 }}"
+      - action: notify.send_message
+        target:
+          entity_id: "{{ ontvangers }}"
+        data:
+          title: "{{ titel }}"
+          message: "{{ bericht }}"
+
+automation:
+  # The evening before a pickup, from sensor.afval_ophaalschema
+  # (packages/afval.yaml), e.g. "GFT en Papier moeten morgen aan straat!".
+  - alias: Meldingen - Afval morgen aan straat
+    id: melding_afval_morgen
+    mode: single
+    triggers:
+      - trigger: time
+        at: "19:00:00"
+    variables:
+      soorten: >-
+        {% set morgen = (now().date() + timedelta(days=1)).isoformat() %}
+        {{ (state_attr('sensor.afval_ophaalschema', 'ophalingen') or [])
+           | selectattr('datum', 'eq', morgen)
+           | map(attribute='soort') | unique | list }}
+    conditions:
+      - condition: template
+        value_template: "{{ soorten | count > 0 }}"
+    actions:
+      - action: script.melding_versturen
+        data:
+          melding: afval
+          titel: Afval
+          bericht: >-
+            {% if soorten | count > 1 %}
+              {{ soorten[:-1] | join(', ') }} en {{ soorten[-1] }} moeten morgen aan straat!
+            {% else %}
+              {{ soorten[0] }} moet morgen aan straat!
+            {% endif %}

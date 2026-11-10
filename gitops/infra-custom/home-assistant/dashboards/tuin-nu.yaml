@@ -1,7 +1,7 @@
 # What the garden is doing now, for the Tuin view, its zone pop-ups and the
-# Thuis view (packages/rainbird.yaml). While watering: which zone, when it
-# ends and what comes next, blue, with Stop (and Volgende for a program).
-# Otherwise: the next scheduled run, or why there is none.
+# Thuis view (packages/rainbird.yaml). While watering: which zone and when it
+# ends, blue, with Stop (which also skips scheduled starts still waiting).
+# Otherwise: the next scheduled run and its zone, or why there is none.
 type: custom:bubble-card
 card_type: button
 button_type: state
@@ -20,19 +20,6 @@ tap_action:
   action: navigate
   navigation_path: /dashboard-thuis/tuin
 sub_button:
-  # Ends the current zone; the program goes on with the next one.
-  - name: Volgende
-    icon: mdi:skip-next
-    show_name: true
-    visibility:
-      - condition: state
-        entity: input_boolean.rainbird_program_running
-        state: "on"
-    tap_action:
-      action: perform-action
-      perform_action: script.rainbird_stop_all_zones
-      data:
-        cancel_program: false
   - name: Stop
     icon: mdi:stop
     show_name: true
@@ -57,10 +44,6 @@ styles: |
     color: ${hass.states['binary_sensor.rainbird_bezig']?.state === 'on' ? '#0b1f3a' : ''} !important;
   }
   .bubble-sub-button-1 {
-    background-color: rgba(255, 255, 255, 0.55) !important;
-    color: #0b1f3a !important;
-  }
-  .bubble-sub-button-2 {
     background-color: var(--error-color) !important;
     color: #fff !important;
   }
@@ -79,13 +62,11 @@ styles: |
     let tekst = '';
     if (st('binary_sensor.rainbird_bezig') === 'on') {
       const timer = hass.states['timer.rainbird_time_left'];
-      const rest = st('sensor.rainbird_program_remaining');
-      const delen = [];
       if (timer?.state === 'active' && timer.attributes.finishes_at) {
-        delen.push(`klaar om ${uur(new Date(timer.attributes.finishes_at))}`);
+        tekst = `klaar om ${uur(new Date(timer.attributes.finishes_at))}`;
+      } else {
+        tekst = 'Even geduld…';
       }
-      if (rest && rest !== 'Geen') delen.push(`daarna ${rest}`);
-      tekst = delen.join(' · ') || 'Even geduld…';
     } else {
       if (status === 'Uit') naam = 'Niets aan het sproeien';
       const pauze = parseInt(st('number.rain_bird_controller_rain_delay')) || 0;
@@ -96,7 +77,8 @@ styles: |
         tekst = 'Automatisch sproeien staat uit';
       } else if (volgende && !['unknown', 'unavailable'].includes(volgende)) {
         const d = new Date(volgende);
-        tekst = `Volgende beurt: ${dag(d)} ${uur(d)}`;
+        const zone = hass.states['sensor.rainbird_volgende_beurt'].attributes.zone;
+        tekst = `Volgende beurt: ${dag(d)} ${uur(d)}${zone ? ` · ${zone}` : ''}`;
       } else {
         tekst = 'Geen beurt gepland';
       }

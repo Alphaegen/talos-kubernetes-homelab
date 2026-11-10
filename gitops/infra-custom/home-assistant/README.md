@@ -13,15 +13,17 @@ This directory contains Kubernetes manifests that are applied into the
 The package runs the four zones one at a time, logs every run, and runs the
 watering schedule. The main entities:
 
-- `script.rainbird_start_single_zone` (zone, minutes, source),
-  `script.rainbird_run_program` and `script.rainbird_stop_all_zones`
-- `input_number.rainbird_duration` (manual minutes) and
-  `input_number.rainbird_program_zone_<1-4>_duration` (schedule minutes)
-- `input_boolean.rainbird_schema_actief`, `input_boolean.rainbird_schema_<ma-zo>`
-  and `input_datetime.rainbird_schema_starttijd` (the schedule)
-- `input_boolean.rainbird_pauze_zone_<1-4>` (pause a zone in the schedule)
+- `script.rainbird_start_single_zone` (zone, minutes, source) and
+  `script.rainbird_stop_all_zones`
+- `input_number.rainbird_duration` (manual minutes)
+- `input_boolean.rainbird_schema_actief` (the whole schedule on or off)
+- per zone N (1-4): `input_boolean.rainbird_zone_N_<ma-zo>` (days),
+  `input_datetime.rainbird_zone_N_tijd_<1-2>` and
+  `input_number.rainbird_zone_N_minuten_<1-2>` (two start times with their
+  minutes; 0 switches a time off), and `input_boolean.rainbird_pauze_zone_N`
+- `input_datetime.rainbird_gestopt` (when Stop was last pressed)
 - `sensor.rainbird_status`, `sensor.rainbird_active_zone`,
-  `sensor.rainbird_program_remaining`, `sensor.rainbird_volgende_beurt` and
+  `sensor.rainbird_volgende_beurt` (with the zone in its `zone` attribute) and
   `binary_sensor.rainbird_bezig` (Dutch, with the zone names)
 - `sensor.rainbird_logboek` (the log) and `timer.rainbird_time_left`
 - `automation.rainbird_schema`, `automation.rainbird_instellingen_in_logboek` and
@@ -35,21 +37,27 @@ shared timer only shows the countdown. A start that is not confirmed is logged,
 creates a persistent notification, and goes to everyone with the `tuin`
 notification switched on.
 
-The program runs every zone with schedule minutes above 0 that is not
-paused, in zone order, and waits up to 15 minutes for the controller if it is
-briefly unreachable. Stop cancels it; Volgende ends the current zone and goes
-on with the next.
-
 ### Schedule
 
-`automation.rainbird_schema` runs the program at the start time on the chosen
-days while Automatisch sproeien is on. It skips the whole day, and logs why,
-when the rain sensor reports rain (`regen gemeten`), a rain delay is set
-(`regenpauze`), or something is already running. A paused zone keeps its
-minutes but is left out and logged as `gepauzeerd`; the other zones still run.
-Pausing is manual: switch Pauze on for as long as the zone should be skipped,
-then off again. **Turn the controller's own programs off in the Rain Bird
-app**, or zones water twice.
+Every zone has its own days and two start times, each with its own minutes,
+so the grass can run 5 minutes twice on Monday and Thursday while the drip
+line runs every evening. `automation.rainbird_schema` has a trigger per start
+time and, while Automatisch sproeien is on, starts that zone for its minutes
+on the zone's days. A start is skipped, and logged with why, when the zone is
+paused (`gepauzeerd`), the rain sensor reports rain (`regen gemeten`) or a
+rain delay is set (`regenpauze`).
+
+The controller runs one zone at a time, so the automation is queued: a start
+that coincides with another, or falls while a zone runs (also one started by
+hand or on the controller), waits its turn, for at most an hour (then it is
+skipped as `er sproeide te lang iets anders`). It also waits up to 15 minutes
+for the controller when it is briefly unreachable. Stop ends the current zone
+and skips the starts still waiting (`gestopt`), via
+`input_datetime.rainbird_gestopt`.
+
+Pausing is manual: switch the zone's pause on for as long as it should be
+skipped, then off again; its days and times stay. **Turn the controller's own
+programs off in the Rain Bird app**, or zones water twice.
 
 While the schedule is off, nothing is logged per day (a winter would fill the
 log). `automation.rainbird_instellingen_in_logboek` logs switching the schedule
@@ -61,7 +69,7 @@ Every entry has a kind (`beurt`, `overgeslagen`, `mislukt`, `pauze`, `hervat`,
 `uit`, `aan`), a zone name, a start time, a short description (`wat`, e.g.
 `15 min` or `overgeslagen: regen gemeten`) and a source (`bron`). The source
 of a run is the start request the scripts announce with a `rainbird_logboek`
-event (Handmatig, Schema, Schema (nu)). A zone that turns on without one was
+event (Handmatig, Schema). A zone that turns on without one was
 started by the controller itself or the Rain Bird app and is logged as Rain
 Bird. For pauses and the schedule switch the source is the person. Times are
 accurate to the one-minute poll.
@@ -99,29 +107,28 @@ repo-root `kubeconfig`. Their current friendly names are `Gras`, `Achtertuin`,
 
 If Home Assistant generated different entity IDs, update
 `packages/rainbird.yaml`, `dashboards/view-tuin.yaml` and
-`lovelace-rainbird-card.yaml`.
+`dashboards/tuin-nu.yaml`.
 
-The entity registry still holds three orphans from earlier UI-made helpers:
-`binary_sensor.rainbird_busy`, `input_select.rainbird_active_zone` and
-`sensor.rainbird_program_status`. Nothing uses them; delete them under
+The entity registry still holds orphans from earlier versions:
+`binary_sensor.rainbird_busy`, `input_select.rainbird_active_zone`,
+`sensor.rainbird_program_status`, and since the per-zone schedule
+`input_number.rainbird_program_zone_<1-4>_duration`,
+`input_number.rainbird_program_step`, `input_boolean.rainbird_program_running`,
+`input_boolean.rainbird_schema_<ma-zo>`, `input_datetime.rainbird_schema_starttijd`,
+`sensor.rainbird_program_total_duration`, `sensor.rainbird_program_remaining`
+and `script.rainbird_run_program`. Nothing uses them; delete them under
 **Settings → Entities**.
 
 Keep the raw Rain Bird zone switches off the primary dashboard so users start
-zones through `script.rainbird_start_single_zone` or
-`script.rainbird_run_program` and preserve mutual exclusion.
+zones through `script.rainbird_start_single_zone` and preserve mutual
+exclusion.
 
 ## Lovelace
 
-Use these snippets on the RainBird page in the main Home Assistant dashboard:
-
-- `lovelace-rainbird-status-card.yaml`
-- `lovelace-rainbird-manual-card.yaml`
-- `lovelace-rainbird-program-card.yaml`
-
-`lovelace-rainbird-card.yaml` contains the same three cards as one
-`vertical-stack` for quick full-page replacement. The main dashboard itself is
-managed in Home Assistant storage, so these files are the source-of-truth
-snippets to paste into that page when the RainBird controls change.
+The Tuin view of the Thuis dashboard (`dashboards/view-tuin.yaml`, with the
+status card `dashboards/tuin-nu.yaml`) replaces the RainBird page of the old
+storage-mode main dashboard and its pasted snippets. Remove that page: it
+still points at the program entities that no longer exist.
 
 ## Thuis Dashboard
 
@@ -137,7 +144,7 @@ block in `helm-values.yaml` registers it in YAML mode for every user. The
 | Thuis | Weather, this week's waste pickups, today's solar, usage, export and import, Woonkamer lamp switch, both airco units with filter life and automation toggle, the Tuin status card with Stop while watering |
 | Energie | The energy dashboard cards: distribution, live power, electricity, solar, gas, water, devices, self-sufficiency |
 | Klimaat | Per room, in groups: the unit (mode, target, fan, both louvre directions), functions (ionizer, display light, jet mode while cooling), the automation with its settings while it is on (day and night maxima, night period, maintenance fan level), and filter and power use |
-| Tuin | What runs now with Stop, the zones to start by hand (pop-up per zone with the minutes) and the log per day; next to it the automatic schedule (days, start time, minutes and pause per zone, rain delay). The log pop-up has the last 50 and the full history |
+| Tuin | What runs now with Stop, the zones to start by hand (pop-up per zone with the minutes) and the log per day; next to it the automatic schedule, a row per zone with a pop-up for its days, two start times with minutes, and pause, plus the rain delay. The log pop-up has the last 50 and the full history |
 | Meldingen | The viewer's own notification toggles (see below) |
 
 Pop-ups (`popup-*.yaml`) open from the Thuis view: all lights and scenes, each

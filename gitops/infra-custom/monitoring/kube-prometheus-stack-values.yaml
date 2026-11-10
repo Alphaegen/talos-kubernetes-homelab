@@ -44,7 +44,9 @@ alertmanager:
         equal: ['namespace']
       - target_matchers: ['alertname = InfoInhibitor']
     route:
-      group_by: ['namespace']
+      # Per alert name, so a long-firing alert is not re-sent whenever an
+      # unrelated alert in the same namespace starts or resolves.
+      group_by: ['namespace', 'alertname']
       group_wait: 30s
       group_interval: 5m
       repeat_interval: 12h

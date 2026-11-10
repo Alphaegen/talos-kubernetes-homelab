@@ -125,14 +125,17 @@ spec:
             summary: Longhorn backup for {{ $labels.volume }} is stale
             description: PVC {{ $labels.pvc_namespace }}/{{ $labels.pvc }} has no successful backup newer than 30 hours.
 
-        - alert: LonghornVolumeUsageCritical
-          expr: 100 * longhorn_volume_actual_size_bytes / longhorn_volume_capacity_bytes > 90
-          for: 15m
+        # A volume's actual size includes snapshot data and can exceed its
+        # capacity while the filesystem has room; KubePersistentVolumeFillingUp
+        # covers filesystem usage. Snapshot growth only matters for the disk.
+        - alert: LonghornDiskUsageHigh
+          expr: 100 * longhorn_disk_usage_bytes / longhorn_disk_capacity_bytes > 70
+          for: 30m
           labels:
-            severity: critical
+            severity: warning
           annotations:
-            summary: Longhorn volume {{ $labels.volume }} is over 90% allocated
-            description: PVC {{ $labels.pvc_namespace }}/{{ $labels.pvc }} is {{ printf "%.1f" $value }}% allocated.
+            summary: Longhorn disk on {{ $labels.node }} is over 70% used
+            description: Disk {{ $labels.disk }} on {{ $labels.node }} is {{ printf "%.1f" $value }}% used. Prune old snapshots before Longhorn stops scheduling replicas there.
 
     - name: storage-restart-circuit-breakers
       rules:
@@ -180,7 +183,8 @@ spec:
             description: The application controller has used over 80% of its memory limit for 10 minutes. Avoid recursive syncs and inspect queued operations.
 
         - alert: PersistentWorkloadRestartLoop
-          expr: sum by (namespace, pod) (increase(kube_pod_container_status_restarts_total{namespace=~"bookorbit|dumbpad|home-assistant|home-automation|media|monitoring|obsidian-livesync|longhorn-system"}[15m])) > 3
+          # Per container: one pod sandbox kill restarts every container at once.
+          expr: sum by (namespace, pod, container) (increase(kube_pod_container_status_restarts_total{namespace=~"bookorbit|dumbpad|home-assistant|home-automation|media|monitoring|obsidian-livesync|longhorn-system"}[15m])) > 3
           for: 5m
           labels:
             severity: critical

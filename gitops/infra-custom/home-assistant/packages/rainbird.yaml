@@ -399,8 +399,7 @@ template:
         entity_id: *rainbird_zones
         to: "off"
         id: uit
-      # data: soort (aanvraag, overgeslagen, mislukt, pauze, hervat, uit or
-      # aan), zone (switch entity or empty for the whole schedule), bron,
+      # data: soort (aanvraag, overgeslagen, mislukt, uit or aan), zone (switch entity or empty for the whole schedule), bron,
       # reden, and optionally naam to override the zone name.
       - trigger: event
         event_type: rainbird_logboek
@@ -450,7 +449,7 @@ template:
               {{ oud_aanvraag }}
             {% endif %}
           # Every entry has a short `wat` for the table and the calendar, e.g.
-          # "15 min", "overgeslagen: regen gemeten" or "gepauzeerd".
+          # "15 min", "overgeslagen: gepauzeerd" or "uitgezet".
           nieuw: >-
             {% if trigger.id == 'uit' and bezig != {} %}
               {% set minuten = [((as_timestamp(now()) - as_timestamp(bezig.start)) / 60) | round(0) | int, 1] | max %}
@@ -475,8 +474,6 @@ template:
                 'wat': {
                   'overgeslagen': 'overgeslagen: ' ~ reden,
                   'mislukt': 'mislukt: ' ~ reden,
-                  'pauze': 'gepauzeerd',
-                  'hervat': 'hervat',
                   'uit': 'uitgezet',
                   'aan': 'aangezet',
                 }.get(soort, soort),
@@ -881,29 +878,23 @@ automation:
               minutes: "{{ minuten + 2 }}"
             continue_on_timeout: true
 
-  # Pausing or resuming a zone and switching the schedule off or on, with the
-  # person who did it (from the change's user), into the log.
+  # Switching the schedule off or on, with the person who did it (from the
+  # change's user), into the log. Pausing a zone is not logged when it is
+  # pressed: the schedule logs each start it skips because of it instead.
   - alias: RainBird - Instellingen in logboek
     id: rainbird_instellingen_logboek
     mode: queued
     triggers:
       - trigger: state
-        entity_id: &rainbird_instellingen
-          - input_boolean.rainbird_schema_actief
-          - input_boolean.rainbird_pauze_zone_1
-          - input_boolean.rainbird_pauze_zone_2
-          - input_boolean.rainbird_pauze_zone_3
-          - input_boolean.rainbird_pauze_zone_4
+        entity_id: input_boolean.rainbird_schema_actief
         from: "off"
         to: "on"
       - trigger: state
-        entity_id: *rainbird_instellingen
+        entity_id: input_boolean.rainbird_schema_actief
         from: "on"
         to: "off"
     actions:
       - variables:
-          aan: "{{ trigger.to_state.state == 'on' }}"
-          schema: "{{ trigger.entity_id == 'input_boolean.rainbird_schema_actief' }}"
           gebruiker: "{{ trigger.to_state.context.user_id }}"
           wie: >-
             {% if gebruiker %}
@@ -914,10 +905,8 @@ automation:
             {% endif %}
       - event: rainbird_logboek
         event_data:
-          soort: >-
-            {% if schema %}{{ 'aan' if aan else 'uit' }}{% else %}{{ 'pauze' if aan else 'hervat' }}{% endif %}
-          zone: >-
-            {{ '' if schema else 'switch.rain_bird_sprinkler_' ~ trigger.entity_id[-1] }}
+          soort: "{{ 'aan' if trigger.to_state.state == 'on' else 'uit' }}"
+          zone: ""
           bron: "{{ wie }}"
       # Space the events out, so the log writes one before the next.
       - delay: "00:00:02"

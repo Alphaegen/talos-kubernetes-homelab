@@ -1077,8 +1077,9 @@ sections:
               {%- if runs %}
 
               *Door*: Handmatig is een zone hier gestart, Schema het automatisch sproeien,
-              Rain Bird de Rain Bird zelf of de app, en een naam bij pauzes en het schema
-              aan- of uitzetten.
+              Rain Bird de Rain Bird zelf of de app, en een naam bij het schema aan- of
+              uitzetten. Een gepauzeerde zone staat erin als overgeslagen op de tijden
+              dat hij anders had gesproeid.
               {%- else %}
               Nog niets gesproeid. Ook beurten van de Rain Bird zelf of de app komen hier.
               {%- endif %}

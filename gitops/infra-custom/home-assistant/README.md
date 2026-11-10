@@ -56,22 +56,23 @@ and skips the starts still waiting (`gestopt`), via
 `input_datetime.rainbird_gestopt`.
 
 Pausing is manual: switch the zone's pause on for as long as it should be
-skipped, then off again; its days and times stay. **Turn the controller's own
+skipped, then off again; its days and times stay. Pressing pause is not
+logged itself: every start the zone would have had is logged as skipped
+(`gepauzeerd`) at its time, so the log shows exactly which runs it missed. **Turn the controller's own
 programs off in the Rain Bird app**, or zones water twice.
 
-While the schedule is off, nothing is logged per day (a winter would fill the
-log). `automation.rainbird_instellingen_in_logboek` logs switching the schedule
-off or on and pausing or resuming a zone instead, with the person who did it.
+While the schedule is off, nothing is logged per start (a winter would fill
+the log). `automation.rainbird_instellingen_in_logboek` logs switching the
+schedule off or on instead, with the person who did it.
 
 ### Log
 
-Every entry has a kind (`beurt`, `overgeslagen`, `mislukt`, `pauze`, `hervat`,
-`uit`, `aan`), a zone name, a start time, a short description (`wat`, e.g.
+Every entry has a kind (`beurt`, `overgeslagen`, `mislukt`, `uit`, `aan`), a zone name, a start time, a short description (`wat`, e.g.
 `15 min` or `overgeslagen: regen gemeten`) and a source (`bron`). The source
 of a run is the start request the scripts announce with a `rainbird_logboek`
 event (Handmatig, Schema). A zone that turns on without one was
 started by the controller itself or the Rain Bird app and is logged as Rain
-Bird. For pauses and the schedule switch the source is the person. Times are
+Bird. For the schedule switch the source is the person. Times are
 accurate to the one-minute poll.
 
 The log is kept twice:
@@ -125,10 +126,9 @@ exclusion.
 
 ## Lovelace
 
-The Tuin view of the Thuis dashboard (`dashboards/view-tuin.yaml`, with the
-status card `dashboards/tuin-nu.yaml`) replaces the RainBird page of the old
-storage-mode main dashboard and its pasted snippets. Remove that page: it
-still points at the program entities that no longer exist.
+The controls live on the Tuin view of the Thuis dashboard
+(`dashboards/view-tuin.yaml`, with the status card `dashboards/tuin-nu.yaml`).
+The old storage-mode main dashboard and its pasted snippets are gone.
 
 ## Thuis Dashboard
 

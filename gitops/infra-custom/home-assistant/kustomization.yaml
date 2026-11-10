@@ -23,6 +23,7 @@ configMapGenerator:
       - dashboards/view-klimaat.yaml
       - dashboards/view-energie.yaml
       - dashboards/view-tuin.yaml
+      - dashboards/tuin-nu.yaml
       - dashboards/view-meldingen.yaml
       - dashboards/airco-boven.yaml
       - dashboards/airco-beneden.yaml

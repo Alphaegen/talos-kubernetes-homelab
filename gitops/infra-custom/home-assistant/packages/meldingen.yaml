@@ -27,6 +27,15 @@ input_boolean:
   melding_aircofilter_wil:
     name: Melding aircofilter (Wil)
     icon: mdi:air-filter
+  melding_tuin_niek:
+    name: Melding tuin (Niek)
+    icon: mdi:sprinkler-variant
+  melding_tuin_marc:
+    name: Melding tuin (Marc)
+    icon: mdi:sprinkler-variant
+  melding_tuin_wil:
+    name: Melding tuin (Wil)
+    icon: mdi:sprinkler-variant
 
 script:
   melding_versturen:
@@ -37,7 +46,7 @@ script:
     mode: queued
     fields:
       melding:
-        description: The notification key, e.g. afval or aircofilter.
+        description: The notification key, e.g. afval, aircofilter or tuin.
         required: true
         example: afval
         selector:

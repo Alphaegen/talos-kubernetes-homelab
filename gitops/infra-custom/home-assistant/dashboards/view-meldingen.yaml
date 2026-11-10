@@ -55,6 +55,7 @@ sections:
             const wanneer = {
               afval: 'de avond voor de ophaaldag, 19:00',
               aircofilter: 'als een filter onder 10% komt',
+              tuin: 'als sproeien niet kan starten',
             }[melding];
             const el = card.querySelector('.bubble-state');
             if (el) el.innerText = (state === 'on' ? 'Aan' : 'Uit') + (wanneer ? ` · ${wanneer}` : '');
@@ -66,6 +67,16 @@ sections:
         entity: input_boolean.melding_aircofilter_niek
         name: Aircofilter
         icon: mdi:air-filter
+        show_state: true
+        grid_options:
+          columns: full
+        styles: *schakelaar
+      - type: custom:bubble-card
+        card_type: button
+        button_type: switch
+        entity: input_boolean.melding_tuin_niek
+        name: Tuin
+        icon: mdi:sprinkler-variant
         show_state: true
         grid_options:
           columns: full
@@ -99,6 +110,16 @@ sections:
         grid_options:
           columns: full
         styles: *schakelaar
+      - type: custom:bubble-card
+        card_type: button
+        button_type: switch
+        entity: input_boolean.melding_tuin_marc
+        name: Tuin
+        icon: mdi:sprinkler-variant
+        show_state: true
+        grid_options:
+          columns: full
+        styles: *schakelaar
 
   - type: grid
     visibility:
@@ -124,6 +145,16 @@ sections:
         entity: input_boolean.melding_aircofilter_wil
         name: Aircofilter
         icon: mdi:air-filter
+        show_state: true
+        grid_options:
+          columns: full
+        styles: *schakelaar
+      - type: custom:bubble-card
+        card_type: button
+        button_type: switch
+        entity: input_boolean.melding_tuin_wil
+        name: Tuin
+        icon: mdi:sprinkler-variant
         show_state: true
         grid_options:
           columns: full

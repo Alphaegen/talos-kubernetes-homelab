@@ -303,11 +303,12 @@ sections:
             color: var(--text-primary-color) !important;
           }
 
-  # Only while watering, so it does not take space otherwise.
+  # Only while watering, so it does not take space otherwise. The same card
+  # as on the Tuin view, with Stop.
   - type: grid
     visibility:
       - condition: state
-        entity: binary_sensor.rainbird_busy
+        entity: binary_sensor.rainbird_bezig
         state: "on"
     cards:
       - type: heading
@@ -316,33 +317,7 @@ sections:
         tap_action:
           action: navigate
           navigation_path: /dashboard-thuis/tuin
-      - type: tile
-        entity: sensor.rainbird_active_zone
-        name: Actieve zone
-        tap_action:
-          action: navigate
-          navigation_path: /dashboard-thuis/tuin
-      - type: tile
-        entity: timer.rainbird_time_left
-        name: Resterend
-      - type: tile
-        entity: script.rainbird_stop_all_zones
-        name: Stop sproeien
-        icon: mdi:stop-circle-outline
-        color: red
-        hide_state: true
-        grid_options:
-          columns: full
-        tap_action:
-          action: perform-action
-          perform_action: script.rainbird_stop_all_zones
-          data:
-            cancel_program: true
-        icon_tap_action:
-          action: perform-action
-          perform_action: script.rainbird_stop_all_zones
-          data:
-            cancel_program: true
+      - !include tuin-nu.yaml
 
   # Pop-ups and navigation: they render as overlays, and the navigation bar
   # must be the last card of the view.

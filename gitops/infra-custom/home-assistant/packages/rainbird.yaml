@@ -1,44 +1,64 @@
+# Rain Bird irrigation (four zones) for the Tuin view of the Thuis dashboard
+# (dashboards/view-tuin.yaml).
+#
+# Zones only start through script.rainbird_start_single_zone. It turns the
+# other zones off first and sends the duration along, so the controller stops
+# the zone by itself, even when Home Assistant goes away halfway. The shared
+# timer only mirrors that countdown for the dashboard.
+#
+# The schedule ("Automatisch sproeien") lives here, not on the controller.
+# Switch the controller's own programs off in the Rain Bird app, or zones run
+# twice. The schedule skips a day when the rain sensor sees rain or a rain
+# delay is set.
+#
+# sensor.rainbird_logboek records every zone run the integration sees, also
+# runs started on the controller or in the Rain Bird app. The integration
+# polls once a minute, so start times and durations are accurate to about a
+# minute.
 input_number:
+  # Manual start, from the zone pop-ups.
   rainbird_duration:
-    name: RainBird Duration
+    name: Sproeiduur handmatig
     min: 5
     max: 60
     step: 5
     unit_of_measurement: min
     icon: mdi:timer-outline
 
+  # Minutes per zone for the schedule and "Schema nu starten"; 0 skips it.
   rainbird_program_zone_1_duration:
-    name: RainBird Program Zone 1
+    name: Schema Gras
     min: 0
     max: 60
     step: 5
     unit_of_measurement: min
-    icon: mdi:numeric-1-circle-outline
+    icon: mdi:grass
 
   rainbird_program_zone_2_duration:
-    name: RainBird Program Zone 2
+    name: Schema Achtertuin
     min: 0
     max: 60
     step: 5
     unit_of_measurement: min
-    icon: mdi:numeric-2-circle-outline
+    icon: mdi:flower
 
   rainbird_program_zone_3_duration:
-    name: RainBird Program Zone 3
+    name: Schema Voortuin + zijkant
     min: 0
     max: 60
     step: 5
     unit_of_measurement: min
-    icon: mdi:numeric-3-circle-outline
+    icon: mdi:home-variant-outline
 
   rainbird_program_zone_4_duration:
-    name: RainBird Program Zone 4
+    name: Schema Druppelslang
     min: 0
     max: 60
     step: 5
     unit_of_measurement: min
-    icon: mdi:numeric-4-circle-outline
+    icon: mdi:water-outline
 
+  # The zone number the program is on (0 before the first zone).
   rainbird_program_step:
     name: RainBird Program Step
     min: 0
@@ -59,7 +79,57 @@ input_boolean:
     name: RainBird Program Running
     icon: mdi:playlist-play
 
+  rainbird_schema_actief:
+    name: Automatisch sproeien
+    icon: mdi:calendar-clock
+
+  # A paused zone keeps its minutes but is skipped by the schedule and by
+  # "Schema nu starten" until it is switched back. Manual starts still work.
+  rainbird_pauze_zone_1:
+    name: Pauze Gras
+    icon: mdi:pause-circle-outline
+  rainbird_pauze_zone_2:
+    name: Pauze Achtertuin
+    icon: mdi:pause-circle-outline
+  rainbird_pauze_zone_3:
+    name: Pauze Voortuin + zijkant
+    icon: mdi:pause-circle-outline
+  rainbird_pauze_zone_4:
+    name: Pauze Druppelslang
+    icon: mdi:pause-circle-outline
+
+  # Days the schedule runs, by Dutch abbreviation (ma = Monday).
+  rainbird_schema_ma:
+    name: Sproeien op maandag
+    icon: mdi:calendar
+  rainbird_schema_di:
+    name: Sproeien op dinsdag
+    icon: mdi:calendar
+  rainbird_schema_wo:
+    name: Sproeien op woensdag
+    icon: mdi:calendar
+  rainbird_schema_do:
+    name: Sproeien op donderdag
+    icon: mdi:calendar
+  rainbird_schema_vr:
+    name: Sproeien op vrijdag
+    icon: mdi:calendar
+  rainbird_schema_za:
+    name: Sproeien op zaterdag
+    icon: mdi:calendar
+  rainbird_schema_zo:
+    name: Sproeien op zondag
+    icon: mdi:calendar
+
+input_datetime:
+  rainbird_schema_starttijd:
+    name: Starttijd schema
+    has_date: false
+    has_time: true
+    icon: mdi:clock-outline
+
 input_text:
+  # The switch entity being started, for the status line.
   rainbird_requested_zone:
     name: RainBird Requested Zone
     max: 40
@@ -70,124 +140,285 @@ input_text:
 
 timer:
   rainbird_time_left:
-    name: RainBird Time Left
+    name: Sproeitijd over
     duration: "00:10:00"
     restore: true
 
 template:
+  - binary_sensor:
+      # Anything going on: a zone on, a start waiting for confirmation, or a
+      # program between zones. Shows the Tuin section on the Thuis view.
+      - name: RainBird Bezig
+        unique_id: rainbird_bezig
+        icon: mdi:sprinkler-variant
+        state: >-
+          {{
+            ['switch.rain_bird_sprinkler_1', 'switch.rain_bird_sprinkler_2',
+             'switch.rain_bird_sprinkler_3', 'switch.rain_bird_sprinkler_4']
+            | select('is_state', 'on') | list | count > 0
+            or is_state('input_boolean.rainbird_command_pending', 'on')
+            or is_state('input_boolean.rainbird_program_running', 'on')
+          }}
+
   - sensor:
+      # The zone's own name (the switch's friendly name), or Geen. Also shows
+      # zones started on the controller or in the Rain Bird app.
       - name: RainBird Active Zone
         unique_id: rainbird_active_zone
         icon: mdi:sprinkler
         state: >-
-          {% if is_state('switch.rain_bird_sprinkler_1', 'on') %}
-            Zone 1
-          {% elif is_state('switch.rain_bird_sprinkler_2', 'on') %}
-            Zone 2
-          {% elif is_state('switch.rain_bird_sprinkler_3', 'on') %}
-            Zone 3
-          {% elif is_state('switch.rain_bird_sprinkler_4', 'on') %}
-            Zone 4
-          {% else %}
-            Idle
-          {% endif %}
+          {% set aan = ['switch.rain_bird_sprinkler_1', 'switch.rain_bird_sprinkler_2',
+                        'switch.rain_bird_sprinkler_3', 'switch.rain_bird_sprinkler_4']
+                       | select('is_state', 'on') | list %}
+          {{ state_attr(aan[0], 'friendly_name') if aan else 'Geen' }}
 
       - name: RainBird Status
         unique_id: rainbird_status
         icon: mdi:sprinkler-variant
         state: >-
-          {% set active_zone = states('sensor.rainbird_active_zone') %}
-          {% if active_zone != 'Idle' %}
-            Running {{ active_zone }}
+          {% set aan = ['switch.rain_bird_sprinkler_1', 'switch.rain_bird_sprinkler_2',
+                        'switch.rain_bird_sprinkler_3', 'switch.rain_bird_sprinkler_4']
+                       | select('is_state', 'on') | list %}
+          {% set gevraagd = states('input_text.rainbird_requested_zone') %}
+          {% if aan %}
+            {{ state_attr(aan[0], 'friendly_name') }} sproeit
           {% elif is_state('input_boolean.rainbird_command_pending', 'on') %}
-            Starting {{ states('input_text.rainbird_requested_zone') }}
+            {{ state_attr(gevraagd, 'friendly_name') or 'Zone' }} wordt gestart
           {% elif is_state('input_boolean.rainbird_program_running', 'on') %}
-            Program waiting
+            Wacht op volgende zone
+          {% elif is_state('switch.rain_bird_sprinkler_1', 'unavailable') %}
+            Rain Bird niet bereikbaar
           {% else %}
-            Idle
+            Uit
           {% endif %}
 
+      # Minutes the program runs: paused zones do not count.
       - name: RainBird Program Total Duration
         unique_id: rainbird_program_total_duration
         icon: mdi:timer-sand
         unit_of_measurement: min
         state: >-
-          {{
-            ([states('input_number.rainbird_program_zone_1_duration') | int(0), 60] | min)
-            + ([states('input_number.rainbird_program_zone_2_duration') | int(0), 60] | min)
-            + ([states('input_number.rainbird_program_zone_3_duration') | int(0), 60] | min)
-            + ([states('input_number.rainbird_program_zone_4_duration') | int(0), 60] | min)
-          }}
+          {% set ns = namespace(totaal=0) %}
+          {% for i in range(1, 5)
+               if not is_state('input_boolean.rainbird_pauze_zone_' ~ i, 'on') %}
+            {% set ns.totaal = ns.totaal
+                 + ([states('input_number.rainbird_program_zone_' ~ i ~ '_duration') | int(0), 60] | min) %}
+          {% endfor %}
+          {{ ns.totaal }}
 
+      # The zones a running program has not started yet, e.g.
+      # "Achtertuin (10 min) → Druppelslang (20 min)", or Geen.
       - name: RainBird Program Remaining
         unique_id: rainbird_program_remaining
         icon: mdi:playlist-check
         state: >-
-          {% if not is_state('input_boolean.rainbird_program_running', 'on') %}
-            No program running
-          {% else %}
-            {% set step = states('input_number.rainbird_program_step') | int(0) %}
-            {% set z1 = [states('input_number.rainbird_program_zone_1_duration') | int(0), 60] | min %}
-            {% set z2 = [states('input_number.rainbird_program_zone_2_duration') | int(0), 60] | min %}
-            {% set z3 = [states('input_number.rainbird_program_zone_3_duration') | int(0), 60] | min %}
-            {% set z4 = [states('input_number.rainbird_program_zone_4_duration') | int(0), 60] | min %}
-            {% set ns = namespace(items=[]) %}
-            {% if z1 > 0 and step < 1 %}
-              {% set ns.items = ns.items + ['Zone 1 (' ~ z1 ~ ' min)'] %}
-            {% endif %}
-            {% if z2 > 0 and step < 2 %}
-              {% set ns.items = ns.items + ['Zone 2 (' ~ z2 ~ ' min)'] %}
-            {% endif %}
-            {% if z3 > 0 and step < 3 %}
-              {% set ns.items = ns.items + ['Zone 3 (' ~ z3 ~ ' min)'] %}
-            {% endif %}
-            {% if z4 > 0 and step < 4 %}
-              {% set ns.items = ns.items + ['Zone 4 (' ~ z4 ~ ' min)'] %}
-            {% endif %}
-            {% if ns.items | count > 0 %}
-              {{ ns.items | join(' -> ') }}
-            {% else %}
-              No remaining zones
-            {% endif %}
+          {% set step = states('input_number.rainbird_program_step') | int(0) %}
+          {% set ns = namespace(items=[]) %}
+          {% if is_state('input_boolean.rainbird_program_running', 'on') %}
+            {% for i in range(step + 1, 5) %}
+              {% set d = [states('input_number.rainbird_program_zone_' ~ i ~ '_duration') | int(0), 60] | min %}
+              {% if d > 0 and not is_state('input_boolean.rainbird_pauze_zone_' ~ i, 'on') %}
+                {% set naam = state_attr('switch.rain_bird_sprinkler_' ~ i, 'friendly_name') or 'Zone ' ~ i %}
+                {% set ns.items = ns.items + [naam ~ ' (' ~ d ~ ' min)'] %}
+              {% endif %}
+            {% endfor %}
           {% endif %}
+          {{ ns.items | join(' → ') if ns.items else 'Geen' }}
+
+      # When the schedule runs next, or unknown while it is off, has no days
+      # or no minutes. Does not look at rain: that is decided at start time.
+      - name: RainBird Volgende Beurt
+        unique_id: rainbird_volgende_beurt
+        icon: mdi:calendar-clock
+        device_class: timestamp
+        state: >-
+          {% set dagen = ['ma', 'di', 'wo', 'do', 'vr', 'za', 'zo'] %}
+          {% set ns = namespace(volgende=none) %}
+          {% if is_state('input_boolean.rainbird_schema_actief', 'on')
+                and has_value('input_datetime.rainbird_schema_starttijd')
+                and states('sensor.rainbird_program_total_duration') | int(0) > 0 %}
+            {% set start = today_at(states('input_datetime.rainbird_schema_starttijd')) %}
+            {% for i in range(8) %}
+              {% set t = start + timedelta(days=i) %}
+              {% if ns.volgende is none and t > now()
+                    and is_state('input_boolean.rainbird_schema_' ~ dagen[t.weekday()], 'on') %}
+                {% set ns.volgende = t %}
+              {% endif %}
+            {% endfor %}
+          {% endif %}
+          {{ ns.volgende.isoformat() if ns.volgende is not none else none }}
 
       - name: RainBird Last Message
         unique_id: rainbird_last_message
         icon: mdi:message-text-outline
         state: "{{ states('input_text.rainbird_last_message') }}"
 
+  # The log: zone runs, skipped schedule days with their reason, failed
+  # starts, pauses and the schedule switched off or on. The last 50, newest
+  # first, stay in the `runs` attribute for the dashboard (it survives
+  # restarts); every entry also goes to the Local Calendar calendar.tuin, which
+  # keeps them for good. A run is written when its zone goes off. Its source
+  # comes from the start request the scripts announce with a rainbird_logboek
+  # event; a zone that comes on without one was started on the controller or
+  # in the Rain Bird app.
+  - triggers:
+      - trigger: state
+        entity_id: &rainbird_zones
+          - switch.rain_bird_sprinkler_1
+          - switch.rain_bird_sprinkler_2
+          - switch.rain_bird_sprinkler_3
+          - switch.rain_bird_sprinkler_4
+        to: "on"
+        id: aan
+      # Also from unavailable: the controller sometimes drops off for a few
+      # minutes, and comes back with the zone already off.
+      - trigger: state
+        entity_id: *rainbird_zones
+        to: "off"
+        id: uit
+      # data: soort (aanvraag, overgeslagen, mislukt, pauze, hervat, uit or
+      # aan), zone (switch entity or empty for the whole schedule), bron,
+      # reden, and optionally naam to override the zone name.
+      - trigger: event
+        event_type: rainbird_logboek
+        id: melding
+    actions:
+      - variables:
+          nu: "{{ now().isoformat() }}"
+          oud_runs: "{{ state_attr('sensor.rainbird_logboek', 'runs') or [] }}"
+          oud_lopend: "{{ state_attr('sensor.rainbird_logboek', 'lopend') or [] }}"
+          oud_aanvraag: "{{ state_attr('sensor.rainbird_logboek', 'aanvraag') or {} }}"
+          zone: >-
+            {{ (trigger.event.data.zone | default('')) if trigger.id == 'melding'
+               else trigger.entity_id }}
+          zone_naam: >-
+            {% if trigger.id == 'melding' and trigger.event.data.naam is defined %}
+              {{ trigger.event.data.naam }}
+            {% elif zone %}
+              {{ state_attr(zone, 'friendly_name') or zone }}
+            {% endif %}
+          bezig: "{{ oud_lopend | selectattr('zone', 'eq', zone) | first | default({}) }}"
+          # A zone that comes back from unavailable while it was already
+          # running keeps its start; one stuck for over 3 hours does not.
+          nog_bezig: >-
+            {{ bezig != {}
+               and as_timestamp(now()) - as_timestamp(bezig.start, 0) < 3 * 3600 }}
+          bron_aan: >-
+            {% set a = oud_aanvraag %}
+            {% if a.get('zone') == zone
+                  and as_timestamp(now()) - as_timestamp(a.get('tijd'), 0) < 300 %}
+              {{ a.bron }}
+            {% else %}
+              Rain Bird
+            {% endif %}
+          lopend: >-
+            {% set rest = oud_lopend | rejectattr('zone', 'eq', zone) | list %}
+            {% if trigger.id == 'aan' and not nog_bezig %}
+              {{ rest + [{'zone': zone, 'start': nu, 'bron': bron_aan}] }}
+            {% elif trigger.id == 'uit' %}
+              {{ rest }}
+            {% else %}
+              {{ oud_lopend }}
+            {% endif %}
+          aanvraag: >-
+            {% if trigger.id == 'melding' and trigger.event.data.soort == 'aanvraag' %}
+              {{ {'zone': zone, 'bron': trigger.event.data.bron | default('Handmatig'), 'tijd': nu} }}
+            {% else %}
+              {{ oud_aanvraag }}
+            {% endif %}
+          # Every entry has a short `wat` for the table and the calendar, e.g.
+          # "15 min", "overgeslagen: regen gemeten" or "gepauzeerd".
+          nieuw: >-
+            {% if trigger.id == 'uit' and bezig != {} %}
+              {% set minuten = [((as_timestamp(now()) - as_timestamp(bezig.start)) / 60) | round(0) | int, 1] | max %}
+              {{ {
+                'soort': 'beurt',
+                'zone': zone,
+                'naam': zone_naam,
+                'start': bezig.start,
+                'minuten': minuten,
+                'wat': minuten ~ ' min',
+                'bron': bezig.bron,
+              } }}
+            {% elif trigger.id == 'melding' and trigger.event.data.soort != 'aanvraag' %}
+              {% set soort = trigger.event.data.soort %}
+              {% set reden = trigger.event.data.reden | default('') %}
+              {{ {
+                'soort': soort,
+                'zone': zone,
+                'naam': zone_naam or 'Schema',
+                'start': nu,
+                'minuten': 0,
+                'wat': {
+                  'overgeslagen': 'overgeslagen: ' ~ reden,
+                  'mislukt': 'mislukt: ' ~ reden,
+                  'pauze': 'gepauzeerd',
+                  'hervat': 'hervat',
+                  'uit': 'uitgezet',
+                  'aan': 'aangezet',
+                }.get(soort, soort),
+                'bron': trigger.event.data.bron | default(''),
+                'reden': reden,
+              } }}
+            {% else %}
+              {{ none }}
+            {% endif %}
+          runs: "{{ ([nieuw] + oud_runs)[:50] if nieuw else oud_runs }}"
+      # The full history. Needs a Local Calendar named Tuin (README); without
+      # it only the last 50 are kept.
+      - if:
+          - condition: template
+            value_template: "{{ nieuw is not none and has_value('calendar.tuin') }}"
+        then:
+          - action: calendar.create_event
+            continue_on_error: true
+            target:
+              entity_id: calendar.tuin
+            data:
+              summary: "{{ nieuw.naam }} · {{ nieuw.wat }}"
+              description: "{{ 'Door: ' ~ nieuw.bron if nieuw.bron else '' }}"
+              start_date_time: "{{ as_datetime(nieuw.start).isoformat() }}"
+              end_date_time: >-
+                {{ ([now(), as_datetime(nieuw.start) + timedelta(minutes=1)] | max).isoformat() }}
+    sensor:
+      - name: RainBird Logboek
+        unique_id: rainbird_logboek
+        icon: mdi:history
+        device_class: timestamp
+        state: "{{ runs[0].start if runs else none }}"
+        attributes:
+          runs: "{{ runs }}"
+          lopend: "{{ lopend }}"
+          aanvraag: "{{ aanvraag }}"
+
 script:
   rainbird_start_single_zone:
     alias: RainBird - Start Single Zone
+    description: >-
+      Starts one zone for a number of minutes after turning the others off,
+      and starts the shared timer once the controller reports it on.
     mode: single
     max_exceeded: silent
     fields:
       zone_switch:
         name: Zone switch
         required: true
+        example: switch.rain_bird_sprinkler_1
       duration:
         name: Duration
+        description: Minutes, 5 to 60. Defaults to input_number.rainbird_duration.
+        required: false
+      bron:
+        name: Source
+        description: Shown in the log. Defaults to Handmatig.
         required: false
     sequence:
       - variables:
-          requested_duration_min: >-
-            {{ duration | default(states('input_number.rainbird_duration')) | int(10) }}
           duration_min: >-
-            {% set requested = requested_duration_min | int(0) %}
-            {% if requested <= 0 %}
-              0
-            {% else %}
-              {{ [[requested, 5] | max, 60] | min }}
-            {% endif %}
-          zone_name: >-
-            {{
-              {
-                'switch.rain_bird_sprinkler_1': 'Zone 1',
-                'switch.rain_bird_sprinkler_2': 'Zone 2',
-                'switch.rain_bird_sprinkler_3': 'Zone 3',
-                'switch.rain_bird_sprinkler_4': 'Zone 4',
-              }.get(zone_switch, zone_switch)
-            }}
+            {% set requested = (duration | default(states('input_number.rainbird_duration'))) | int(0) %}
+            {{ 0 if requested <= 0 else [[requested, 5] | max, 60] | min }}
+          zone_name: "{{ state_attr(zone_switch, 'friendly_name') or zone_switch }}"
+          bron_tekst: "{{ bron | default('Handmatig') }}"
           started_at: "{{ as_timestamp(now()) }}"
 
       - condition: template
@@ -201,13 +432,19 @@ script:
         target:
           entity_id: input_text.rainbird_requested_zone
         data:
-          value: "{{ zone_name }}"
+          value: "{{ zone_switch }}"
 
       - action: input_text.set_value
         target:
           entity_id: input_text.rainbird_last_message
         data:
-          value: "Sending start command for {{ zone_name }} ({{ duration_min | int(0) }} min)."
+          value: "{{ zone_name }} wordt gestart ({{ duration_min }} min)."
+
+      - event: rainbird_logboek
+        event_data:
+          soort: aanvraag
+          zone: "{{ zone_switch }}"
+          bron: "{{ bron_tekst }}"
 
       - action: input_boolean.turn_on
         target:
@@ -219,7 +456,7 @@ script:
 
       - action: switch.turn_off
         target:
-          entity_id:
+          entity_id: &rainbird_zones_script
             - switch.rain_bird_sprinkler_1
             - switch.rain_bird_sprinkler_2
             - switch.rain_bird_sprinkler_3
@@ -228,14 +465,17 @@ script:
 
       - delay: "00:00:02"
 
+      # Two tries: the controller handles one request at a time and is
+      # sometimes briefly busy or unreachable. The integration polls once a
+      # minute, hence the long wait.
       - action: rainbird.start_irrigation
         target:
           entity_id: "{{ zone_switch }}"
         data:
-          duration: "{{ duration_min | int(0) }}"
+          duration: "{{ duration_min }}"
         continue_on_error: true
 
-      - wait_template: >-
+      - wait_template: &rainbird_zone_on >-
           {{
             is_state(zone_switch, 'on')
             and as_timestamp(states[zone_switch].last_changed, 0) >= (started_at | float(0))
@@ -245,21 +485,29 @@ script:
 
       - if:
           - condition: template
-            value_template: "{{ wait.completed }}"
+            value_template: "{{ not wait.completed }}"
         then:
+          - delay: "00:00:30"
+          - action: rainbird.start_irrigation
+            target:
+              entity_id: "{{ zone_switch }}"
+            data:
+              duration: "{{ duration_min }}"
+            continue_on_error: true
+          - wait_template: *rainbird_zone_on
+            timeout: "00:01:15"
+            continue_on_timeout: true
+
+      - if:
+          - condition: template
+            value_template: *rainbird_zone_on
+        then:
+          # Counted from when the zone was seen on, which is at most a minute
+          # after the controller started it.
           - variables:
-              elapsed_seconds: "{{ (as_timestamp(now()) - (started_at | float)) | round(0) | int }}"
-              remaining_seconds: "{{ [((duration_min | int(0)) * 60) - (elapsed_seconds | int(0)), 1] | max }}"
-              timer_duration: >-
-                {% set remaining = remaining_seconds | int(1) %}
-                {{
-                  '%02d:%02d:%02d'
-                  | format(
-                    remaining // 3600,
-                    (remaining % 3600) // 60,
-                    remaining % 60
-                  )
-                }}
+              remaining_seconds: >-
+                {% set gelopen = as_timestamp(now()) - as_timestamp(states[zone_switch].last_changed) %}
+                {{ [(duration_min | int(0)) * 60 - gelopen | int(0), 60] | max }}
 
           - action: input_boolean.turn_on
             target:
@@ -273,21 +521,19 @@ script:
             target:
               entity_id: timer.rainbird_time_left
             data:
-              duration: "{{ timer_duration }}"
+              duration: "{{ remaining_seconds }}"
 
           - action: input_text.set_value
             target:
               entity_id: input_text.rainbird_last_message
             data:
-              value: "{{ zone_name }} confirmed running for {{ duration_min | int(0) }} min."
+              value: "{{ zone_name }} sproeit {{ duration_min }} min."
         else:
           - action: input_boolean.turn_off
             target:
-              entity_id: input_boolean.rainbird_command_pending
-
-          - action: input_boolean.turn_off
-            target:
-              entity_id: input_boolean.rainbird_last_start_confirmed
+              entity_id:
+                - input_boolean.rainbird_command_pending
+                - input_boolean.rainbird_last_start_confirmed
 
           - action: timer.cancel
             target:
@@ -297,20 +543,55 @@ script:
             target:
               entity_id: input_text.rainbird_last_message
             data:
-              value: "Could not confirm {{ zone_name }} started. RainBird may be unreachable or busy."
+              value: "{{ zone_name }} kon niet starten: Rain Bird reageert niet."
+
+          - event: rainbird_logboek
+            event_data:
+              soort: mislukt
+              zone: "{{ zone_switch }}"
+              bron: "{{ bron_tekst }}"
+              reden: Rain Bird reageert niet
 
           - action: persistent_notification.create
             data:
-              title: RainBird start failed
-              message: "Could not confirm {{ zone_name }} started. RainBird may be unreachable or busy."
+              title: Tuin
+              message: "{{ zone_name }} kon niet starten: Rain Bird reageert niet."
+
+          # packages/meldingen.yaml: only phones that have it switched on.
+          - action: script.melding_versturen
+            continue_on_error: true
+            data:
+              melding: tuin
+              titel: Tuin
+              bericht: "{{ zone_name }} kon niet starten: Rain Bird reageert niet."
 
   rainbird_run_program:
     alias: RainBird - Run Program
+    description: >-
+      Runs every zone with schedule minutes above 0 that is not paused, in
+      zone order, one after the other.
     mode: single
     max_exceeded: silent
+    fields:
+      bron:
+        name: Source
+        description: Shown in the log. Defaults to Programma.
+        required: false
     sequence:
+      - variables:
+          bron_tekst: "{{ bron | default('Programma') }}"
+          zones: >-
+            {% set ns = namespace(zones=[]) %}
+            {% for i in range(1, 5) %}
+              {% set d = [states('input_number.rainbird_program_zone_' ~ i ~ '_duration') | int(0), 60] | min %}
+              {% if d > 0 and not is_state('input_boolean.rainbird_pauze_zone_' ~ i, 'on') %}
+                {% set ns.zones = ns.zones + [{'nr': i, 'switch': 'switch.rain_bird_sprinkler_' ~ i, 'minuten': d}] %}
+              {% endif %}
+            {% endfor %}
+            {{ ns.zones }}
+
       - condition: template
-        value_template: "{{ states('sensor.rainbird_program_total_duration') | int(0) > 0 }}"
+        value_template: "{{ zones | count > 0 }}"
 
       - action: input_boolean.turn_on
         target:
@@ -326,158 +607,81 @@ script:
         target:
           entity_id: input_text.rainbird_last_message
         data:
-          value: "Starting RainBird program."
+          value: "{{ bron_tekst }} gestart."
+
+      - repeat:
+          for_each: "{{ zones }}"
+          sequence:
+            # Stop pressed while the previous zone ran.
+            - if:
+                - condition: state
+                  entity_id: input_boolean.rainbird_program_running
+                  state: "off"
+              then:
+                - stop: Program cancelled.
+
+            # Ride out a short controller drop-off before giving up.
+            - wait_template: "{{ not is_state(repeat.item.switch, 'unavailable') }}"
+              timeout: "00:15:00"
+              continue_on_timeout: true
+
+            - action: script.rainbird_start_single_zone
+              data:
+                zone_switch: "{{ repeat.item.switch }}"
+                duration: "{{ repeat.item.minuten }}"
+                bron: "{{ bron_tekst }}"
+
+            - if:
+                - condition: state
+                  entity_id: input_boolean.rainbird_last_start_confirmed
+                  state: "off"
+              then:
+                - action: input_boolean.turn_off
+                  target:
+                    entity_id: input_boolean.rainbird_program_running
+                - action: input_number.set_value
+                  target:
+                    entity_id: input_number.rainbird_program_step
+                  data:
+                    value: 0
+                - stop: A zone did not start.
+
+            - action: input_number.set_value
+              target:
+                entity_id: input_number.rainbird_program_step
+              data:
+                value: "{{ repeat.item.nr }}"
+
+            # Ends early on "Volgende zone" (stop without cancel_program).
+            - wait_template: "{{ is_state('timer.rainbird_time_left', 'idle') }}"
+              timeout:
+                minutes: "{{ repeat.item.minuten + 2 }}"
+              continue_on_timeout: true
 
       - if:
-          - condition: template
-            value_template: "{{ states('input_number.rainbird_program_zone_1_duration') | int(0) > 0 }}"
+          - condition: state
+            entity_id: input_boolean.rainbird_program_running
+            state: "on"
         then:
-          - action: script.rainbird_start_single_zone
-            data:
-              zone_switch: switch.rain_bird_sprinkler_1
-              duration: "{{ states('input_number.rainbird_program_zone_1_duration') | int(0) }}"
-          - if:
-              - condition: state
-                entity_id: input_boolean.rainbird_last_start_confirmed
-                state: "off"
-            then:
-              - action: input_boolean.turn_off
-                target:
-                  entity_id: input_boolean.rainbird_program_running
-              - stop: RainBird program stopped because Zone 1 did not start.
+          - action: input_boolean.turn_off
+            target:
+              entity_id: input_boolean.rainbird_program_running
           - action: input_number.set_value
             target:
               entity_id: input_number.rainbird_program_step
             data:
-              value: 1
-          - wait_template: "{{ is_state('timer.rainbird_time_left', 'idle') }}"
-            timeout:
-              minutes: "{{ states('input_number.rainbird_program_zone_1_duration') | int(0) + 2 }}"
-            continue_on_timeout: true
-          - if:
-              - condition: state
-                entity_id: input_boolean.rainbird_program_running
-                state: "off"
-            then:
-              - stop: RainBird program cancelled.
-
-      - if:
-          - condition: template
-            value_template: "{{ states('input_number.rainbird_program_zone_2_duration') | int(0) > 0 }}"
-        then:
-          - action: script.rainbird_start_single_zone
-            data:
-              zone_switch: switch.rain_bird_sprinkler_2
-              duration: "{{ states('input_number.rainbird_program_zone_2_duration') | int(0) }}"
-          - if:
-              - condition: state
-                entity_id: input_boolean.rainbird_last_start_confirmed
-                state: "off"
-            then:
-              - action: input_boolean.turn_off
-                target:
-                  entity_id: input_boolean.rainbird_program_running
-              - stop: RainBird program stopped because Zone 2 did not start.
-          - action: input_number.set_value
+              value: 0
+          - action: input_text.set_value
             target:
-              entity_id: input_number.rainbird_program_step
+              entity_id: input_text.rainbird_last_message
             data:
-              value: 2
-          - wait_template: "{{ is_state('timer.rainbird_time_left', 'idle') }}"
-            timeout:
-              minutes: "{{ states('input_number.rainbird_program_zone_2_duration') | int(0) + 2 }}"
-            continue_on_timeout: true
-          - if:
-              - condition: state
-                entity_id: input_boolean.rainbird_program_running
-                state: "off"
-            then:
-              - stop: RainBird program cancelled.
-
-      - if:
-          - condition: template
-            value_template: "{{ states('input_number.rainbird_program_zone_3_duration') | int(0) > 0 }}"
-        then:
-          - action: script.rainbird_start_single_zone
-            data:
-              zone_switch: switch.rain_bird_sprinkler_3
-              duration: "{{ states('input_number.rainbird_program_zone_3_duration') | int(0) }}"
-          - if:
-              - condition: state
-                entity_id: input_boolean.rainbird_last_start_confirmed
-                state: "off"
-            then:
-              - action: input_boolean.turn_off
-                target:
-                  entity_id: input_boolean.rainbird_program_running
-              - stop: RainBird program stopped because Zone 3 did not start.
-          - action: input_number.set_value
-            target:
-              entity_id: input_number.rainbird_program_step
-            data:
-              value: 3
-          - wait_template: "{{ is_state('timer.rainbird_time_left', 'idle') }}"
-            timeout:
-              minutes: "{{ states('input_number.rainbird_program_zone_3_duration') | int(0) + 2 }}"
-            continue_on_timeout: true
-          - if:
-              - condition: state
-                entity_id: input_boolean.rainbird_program_running
-                state: "off"
-            then:
-              - stop: RainBird program cancelled.
-
-      - if:
-          - condition: template
-            value_template: "{{ states('input_number.rainbird_program_zone_4_duration') | int(0) > 0 }}"
-        then:
-          - action: script.rainbird_start_single_zone
-            data:
-              zone_switch: switch.rain_bird_sprinkler_4
-              duration: "{{ states('input_number.rainbird_program_zone_4_duration') | int(0) }}"
-          - if:
-              - condition: state
-                entity_id: input_boolean.rainbird_last_start_confirmed
-                state: "off"
-            then:
-              - action: input_boolean.turn_off
-                target:
-                  entity_id: input_boolean.rainbird_program_running
-              - stop: RainBird program stopped because Zone 4 did not start.
-          - action: input_number.set_value
-            target:
-              entity_id: input_number.rainbird_program_step
-            data:
-              value: 4
-          - wait_template: "{{ is_state('timer.rainbird_time_left', 'idle') }}"
-            timeout:
-              minutes: "{{ states('input_number.rainbird_program_zone_4_duration') | int(0) + 2 }}"
-            continue_on_timeout: true
-          - if:
-              - condition: state
-                entity_id: input_boolean.rainbird_program_running
-                state: "off"
-            then:
-              - stop: RainBird program cancelled.
-
-      - action: input_boolean.turn_off
-        target:
-          entity_id: input_boolean.rainbird_program_running
-
-      - action: input_number.set_value
-        target:
-          entity_id: input_number.rainbird_program_step
-        data:
-          value: 0
-
-      - action: input_text.set_value
-        target:
-          entity_id: input_text.rainbird_last_message
-        data:
-          value: "RainBird program complete."
+              value: "{{ bron_tekst }} klaar."
 
   rainbird_stop_all_zones:
     alias: RainBird - Stop All Zones
+    description: >-
+      Turns every zone off. With cancel_program a running program stops too;
+      without, it moves on to its next zone.
     mode: restart
     fields:
       cancel_program:
@@ -503,11 +707,7 @@ script:
 
       - action: switch.turn_off
         target:
-          entity_id:
-            - switch.rain_bird_sprinkler_1
-            - switch.rain_bird_sprinkler_2
-            - switch.rain_bird_sprinkler_3
-            - switch.rain_bird_sprinkler_4
+          entity_id: *rainbird_zones_script
         continue_on_error: true
 
       - action: timer.cancel
@@ -528,18 +728,148 @@ script:
             target:
               entity_id: input_text.rainbird_last_message
             data:
-              value: "RainBird irrigation stopped."
+              value: Sproeien gestopt.
 
 automation:
   - alias: RainBird - Stop when shared timer finishes
     id: rainbird_stop_when_shared_timer_finishes
     mode: single
-    trigger:
-      - platform: event
+    triggers:
+      - trigger: event
         event_type: timer.finished
         event_data:
           entity_id: timer.rainbird_time_left
-    action:
+    actions:
       - action: script.rainbird_stop_all_zones
         data:
           cancel_program: false
+
+  # "Automatisch sproeien": at the start time on the chosen days, run the
+  # program. The whole day is skipped, and logged with its reason, when it
+  # rains, a rain delay is set, or something already runs. Paused zones are
+  # logged as skipped and the rest runs. While the schedule is off nothing is
+  # logged per day; switching it off and on is logged instead (below).
+  - alias: RainBird - Schema
+    id: rainbird_schema
+    mode: single
+    triggers:
+      - trigger: time
+        at: input_datetime.rainbird_schema_starttijd
+    conditions:
+      - condition: state
+        entity_id: input_boolean.rainbird_schema_actief
+        state: "on"
+      - condition: template
+        value_template: >-
+          {% set dagen = ['ma', 'di', 'wo', 'do', 'vr', 'za', 'zo'] %}
+          {{ is_state('input_boolean.rainbird_schema_' ~ dagen[now().weekday()], 'on') }}
+      # Minutes on at least one zone, paused or not, so a day with only
+      # paused zones is still logged.
+      - condition: template
+        value_template: >-
+          {% set ns = namespace(minuten=0) %}
+          {% for i in range(1, 5) %}
+            {% set ns.minuten = ns.minuten
+                 + states('input_number.rainbird_program_zone_' ~ i ~ '_duration') | int(0) %}
+          {% endfor %}
+          {{ ns.minuten > 0 }}
+    actions:
+      - variables:
+          reden: >-
+            {% if is_state('binary_sensor.rain_bird_controller_rainsensor', 'on') %}
+              regen gemeten
+            {% elif states('number.rain_bird_controller_rain_delay') | int(0) > 0 %}
+              regenpauze
+            {% elif is_state('binary_sensor.rainbird_bezig', 'on') %}
+              er sproeide al iets
+            {% endif %}
+          # Names of the paused zones that have minutes, e.g. "Gras + Achtertuin".
+          gepauzeerd: >-
+            {% set ns = namespace(namen=[]) %}
+            {% for i in range(1, 5)
+                 if is_state('input_boolean.rainbird_pauze_zone_' ~ i, 'on')
+                 and states('input_number.rainbird_program_zone_' ~ i ~ '_duration') | int(0) > 0 %}
+              {% set ns.namen = ns.namen
+                   + [state_attr('switch.rain_bird_sprinkler_' ~ i, 'friendly_name') or 'Zone ' ~ i] %}
+            {% endfor %}
+            {{ ns.namen | join(' + ') }}
+      - if:
+          - condition: template
+            value_template: "{{ reden | length > 0 }}"
+        then:
+          - event: rainbird_logboek
+            event_data:
+              soort: overgeslagen
+              zone: ""
+              bron: Schema
+              reden: "{{ reden }}"
+          - action: input_text.set_value
+            target:
+              entity_id: input_text.rainbird_last_message
+            data:
+              value: "Schema overgeslagen: {{ reden }}."
+        else:
+          - if:
+              - condition: template
+                value_template: "{{ gepauzeerd | length > 0 }}"
+            then:
+              - event: rainbird_logboek
+                event_data:
+                  soort: overgeslagen
+                  zone: ""
+                  naam: "{{ gepauzeerd }}"
+                  bron: Schema
+                  reden: gepauzeerd
+          - if:
+              - condition: template
+                value_template: "{{ states('sensor.rainbird_program_total_duration') | int(0) > 0 }}"
+            then:
+              # After the log entry above has been written.
+              - delay: "00:00:02"
+              - action: script.turn_on
+                target:
+                  entity_id: script.rainbird_run_program
+                data:
+                  variables:
+                    bron: Schema
+
+  # Pausing or resuming a zone and switching the schedule off or on, with the
+  # person who did it (from the change's user), into the log.
+  - alias: RainBird - Instellingen in logboek
+    id: rainbird_instellingen_logboek
+    mode: queued
+    triggers:
+      - trigger: state
+        entity_id: &rainbird_instellingen
+          - input_boolean.rainbird_schema_actief
+          - input_boolean.rainbird_pauze_zone_1
+          - input_boolean.rainbird_pauze_zone_2
+          - input_boolean.rainbird_pauze_zone_3
+          - input_boolean.rainbird_pauze_zone_4
+        from: "off"
+        to: "on"
+      - trigger: state
+        entity_id: *rainbird_instellingen
+        from: "on"
+        to: "off"
+    actions:
+      - variables:
+          aan: "{{ trigger.to_state.state == 'on' }}"
+          schema: "{{ trigger.entity_id == 'input_boolean.rainbird_schema_actief' }}"
+          gebruiker: "{{ trigger.to_state.context.user_id }}"
+          wie: >-
+            {% if gebruiker %}
+              {{ states.person | selectattr('attributes.user_id', 'eq', gebruiker)
+                 | map(attribute='name') | first | default('Onbekend') }}
+            {% else %}
+              Automatisch
+            {% endif %}
+      - event: rainbird_logboek
+        event_data:
+          soort: >-
+            {% if schema %}{{ 'aan' if aan else 'uit' }}{% else %}{{ 'pauze' if aan else 'hervat' }}{% endif %}
+          zone: >-
+            {{ '' if schema else 'switch.rain_bird_sprinkler_' ~ trigger.entity_id[-1] }}
+          bron: "{{ wie }}"
+      # Space the events out, so the log writes one before the next.
+      - delay: "00:00:02"

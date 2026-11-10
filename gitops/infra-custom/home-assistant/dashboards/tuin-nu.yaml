@@ -1,0 +1,109 @@
+# What the garden is doing now, for the Tuin view, its zone pop-ups and the
+# Thuis view (packages/rainbird.yaml). While watering: which zone, when it
+# ends and what comes next, blue, with Stop (and Volgende for a program).
+# Otherwise: the next scheduled run, or why there is none.
+type: custom:bubble-card
+card_type: button
+button_type: state
+entity: sensor.rainbird_status
+name: Tuin
+icon: mdi:sprinkler-variant
+show_state: true
+card_layout: large
+grid_options:
+  columns: full
+button_action:
+  tap_action:
+    action: navigate
+    navigation_path: /dashboard-thuis/tuin
+tap_action:
+  action: navigate
+  navigation_path: /dashboard-thuis/tuin
+sub_button:
+  # Ends the current zone; the program goes on with the next one.
+  - name: Volgende
+    icon: mdi:skip-next
+    show_name: true
+    visibility:
+      - condition: state
+        entity: input_boolean.rainbird_program_running
+        state: "on"
+    tap_action:
+      action: perform-action
+      perform_action: script.rainbird_stop_all_zones
+      data:
+        cancel_program: false
+  - name: Stop
+    icon: mdi:stop
+    show_name: true
+    visibility:
+      - condition: state
+        entity: binary_sensor.rainbird_bezig
+        state: "on"
+    tap_action:
+      action: perform-action
+      perform_action: script.rainbird_stop_all_zones
+      data:
+        cancel_program: true
+styles: |
+  .bubble-button-background {
+    background-color: ${hass.states['binary_sensor.rainbird_bezig']?.state === 'on' ? 'rgb(96, 165, 250)' : ''} !important;
+    opacity: ${hass.states['binary_sensor.rainbird_bezig']?.state === 'on' ? '1' : ''} !important;
+  }
+  .bubble-main-icon-container {
+    background-color: ${hass.states['binary_sensor.rainbird_bezig']?.state === 'on' ? 'rgba(255, 255, 255, 0.4)' : ''} !important;
+  }
+  .bubble-main-icon, .bubble-name, .bubble-state {
+    color: ${hass.states['binary_sensor.rainbird_bezig']?.state === 'on' ? '#0b1f3a' : ''} !important;
+  }
+  .bubble-sub-button-1 {
+    background-color: rgba(255, 255, 255, 0.55) !important;
+    color: #0b1f3a !important;
+  }
+  .bubble-sub-button-2 {
+    background-color: var(--error-color) !important;
+    color: #fff !important;
+  }
+  ${(() => {
+    const st = (id) => hass.states[id]?.state;
+    const uur = (d) => d.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' });
+    const dag = (d) => {
+      const verschil = Math.round(
+        (new Date(d).setHours(0, 0, 0, 0) - new Date().setHours(0, 0, 0, 0)) / 864e5);
+      if (verschil === 0) return 'vandaag';
+      if (verschil === 1) return 'morgen';
+      return d.toLocaleDateString('nl-NL', { weekday: 'long' });
+    };
+    const status = st('sensor.rainbird_status') || '';
+    let naam = status;
+    let tekst = '';
+    if (st('binary_sensor.rainbird_bezig') === 'on') {
+      const timer = hass.states['timer.rainbird_time_left'];
+      const rest = st('sensor.rainbird_program_remaining');
+      const delen = [];
+      if (timer?.state === 'active' && timer.attributes.finishes_at) {
+        delen.push(`klaar om ${uur(new Date(timer.attributes.finishes_at))}`);
+      }
+      if (rest && rest !== 'Geen') delen.push(`daarna ${rest}`);
+      tekst = delen.join(' · ') || 'Even geduld…';
+    } else {
+      if (status === 'Uit') naam = 'Niets aan het sproeien';
+      const pauze = parseInt(st('number.rain_bird_controller_rain_delay')) || 0;
+      const volgende = st('sensor.rainbird_volgende_beurt');
+      if (pauze > 0) {
+        tekst = `Regenpauze: nog ${pauze} ${pauze === 1 ? 'dag' : 'dagen'}`;
+      } else if (st('input_boolean.rainbird_schema_actief') !== 'on') {
+        tekst = 'Automatisch sproeien staat uit';
+      } else if (volgende && !['unknown', 'unavailable'].includes(volgende)) {
+        const d = new Date(volgende);
+        tekst = `Volgende beurt: ${dag(d)} ${uur(d)}`;
+      } else {
+        tekst = 'Geen beurt gepland';
+      }
+    }
+    const n = card.querySelector('.bubble-name');
+    if (n) n.innerText = naam;
+    const t = card.querySelector('.bubble-state');
+    if (t) t.innerText = tekst;
+    return '';
+  })()}

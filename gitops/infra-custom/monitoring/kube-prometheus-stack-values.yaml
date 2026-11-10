@@ -60,15 +60,26 @@ alertmanager:
         webhook_configs:
           - url_file: /etc/alertmanager/secrets/alertmanager-notifications/NTFY_URL
             send_resolved: true
-            # ntfy rejects templated messages over its size limit (4 KiB default).
             max_alerts: 5
             http_config:
               authorization:
                 type: Bearer
                 credentials_file: /etc/alertmanager/secrets/alertmanager-notifications/NTFY_TOKEN
-              # ntfy's built-in template renders the Alertmanager webhook JSON.
+              # ntfy renders these inline Go templates (with Sprig) from the
+              # webhook JSON. ntfy drops a message whose rendered title or body
+              # exceeds 4 KiB, and Alertmanager does not retry a 400, so the
+              # body is kept compact: no source URLs, summary and description
+              # truncated. ntfy's built-in alertmanager template overflowed
+              # with five kube-prometheus alerts. Header values cannot hold
+              # newlines; "\n" inside a template string literal adds them.
               http_headers:
-                X-Template: {values: [alertmanager]}
+                X-Template: {values: ['yes']}
+                X-Title:
+                  values:
+                    - '{{ if eq .status "firing" }}{{ "\U0001F6A8" }}{{ else }}{{ "\U00002705" }}{{ end }} {{ (index .alerts 0).labels.alertname }}{{ with .groupLabels.namespace }} - {{ . }}{{ end }}{{ $n := add (len .alerts) (.truncatedAlerts | default 0) }}{{ if gt $n 1 }} ({{ $n }}){{ end }}'
+                X-Message:
+                  values:
+                    - '{{ range .alerts }}{{ if eq .status "resolved" }}RESOLVED{{ else }}{{ .labels.severity | default "none" | upper }}{{ end }}: {{ .annotations.summary | default .labels.alertname | trunc 160 }}{{ with .annotations.description }}{{ "\n" }}{{ . | trunc 280 }}{{ end }}{{ "\n\n" }}{{ end }}{{ with .truncatedAlerts }}...and {{ . }} more{{ end }}'
     templates:
       - '/etc/alertmanager/config/*.tmpl'
 kubeStateMetrics: {enabled: true}

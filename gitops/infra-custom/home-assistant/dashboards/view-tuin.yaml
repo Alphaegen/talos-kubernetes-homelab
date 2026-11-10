@@ -300,8 +300,9 @@ sections:
         color: blue
         grid_options:
           columns: 6
-      # Minutes per zone, run one after the other; 0 skips the zone. Pauze
-      # skips it in the schedule (and logs that) but keeps its minutes.
+      # Minutes per zone, run one after the other; at 0 the zone does not
+      # take part ("Doet niet mee"). Pauze skips it in the schedule (and logs
+      # that) but keeps its minutes.
       - type: custom:bubble-card
         card_type: button
         button_type: state
@@ -343,7 +344,7 @@ sections:
             const nr = entity.match(/zone_(\d)_/)?.[1];
             const pauze = hass.states[`input_boolean.rainbird_pauze_zone_${nr}`]?.state === 'on';
             const min = parseInt(state) || 0;
-            const tekst = pauze ? `Gepauzeerd · ${min} min` : min > 0 ? `${min} min` : '0 min · overslaan';
+            const tekst = pauze ? `Gepauzeerd · ${min} min` : min > 0 ? `${min} min` : 'Doet niet mee';
             const el = card.querySelector('.bubble-state');
             if (el) el.innerText = tekst;
             return '';
@@ -443,9 +444,10 @@ sections:
         grid_options:
           columns: full
         content: >-
-          Zones sproeien na elkaar. 0 min slaat een zone over, Pauze tijdelijk
-          (de minuten blijven bewaard). Bij regen of een regenpauze vervalt de
-          hele beurt.
+          De zones sproeien na elkaar, elk zo lang als hierboven staat. Zet een
+          zone met − helemaal terug als hij niet mee moet doen. Met Pauze sla je
+          een zone een tijdje over en blijft zijn tijd bewaard. Bij regen of een
+          regenpauze gaat de hele beurt niet door.
       - type: tile
         entity: script.rainbird_run_program
         name: Schema nu starten

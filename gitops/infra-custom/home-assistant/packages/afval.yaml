@@ -1,7 +1,8 @@
-# Waste pickups from today through Sunday of next week, read from the Circulus
-# calendar, for the Afval cards on the Thuis dashboard. The state is the next
-# bin type ("GFT", or "GFT + Papier" on a shared day), so it can be shown as
-# the card's title.
+# Waste pickups from today through Sunday three weeks ahead (four calendar
+# weeks), read from the Circulus calendar, for the Afval cards on the Thuis
+# dashboard. sensor.afval_ophaalschema's state is the next bin type ("GFT", or
+# "GFT + Papier" on a shared day); sensor.afval_deze_week_1 to _4 hold this
+# week's pickups, one each, for the cards on the Thuis view.
 template:
   - triggers:
       - trigger: homeassistant
@@ -23,8 +24,9 @@ template:
           entity_id: calendar.afvalbeheer_circulus
         data:
           start_date_time: "{{ today_at() }}"
-          # Monday is weekday 0: this ends at the Monday after next week.
-          end_date_time: "{{ today_at() + timedelta(days=14 - now().weekday()) }}"
+          # Monday is weekday 0: this ends at the Monday four weeks after
+          # this week's.
+          end_date_time: "{{ today_at() + timedelta(days=28 - now().weekday()) }}"
         response_variable: agenda
       - variables:
           dagen: >-
@@ -61,6 +63,16 @@ template:
               {% endfor %}
               {{ ns.items }}
             {% endif %}
+      # This week's pickups for the Thuis cards, or only the next one when
+      # nothing is left this week; none while the calendar is not loaded.
+      - variables:
+          deze_week: >-
+            {% if ophalingen is none %}
+              {{ none }}
+            {% else %}
+              {% set week = ophalingen | selectattr('week', 'eq', 0) | list %}
+              {{ week if week | count > 0 else ophalingen[:1] }}
+            {% endif %}
     sensor:
       - name: Afval ophaalschema
         unique_id: afval_ophaalschema
@@ -80,7 +92,7 @@ template:
             {% if ophalingen is none %}
               {{ this.attributes.get('wanneer', '') }}
             {% elif ophalingen | count == 0 %}
-              Niets tot en met volgende week
+              Niets in de komende vier weken
             {% else %}
               {{ ophalingen[0].dag }} · {{ ophalingen[0].wanneer }}
             {% endif %}
@@ -92,7 +104,108 @@ template:
             {% else %}
               {{ ophalingen[0].icoon }}
             {% endif %}
-          # Every pickup in the window; week 0 is this week, 1 is next week.
+          # Every pickup in the window; week 0 is this week, 1 next week, up
+          # to 3.
           ophalingen: >-
             {{ this.attributes.get('ophalingen', []) if ophalingen is none
                else ophalingen }}
+      # One per pickup of this week (deze_week above), "Geen" when the slot is
+      # unused, so the Thuis view can hide it. Four slots: one per bin type.
+      - name: Afval deze week 1
+        unique_id: afval_deze_week_1
+        icon: mdi:trash-can
+        state: >-
+          {% if deze_week is none %}
+            {{ this.state if this.state not in ['unknown', 'unavailable'] else 'Geen' }}
+          {% else %}
+            {{ deze_week[0].soort if deze_week | count > 0 else 'Geen' }}
+          {% endif %}
+        attributes:
+          wanneer: >-
+            {% if deze_week is none %}
+              {{ this.attributes.get('wanneer', '') }}
+            {% elif deze_week | count > 0 %}
+              {{ deze_week[0].dag }} · {{ deze_week[0].wanneer }}
+            {% else %}
+              Niets in de komende vier weken
+            {% endif %}
+          icoon: >-
+            {% if deze_week is none %}
+              {{ this.attributes.get('icoon', 'mdi:trash-can') }}
+            {% elif deze_week | count > 0 %}
+              {{ deze_week[0].icoon }}
+            {% else %}
+              mdi:trash-can-outline
+            {% endif %}
+      - name: Afval deze week 2
+        unique_id: afval_deze_week_2
+        icon: mdi:trash-can
+        state: >-
+          {% if deze_week is none %}
+            {{ this.state if this.state not in ['unknown', 'unavailable'] else 'Geen' }}
+          {% else %}
+            {{ deze_week[1].soort if deze_week | count > 1 else 'Geen' }}
+          {% endif %}
+        attributes:
+          wanneer: >-
+            {% if deze_week is none %}
+              {{ this.attributes.get('wanneer', '') }}
+            {% elif deze_week | count > 1 %}
+              {{ deze_week[1].dag }} · {{ deze_week[1].wanneer }}
+            {% endif %}
+          icoon: >-
+            {% if deze_week is none %}
+              {{ this.attributes.get('icoon', 'mdi:trash-can') }}
+            {% elif deze_week | count > 1 %}
+              {{ deze_week[1].icoon }}
+            {% else %}
+              mdi:trash-can-outline
+            {% endif %}
+      - name: Afval deze week 3
+        unique_id: afval_deze_week_3
+        icon: mdi:trash-can
+        state: >-
+          {% if deze_week is none %}
+            {{ this.state if this.state not in ['unknown', 'unavailable'] else 'Geen' }}
+          {% else %}
+            {{ deze_week[2].soort if deze_week | count > 2 else 'Geen' }}
+          {% endif %}
+        attributes:
+          wanneer: >-
+            {% if deze_week is none %}
+              {{ this.attributes.get('wanneer', '') }}
+            {% elif deze_week | count > 2 %}
+              {{ deze_week[2].dag }} · {{ deze_week[2].wanneer }}
+            {% endif %}
+          icoon: >-
+            {% if deze_week is none %}
+              {{ this.attributes.get('icoon', 'mdi:trash-can') }}
+            {% elif deze_week | count > 2 %}
+              {{ deze_week[2].icoon }}
+            {% else %}
+              mdi:trash-can-outline
+            {% endif %}
+      - name: Afval deze week 4
+        unique_id: afval_deze_week_4
+        icon: mdi:trash-can
+        state: >-
+          {% if deze_week is none %}
+            {{ this.state if this.state not in ['unknown', 'unavailable'] else 'Geen' }}
+          {% else %}
+            {{ deze_week[3].soort if deze_week | count > 3 else 'Geen' }}
+          {% endif %}
+        attributes:
+          wanneer: >-
+            {% if deze_week is none %}
+              {{ this.attributes.get('wanneer', '') }}
+            {% elif deze_week | count > 3 %}
+              {{ deze_week[3].dag }} · {{ deze_week[3].wanneer }}
+            {% endif %}
+          icoon: >-
+            {% if deze_week is none %}
+              {{ this.attributes.get('icoon', 'mdi:trash-can') }}
+            {% elif deze_week | count > 3 %}
+              {{ deze_week[3].icoon }}
+            {% else %}
+              mdi:trash-can-outline
+            {% endif %}

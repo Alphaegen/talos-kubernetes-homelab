@@ -51,12 +51,14 @@ sections:
         tap_action:
           action: navigate
           navigation_path: '#afval'
-      # Titled with the next bin type itself (packages/afval.yaml), in its
-      # colour, with the day and countdown underneath.
+      # One card per pickup this week (sensor.afval_deze_week_1 to _4 from
+      # packages/afval.yaml), or the next one when none is left this week.
+      # Each is titled with its bin type, in its colour, with the day and
+      # countdown underneath. Unused slots ("Geen") are hidden.
       - type: custom:bubble-card
         card_type: button
         button_type: state
-        entity: sensor.afval_ophaalschema
+        entity: sensor.afval_deze_week_1
         name: Afval
         icon: mdi:trash-can
         show_state: true
@@ -67,7 +69,7 @@ sections:
           tap_action:
             action: navigate
             navigation_path: '#afval'
-        styles: |
+        styles: &afval-stijl |
           .bubble-main-icon-container {
             background-color: rgba(var(--afval-kleur, 158, 158, 158), 0.22) !important;
           }
@@ -75,14 +77,13 @@ sections:
             color: rgb(var(--afval-kleur, 158, 158, 158)) !important;
           }
           ${(() => {
-            const s = hass.states['sensor.afval_ophaalschema'];
-            const soort = (s?.state || '').split(' + ')[0];
+            const s = hass.states[entity];
             const kleur = {
               GFT: '76, 175, 80',
               PMD: '255, 152, 0',
               Papier: '66, 133, 244',
               Restafval: '158, 158, 158',
-            }[soort];
+            }[s?.state];
             if (kleur) card.style.setProperty('--afval-kleur', kleur);
             else card.style.removeProperty('--afval-kleur');
             const naam = card.querySelector('.bubble-name');
@@ -93,6 +94,63 @@ sections:
             if (icoon && s?.attributes.icoon) icoon.setAttribute('icon', s.attributes.icoon);
             return '';
           })()}
+      - type: custom:bubble-card
+        card_type: button
+        button_type: state
+        entity: sensor.afval_deze_week_2
+        name: Afval
+        icon: mdi:trash-can
+        show_state: true
+        card_layout: large
+        grid_options:
+          columns: full
+        visibility:
+          - condition: state
+            entity: sensor.afval_deze_week_2
+            state_not: Geen
+        button_action:
+          tap_action:
+            action: navigate
+            navigation_path: '#afval'
+        styles: *afval-stijl
+      - type: custom:bubble-card
+        card_type: button
+        button_type: state
+        entity: sensor.afval_deze_week_3
+        name: Afval
+        icon: mdi:trash-can
+        show_state: true
+        card_layout: large
+        grid_options:
+          columns: full
+        visibility:
+          - condition: state
+            entity: sensor.afval_deze_week_3
+            state_not: Geen
+        button_action:
+          tap_action:
+            action: navigate
+            navigation_path: '#afval'
+        styles: *afval-stijl
+      - type: custom:bubble-card
+        card_type: button
+        button_type: state
+        entity: sensor.afval_deze_week_4
+        name: Afval
+        icon: mdi:trash-can
+        show_state: true
+        card_layout: large
+        grid_options:
+          columns: full
+        visibility:
+          - condition: state
+            entity: sensor.afval_deze_week_4
+            state_not: Geen
+        button_action:
+          tap_action:
+            action: navigate
+            navigation_path: '#afval'
+        styles: *afval-stijl
 
   # Today's totals from packages/energie.yaml, two by two.
   - type: grid

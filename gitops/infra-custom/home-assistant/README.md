@@ -134,7 +134,7 @@ block in `helm-values.yaml` registers it in YAML mode for every user. The
 
 | View | Contents |
 |---|---|
-| Thuis | Weather, next waste pickup, today's solar, usage, export and import, Woonkamer lamp switch, both airco units with filter life and automation toggle, the Tuin status card with Stop while watering |
+| Thuis | Weather, this week's waste pickups, today's solar, usage, export and import, Woonkamer lamp switch, both airco units with filter life and automation toggle, the Tuin status card with Stop while watering |
 | Energie | The energy dashboard cards: distribution, live power, electricity, solar, gas, water, devices, self-sufficiency |
 | Klimaat | Per room, in groups: the unit (mode, target, fan, both louvre directions), functions (ionizer, display light, jet mode while cooling), the automation with its settings while it is on (day and night maxima, night period, maintenance fan level), and filter and power use |
 | Tuin | What runs now with Stop, the zones to start by hand (pop-up per zone with the minutes) and the log per day; next to it the automatic schedule (days, start time, minutes and pause per zone, rain delay). The log pop-up has the last 50 and the full history |
@@ -167,13 +167,18 @@ Requirements and editing:
 ### Waste pickups
 
 `packages/afval.yaml` adds `sensor.afval_ophaalschema`. Every hour, and just
-after midnight, it reads the Circulus calendar from today through Sunday of
-next week. Its state is the next bin type (`GFT`, or `GFT + Papier` when two
-share a day), which the Thuis card uses as its title. Its attributes hold the
-Dutch day and countdown (`wanneer`), an icon, and every pickup in the window
-(`ophalingen`, with `week` 0 for this week and 1 for next week) for the
-pop-up's list. If the calendar is not loaded yet after a restart, the sensor
-keeps its last value until the next hourly run.
+after midnight, it reads the Circulus calendar from today through Sunday three
+weeks ahead, so four calendar weeks. Its state is the next bin type (`GFT`, or
+`GFT + Papier` when two share a day), used by the Thuis badge. Its attributes
+hold the Dutch day and countdown (`wanneer`), an icon, and every pickup in the
+window (`ophalingen`, with `week` 0 for this week up to 3) for the pop-up,
+which lists the four weeks.
+
+`sensor.afval_deze_week_1` to `_4` hold this week's pickups, one each (bin
+type as state, `wanneer` and `icoon` as attributes), or only the next pickup
+when nothing is left this week. The Thuis view shows one card per slot and
+hides the slots that are `Geen`. If the calendar is not loaded yet after a
+restart, all these sensors keep their last value until the next hourly run.
 
 ### Notifications
 

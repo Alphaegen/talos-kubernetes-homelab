@@ -6,12 +6,17 @@ icon: mdi:trash-can
 entity: sensor.afval_ophaalschema
 width_desktop: 560px
 cards:
-  # The rest of this week and all of next week (packages/afval.yaml).
+  # The rest of this week and the three weeks after it (packages/afval.yaml).
   - type: markdown
     content: |-
       {% set items = state_attr('sensor.afval_ophaalschema', 'ophalingen') or [] %}
-      {% for week, label in [(0, 'Deze week'), (1, 'Volgende week')] %}
-      ### {{ label }}
+      {% set maanden = ['jan', 'feb', 'mrt', 'apr', 'mei', 'jun', 'jul', 'aug',
+                        'sep', 'okt', 'nov', 'dec'] %}
+      {% set maandag = (today_at() - timedelta(days=now().weekday())).date() %}
+      {% for week in range(4) %}
+      {% set van = maandag + timedelta(days=7 * week) %}
+      {% set tot = van + timedelta(days=6) %}
+      ### {{ ['Deze week', 'Volgende week'][week] if week < 2 else 'Over ' ~ week ~ ' weken' }} · {{ van.day }} {{ maanden[van.month - 1] }} – {{ tot.day }} {{ maanden[tot.month - 1] }}
       {% for i in items | selectattr('week', 'eq', week) %}
       - <ha-icon icon="{{ i.icoon }}"></ha-icon> **{{ i.soort }}** · {{ i.dag }} ({{ i.wanneer }})
       {% else %}
@@ -19,7 +24,7 @@ cards:
       {% endfor %}
       {% endfor %}
 
-  # Next date per bin, also when it is further away than next week.
+  # Next date per bin, also when it is further away than four weeks.
   - type: custom:bubble-card
     card_type: separator
     name: Per soort

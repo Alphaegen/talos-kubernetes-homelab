@@ -45,7 +45,7 @@ spec:
             # status; any failure exits non-zero and fails the Job.
             - name: snapshot
               # Keep in sync with talosctl in .tool-versions (Talos version in use).
-              image: ghcr.io/siderolabs/talosctl:v1.13.10@sha256:3116f64c97ddffb53bd3c5bf87c8614d99f04df4326177dbbb7702b5087f0e4d
+              image: ghcr.io/siderolabs/talosctl:v1.14.6@sha256:82c9a9985fc7292a222e680414c65955ac0566db588b84d88f620b05d16b1d5b
               imagePullPolicy: IfNotPresent
               args:
                 # The injected talosconfig sets only the talos.default endpoint,

@@ -23,14 +23,14 @@ env:
   # renovate: datasource=github-releases depName=yannh/kubeconform
   KUBECONFORM_VERSION: v0.8.0
   # renovate: datasource=go depName=github.com/mikefarah/yq/v4
-  YQ_VERSION: v4.54.2
+  YQ_VERSION: v4.54.3
   # renovate: datasource=github-releases depName=gitleaks/gitleaks
   GITLEAKS_VERSION: v8.30.1
   # renovate: datasource=go depName=golang.stackrox.io/kube-linter
   KUBE_LINTER_VERSION: v0.8.3
   # Keep in step with the Kyverno chart's app version in gitops/infra-helm/values.yaml.
   # renovate: datasource=github-releases depName=kyverno/kyverno
-  KYVERNO_VERSION: v1.19.2
+  KYVERNO_VERSION: v1.20.0
 
 jobs:
   manifests:

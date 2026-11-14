@@ -20,7 +20,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: prowlarr
-          image: lscr.io/linuxserver/prowlarr:2.7.0.5723-ls167
+          image: lscr.io/linuxserver/prowlarr:2.7.0.5723-ls168
           # s6-overlay starts as root, fixes ownership, then drops to PUID/PGID.
           securityContext:
             allowPrivilegeEscalation: false

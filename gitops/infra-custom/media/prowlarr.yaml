@@ -21,6 +21,31 @@ spec:
         fsGroupChangePolicy: OnRootMismatch
         seccompProfile:
           type: RuntimeDefault
+      initContainers:
+        # Native sidecar: clears indexer backoff once the indexer works again
+        # (see indexer-backoff-reset.yaml).
+        - name: indexer-backoff-reset
+          image: docker.io/curlimages/curl:8.23.0
+          restartPolicy: Always
+          command: ["/bin/sh", "/scripts/reset.sh"]
+          env:
+            - { name: APP_PORT, value: "9696" }
+            - { name: API_VERSION, value: v1 }
+            - { name: INTERVAL_SECONDS, value: "900" }
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            requests: { cpu: 5m, memory: 8Mi }
+            limits: { memory: 32Mi }
+          volumeMounts:
+            - { name: config, mountPath: /app-config, readOnly: true }
+            - { name: indexer-backoff-reset, mountPath: /scripts, readOnly: true }
       containers:
         - name: prowlarr
           image: lscr.io/linuxserver/prowlarr:3.0.2.5780-ls169
@@ -66,6 +91,8 @@ spec:
             name: config,
             persistentVolumeClaim: { claimName: prowlarr-config },
           }
+        - name: indexer-backoff-reset
+          configMap: { name: indexer-backoff-reset }
 ---
 apiVersion: v1
 kind: Service

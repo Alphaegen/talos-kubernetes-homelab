@@ -110,11 +110,17 @@ spec:
             - { name: BROWSER_POOL_SIZE, value: "1" }
             - { name: SESSION_TTL_SECONDS, value: "3600" }
             - { name: PORT, value: "8191" }
+            # A browser that has already solved challenges grows past 1.5 GiB on
+            # the next Cloudflare Turnstile solve (1337x) and gets OOM-killed;
+            # a fresh one peaks around 1.1 GiB. Replace it after two solves
+            # instead of the default eight.
+            - { name: BROWSER_RECYCLE_AFTER_CONTEXTS, value: "2" }
           ports:
             - { name: http, containerPort: 8191 }
           resources:
+            # Idle ~300-500 MiB; a Turnstile solve peaks at 1.1-1.5+ GiB.
             requests: { cpu: 200m, memory: 768Mi }
-            limits: { memory: 1536Mi }
+            limits: { memory: 2560Mi }
           startupProbe:
             httpGet: { path: /health, port: http }
             periodSeconds: 5

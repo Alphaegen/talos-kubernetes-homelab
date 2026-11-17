@@ -23,14 +23,14 @@ env:
   # renovate: datasource=github-releases depName=yannh/kubeconform
   KUBECONFORM_VERSION: v0.8.0
   # renovate: datasource=go depName=github.com/mikefarah/yq/v4
-  YQ_VERSION: v4.54.2
+  YQ_VERSION: v4.54.3
   # renovate: datasource=github-releases depName=gitleaks/gitleaks
   GITLEAKS_VERSION: v8.30.1
   # renovate: datasource=go depName=golang.stackrox.io/kube-linter
   KUBE_LINTER_VERSION: v0.8.3
   # Keep in step with the Kyverno chart's app version in gitops/infra-helm/values.yaml.
   # renovate: datasource=github-releases depName=kyverno/kyverno
-  KYVERNO_VERSION: v1.19.2
+  KYVERNO_VERSION: v1.20.0
 
 jobs:
   manifests:
@@ -44,7 +44,7 @@ jobs:
           persist-credentials: false
 
       - name: Set up Go
-        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        uses: actions/setup-go@d8cbb8045d7f43706b9177cceb36c1f91a6644d5 # v7.1.0
         with:
           go-version-file: gitops/infra-custom/pi5-fan-control/go.mod
           cache-dependency-path: gitops/infra-custom/pi5-fan-control/go.sum

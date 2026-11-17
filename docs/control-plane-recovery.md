@@ -221,6 +221,6 @@ installer image in `nodes.yaml` and `generate.sh`, and the talosctl image in
 
 ## References
 
-- [Talos 1.13 upgrade and A/B rollback](https://docs.siderolabs.com/talos/v1.13/configure-your-talos-cluster/lifecycle-management/upgrading-talos)
-- [Talos 1.13 etcd backup and disaster recovery](https://docs.siderolabs.com/talos/v1.13/build-and-extend-talos/cluster-operations-and-maintenance/disaster-recovery)
+- [Talos 1.14 upgrade and A/B rollback](https://docs.siderolabs.com/talos/v1.14/configure-your-talos-cluster/lifecycle-management/upgrading-talos)
+- [Talos 1.14 etcd backup and disaster recovery](https://docs.siderolabs.com/talos/v1.14/build-and-extend-talos/cluster-operations-and-maintenance/disaster-recovery)
 - [Talos API access from Kubernetes](https://docs.siderolabs.com/kubernetes-guides/advanced-guides/talos-api-access-from-k8s)

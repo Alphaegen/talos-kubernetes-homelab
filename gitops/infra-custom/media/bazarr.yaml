@@ -3,6 +3,9 @@ kind: Deployment
 metadata:
   name: bazarr
   namespace: media
+  labels:
+    app: bazarr
+    app.kubernetes.io/name: bazarr
 spec:
   replicas: 1
   revisionHistoryLimit: 2

@@ -3,6 +3,9 @@ kind: Deployment
 metadata:
   name: qbittorrent
   namespace: media
+  labels:
+    app: qbittorrent
+    app.kubernetes.io/name: qbittorrent
   annotations:
     # Wait for External Secrets to materialize the Proton WireGuard key.
     argocd.argoproj.io/sync-wave: "1"

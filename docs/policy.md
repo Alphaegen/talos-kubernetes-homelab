@@ -87,8 +87,9 @@ writes to. Each one names the policies it covers and records its reason in
 | `nfs-provisioner` | NFS subdir provisioner | Restricted PSS, name label; expires 2026-12-31 |
 
 Exception conditions see the object being checked: for a Deployment that is
-its own metadata, not the pod template. Match on labels that are set on both,
-or fall back to the template labels as the media exceptions do.
+its own metadata, not the pod template. Since Kyverno 1.20 its `spec` is
+already the pod spec, so `object.spec.template` is gone too. Match on labels
+that are set on both the controller and its pod template.
 
 Adding an exception:
 

@@ -38,13 +38,13 @@ results:
     kind: Pod
     resources: [radarr-pod]
     result: skip
-  # Exception matchConditions see the controller's own metadata; like
-  # media/radarr.yaml this Deployment is labelled on its template only.
+  # Exception matchConditions see the controller's own metadata but not its
+  # pod template, so a label on the template only is not enough.
   - policy: pss-restricted-run-as-non-root
     isValidatingPolicy: true
     kind: Deployment
     resources: [radarr-label-only-on-template]
-    result: skip
+    result: fail
   - policy: pss-restricted-run-as-non-root
     isValidatingPolicy: true
     kind: Deployment

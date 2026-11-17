@@ -16,10 +16,10 @@ spec:
       kind: ValidatingPolicy
     - name: pss-restricted-capabilities
       kind: ValidatingPolicy
-  # The media manifests set the app label on the pod template only.
+  # Since Kyverno 1.20 a controller's object has the pod spec in place of
+  # its own, so the app label must be on the controller's metadata as well.
   matchConditions:
     - name: linuxserver-root
       expression: >-
         object.metadata.namespace == 'media' &&
-        object.metadata.?labels[?'app'].orValue(
-          object.spec.?template.?metadata.?labels[?'app'].orValue('')) in ['bazarr', 'prowlarr', 'radarr', 'sonarr']
+        object.metadata.?labels[?'app'].orValue('') in ['bazarr', 'prowlarr', 'radarr', 'sonarr']

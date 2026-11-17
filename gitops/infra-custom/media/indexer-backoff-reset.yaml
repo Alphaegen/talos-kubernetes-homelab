@@ -1,9 +1,9 @@
 # Shared script for the indexer-backoff-reset sidecar in Prowlarr, Sonarr and
 # Radarr. Each app backs off from a failing indexer for longer every time (up to
 # 24h) and only a successful indexer test clears that. The sidecar reads the
-# app's own API key from config.xml, so no extra secret is needed. When an
-# indexer is in backoff it runs "test all"; a test that passes resets the
-# backoff, one that fails changes nothing.
+# app's own API key from config.xml, so no extra secret is needed. When the
+# app's health reports an indexer in backoff it runs "test all"; a test that
+# passes resets the backoff, one that fails changes nothing.
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -14,21 +14,23 @@ data:
     #!/bin/sh
     # Env: APP_PORT, API_VERSION (v1 for Prowlarr, v3 for Sonarr/Radarr),
     # INTERVAL_SECONDS. The app's config is mounted read-only at /app-config.
+    # Sonarr and Radarr have no indexer status endpoint, so all three use the
+    # health checks for indexers in (long-term) backoff.
     set -u
     api="http://localhost:${APP_PORT}/api/${API_VERSION}"
+    log() { echo "$(date -u +%FT%TZ) $*"; }
     sleep 300
     while true; do
       key=$(sed -n 's:.*<ApiKey>\(.*\)</ApiKey>.*:\1:p' /app-config/config.xml)
-      if status=$(curl -fsS -m 30 -H "X-Api-Key: ${key}" "${api}/indexerstatus"); then
-        case "$status" in
-          *disabledTill*)
-            echo "$(date -u +%FT%TZ) indexer in backoff, testing all indexers"
-            curl -sS -m 600 -o /dev/null -w "$(date -u +%FT%TZ) testall http=%{http_code}\n" \
-              -X POST -H "X-Api-Key: ${key}" "${api}/indexer/testall" || true
-            ;;
-        esac
+      if health=$(curl -fsS -m 30 -H "X-Api-Key: ${key}" "${api}/health"); then
+        if echo "$health" | grep -Eq '"source": *"Indexer(LongTerm)?StatusCheck"'; then
+          log "indexer in backoff, testing all indexers"
+          result=$(curl -sS -m 600 -X POST -H "X-Api-Key: ${key}" "${api}/indexer/testall")
+          log "testall passed=$(echo "$result" | grep -Eo '"isValid": *true' | wc -l)" \
+            "failed=$(echo "$result" | grep -Eo '"isValid": *false' | wc -l)"
+        fi
       else
-        echo "$(date -u +%FT%TZ) could not read indexer status"
+        log "could not read health"
       fi
       sleep "${INTERVAL_SECONDS}"
     done

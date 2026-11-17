@@ -21,7 +21,7 @@ slzb:
   baudrate: 115200
 
 mqtt:
-  image: eclipse-mosquitto:2.0.22
+  image: eclipse-mosquitto:2.0.23
   resources:
     requests:
       cpu: 20m

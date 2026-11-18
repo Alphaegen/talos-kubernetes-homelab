@@ -51,7 +51,7 @@ spec:
         - name: sonarr
           # Develop (beta) branch, v5. Its database migration is one-way: going
           # back to v4 means restoring the config volume from a backup.
-          image: lscr.io/linuxserver/sonarr:develop-5.0.0.2941-ls209
+          image: lscr.io/linuxserver/sonarr:develop-5.0.0.2997-ls210
           # s6-overlay starts as root, fixes ownership, then drops to PUID/PGID.
           securityContext:
             allowPrivilegeEscalation: false

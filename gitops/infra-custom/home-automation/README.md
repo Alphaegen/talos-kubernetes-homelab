@@ -32,7 +32,7 @@ Sample config file:
 
 1. External Secrets Operator is available (already present in this repo when `security.eso.enabled=true`).
 1. The configured secret backend path (default: `mqtt-zigbee/username` and `mqtt-zigbee/password`) contains valid MQTT credentials.
-1. SLZB adapter has a stable DHCP reservation/IP (default in values: `192.168.3.232`) and TCP adapter port `6638` is reachable from cluster nodes.
+1. SLZB adapter has a stable DHCP reservation/IP (default in values: `192.168.30.232`) and TCP adapter port `6638` is reachable from cluster nodes.
 
 ## Rollout
 
@@ -47,7 +47,7 @@ Sample config file:
 ## Validation
 
 1. Confirm network reachability from the cluster to the SLZB adapter:
-   - `kubectl -n home-automation run slzb-check --image=busybox:1.36 --restart=Never --rm -it -- nc -vz -w 3 192.168.3.232 6638`
+   - `kubectl -n home-automation run slzb-check --image=busybox:1.36 --restart=Never --rm -it -- nc -vz -w 3 192.168.30.232 6638`
 1. Confirm Zigbee2MQTT starts with coordinator and MQTT connected:
    - `kubectl -n home-automation logs deploy/zigbee2mqtt --tail=200`
    - Look for successful coordinator initialization and MQTT connection messages.

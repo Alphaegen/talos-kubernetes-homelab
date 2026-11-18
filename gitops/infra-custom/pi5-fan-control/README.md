@@ -109,14 +109,14 @@ only for RP1 MMIO and must be removed with the workaround.
 ## Canary rollout on rpi-w-2
 
 The initial rollout assigned `hardware.niekvlam.nl/pi5-fan: "true"` only to
-`rpi-w-2` (`192.168.3.103`). The DaemonSet also requires ARM64 and this explicit
+`rpi-w-2` (`192.168.20.103`). The DaemonSet also requires ARM64 and this explicit
 label, so it could not schedule on the other nodes during the canary. Generate
 the Talos configs and inspect the canary diff. Apply only the label to the live
 machine configuration so unrelated Talos settings are not replaced:
 
 ```bash
 ./generate.sh
-talosctl -n 192.168.3.103 patch machineconfig \
+talosctl -n 192.168.20.103 patch machineconfig \
   --patch '{"machine":{"nodeLabels":{"hardware.niekvlam.nl/pi5-fan":"true"}}}'
 ```
 
@@ -134,7 +134,7 @@ Monitor the canary temperature from Fish shell:
 
 ```fish
 while true
-    set temp (talosctl -n 192.168.3.103 read /sys/class/thermal/thermal_zone0/temp 2>/dev/null)
+    set temp (talosctl -n 192.168.20.103 read /sys/class/thermal/thermal_zone0/temp 2>/dev/null)
     echo (date "+%H:%M:%S")" - "(math --scale=1 "$temp / 1000")"°C"
     sleep 2
 end
@@ -172,9 +172,9 @@ live machines:
 
 ```bash
 ./generate.sh
-talosctl -n 192.168.3.101 patch machineconfig --patch '{"machine":{"nodeLabels":{"hardware.niekvlam.nl/pi5-fan":"true"}}}'
-talosctl -n 192.168.3.102 patch machineconfig --patch '{"machine":{"nodeLabels":{"hardware.niekvlam.nl/pi5-fan":"true"}}}'
-talosctl -n 192.168.3.104 patch machineconfig --patch '{"machine":{"nodeLabels":{"hardware.niekvlam.nl/pi5-fan":"true"}}}'
+talosctl -n 192.168.20.101 patch machineconfig --patch '{"machine":{"nodeLabels":{"hardware.niekvlam.nl/pi5-fan":"true"}}}'
+talosctl -n 192.168.20.102 patch machineconfig --patch '{"machine":{"nodeLabels":{"hardware.niekvlam.nl/pi5-fan":"true"}}}'
+talosctl -n 192.168.20.104 patch machineconfig --patch '{"machine":{"nodeLabels":{"hardware.niekvlam.nl/pi5-fan":"true"}}}'
 ```
 
 The catch-all toleration allows the DaemonSet to run on the control-plane node

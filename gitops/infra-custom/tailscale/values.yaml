@@ -6,7 +6,10 @@ connector:
   tags:
     - tag:home-lan-router
   subnetRouter:
+    # Server VLAN (nodes, Gateway 192.168.20.112, resolver 192.168.20.1) and
+    # the NAS. Who may reach what is decided by the tailnet policy grants.
     advertiseRoutes:
-      - 192.168.3.0/24
+      - 192.168.20.0/24
+      - 192.168.60.137/32
   exitNode:
     enabled: true

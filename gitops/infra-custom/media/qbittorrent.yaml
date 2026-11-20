@@ -39,8 +39,9 @@ spec:
             requests:
               cpu: 25m
               memory: 64Mi
+            # No CPU limit: Gluetun is the Pod's DNS resolver and was throttled
+            # under ~1200 peer connections, delaying tracker announces.
             limits:
-              cpu: 500m
               memory: 256Mi
           command: ["/bin/sh", "-ec"]
           args:
@@ -170,7 +171,7 @@ spec:
               memory: 768Mi
             limits:
               cpu: 1500m
-              memory: 1Gi
+              memory: 1536Mi
           ports:
             - { name: http, containerPort: 8080 }
           env:

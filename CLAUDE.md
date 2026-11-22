@@ -53,3 +53,17 @@ Talos: `generate.sh` renders client config and per-node machine configs into `ou
 ## Docs
 
 `docs/bootstrap.md` (full bootstrap and reconfiguration), `docs/control-plane-recovery.md` (single etcd member, snapshots, A/B rollback; protected disks), `docs/auth.md` (SSO and break-glass), `docs/policy.md` (policies, exceptions, enforce procedure), `gitops/infra-helm/README.md` (ownership, waves, deletion policy).
+
+## Agent skills
+
+### Issue tracker
+
+GitHub Issues in `Alphaegen/talos-kubernetes-homelab` via `gh` (public). See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Default five-role vocabulary (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: `GLOSSARY.md` and `docs/adr/` at the repo root (created lazily). See `docs/agents/domain.md`.

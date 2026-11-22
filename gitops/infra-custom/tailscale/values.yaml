@@ -7,9 +7,11 @@ connector:
     - tag:home-lan-router
   subnetRouter:
     # Server VLAN (nodes, Gateway 192.168.20.112, resolver 192.168.20.1).
-    # The NAS (192.168.60.137/32) is advertised by its own Tailscale node so
-    # it stays reachable when the cluster is down. Who may reach what is
-    # decided by the tailnet policy grants.
+    # The NAS is not advertised as a subnet route: reach it remotely through
+    # its own Tailscale node (synology-nas). A route for its LAN IP pulls home
+    # SMB sessions (Time Machine) into the tunnel, where every Tailscale
+    # rebind breaks them. Who may reach what is decided by the tailnet
+    # policy grants.
     advertiseRoutes:
       - 192.168.20.0/24
   exitNode:

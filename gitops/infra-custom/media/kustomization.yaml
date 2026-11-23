@@ -4,7 +4,6 @@ kind: Kustomization
 resources:
   - pvc-shared.yaml
   - pvc-configs.yaml
-  - indexer-backoff-reset.yaml
   - qbittorrent-protonvpn-secret.yaml
   - bazarr.yaml
   - profilarr.yaml
@@ -15,9 +14,10 @@ resources:
   - sonarr.yaml
   - trawl.yaml
 
-# Deployments labelled homelab.niekvlam.nl/base: linuxserver.
+# Each applies to the Deployments that carry its homelab.niekvlam.nl/ label.
 components:
   - components/linuxserver
+  - components/indexer-backoff-reset
 
 patches:
   # Every media Deployment: one replica on RWO volumes, replaced rather than

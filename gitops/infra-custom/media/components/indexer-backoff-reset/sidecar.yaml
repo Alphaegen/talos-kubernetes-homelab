@@ -1,0 +1,32 @@
+# Native sidecar for Deployments labelled
+# homelab.niekvlam.nl/indexer-backoff-reset: "true". The app's config volume
+# must be named "config".
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: indexer-backoff-reset
+spec:
+  template:
+    spec:
+      initContainers:
+        - name: indexer-backoff-reset
+          image: docker.io/curlimages/curl:8.23.0
+          restartPolicy: Always
+          command: ["/bin/sh", "/scripts/reset.sh"]
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            requests: { cpu: 5m, memory: 8Mi }
+            limits: { memory: 32Mi }
+          volumeMounts:
+            - { name: config, mountPath: /app-config, readOnly: true }
+            - { name: indexer-backoff-reset, mountPath: /scripts, readOnly: true }
+      volumes:
+        - name: indexer-backoff-reset
+          configMap: { name: indexer-backoff-reset }

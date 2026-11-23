@@ -6,6 +6,7 @@ metadata:
   labels:
     app.kubernetes.io/name: radarr
     homelab.niekvlam.nl/base: linuxserver
+    homelab.niekvlam.nl/indexer-backoff-reset: "true"
 spec:
   selector: { matchLabels: { app: radarr } }
   template:
@@ -24,31 +25,6 @@ spec:
                     values:
                       - rpi-w-2
                       - rpi-w-3
-      initContainers:
-        # Native sidecar: clears indexer backoff once the indexer works again
-        # (see indexer-backoff-reset.yaml).
-        - name: indexer-backoff-reset
-          image: docker.io/curlimages/curl:8.23.0
-          restartPolicy: Always
-          command: ["/bin/sh", "/scripts/reset.sh"]
-          env:
-            - { name: APP_PORT, value: "7878" }
-            - { name: API_VERSION, value: v3 }
-            - { name: INTERVAL_SECONDS, value: "900" }
-          securityContext:
-            runAsNonRoot: true
-            runAsUser: 1000
-            runAsGroup: 1000
-            allowPrivilegeEscalation: false
-            readOnlyRootFilesystem: true
-            capabilities:
-              drop: ["ALL"]
-          resources:
-            requests: { cpu: 5m, memory: 8Mi }
-            limits: { memory: 32Mi }
-          volumeMounts:
-            - { name: config, mountPath: /app-config, readOnly: true }
-            - { name: indexer-backoff-reset, mountPath: /scripts, readOnly: true }
       containers:
         - name: radarr
           image: lscr.io/linuxserver/radarr:7.0.3.10918-ls328
@@ -81,8 +57,6 @@ spec:
       volumes:
         - { name: data, persistentVolumeClaim: { claimName: media-shared } }
         - { name: config, persistentVolumeClaim: { claimName: radarr-config } }
-        - name: indexer-backoff-reset
-          configMap: { name: indexer-backoff-reset }
 ---
 apiVersion: v1
 kind: Service

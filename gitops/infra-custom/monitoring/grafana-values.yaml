@@ -110,11 +110,10 @@ extraInitContainers:
 
         # The download script only adds files, so a dashboard dropped from the
         # values stays on the volume and can clash with a sidecar dashboard of
-        # the same title. Keep only the downloads and the chart's file dashboards.
+        # the same title. Keep only the downloads.
         for existing in /var/lib/grafana/dashboards/default/*.json; do
           [ -e "$existing" ] || continue
           printf '%s\n' "$dashboard_files" | grep -qxF "$existing" && continue
-          [ -e "/etc/grafana/dashboards-default/$(basename "$existing")" ] && continue
           echo "Removing dashboard that is no longer configured: $(basename "$existing")"
           rm -f "$existing"
         done
@@ -136,10 +135,6 @@ extraInitContainers:
         subPath: download_dashboards.sh
       - name: storage
         mountPath: /var/lib/grafana
-      # The chart's volume for dashboardFiles (see monitoring.grafana.dashboardFiles).
-      - name: dashboards-default
-        mountPath: /etc/grafana/dashboards-default
-        readOnly: true
 
 dashboardProviders:
   dashboardproviders.yaml:
@@ -154,6 +149,30 @@ dashboardProviders:
         editable: true
         options:
           path: /var/lib/grafana/dashboards/default
+
+# Downloaded from grafana.com by the chart's init script. Dashboards that ship
+# with a service are ConfigMaps labelled grafana_dashboard: "1", which the
+# sidecar loads from any namespace.
+dashboards:
+  default:
+    node-exporter:
+      gnetId: 1860
+      revision: 32
+      datasource: Prometheus
+    argocd:
+      gnetId: 14584
+      revision: 1
+    cert-manager:
+      gnetId: 11001
+      revision: 1
+    metallb:
+      gnetId: 20162
+      revision: 6
+      datasource: Prometheus
+    trivy-operator:
+      gnetId: 16337
+      revision: 16
+      datasource: Prometheus
 
 sidecar:
   resources:

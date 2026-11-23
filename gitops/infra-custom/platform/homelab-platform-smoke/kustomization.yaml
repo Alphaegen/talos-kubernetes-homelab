@@ -12,3 +12,15 @@ resources:
   - networkpolicy.yaml
   - ciliumnetworkpolicy.yaml
   - httproute.yaml
+
+# Loaded by the Grafana sidecar, which watches every namespace for this label.
+configMapGenerator:
+  - name: homelab-platform-smoke-dashboard
+    namespace: homelab-platform
+    files:
+      - dashboards/homelab-platform-smoke.json
+    options:
+      disableNameSuffixHash: true
+      labels:
+        app.kubernetes.io/name: homelab-platform-smoke
+        grafana_dashboard: "1"

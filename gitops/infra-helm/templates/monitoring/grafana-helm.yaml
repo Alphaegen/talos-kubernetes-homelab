@@ -30,16 +30,6 @@ sources:
       releaseName: grafana
       valueFiles:
         - $values/gitops/infra-custom/monitoring/grafana-values.yaml
-      # Dashboard assembly stays centralized here; runtime values live beside Grafana.
-      values: |-
-        dashboards:
-        {{- $dashboards := deepCopy (.Values.monitoring.grafana.dashboards | default dict) }}
-        {{- $defaultDashboards := get $dashboards "default" | default dict }}
-        {{- range .Values.monitoring.grafana.dashboardFiles }}
-        {{- $_ := set $defaultDashboards .name (dict "json" ($.Files.Get .path)) }}
-        {{- end }}
-        {{- $_ := set $dashboards "default" $defaultDashboards }}
-{{ toYaml $dashboards | indent 10 }}
 {{ end }}
 {{- if .Values.monitoring.enabled }}
 {{ include "infra.application" (dict "root" . "app" (include "app.grafana" . | fromYaml)) }}

@@ -1,0 +1,2 @@
+# expect: ci-toggles: monitoring.tool.enabled is off in the CI render; switch it on in gitops/infra-helm/ci/all-enabled-values.yaml
+.toggles[1].enabled = false

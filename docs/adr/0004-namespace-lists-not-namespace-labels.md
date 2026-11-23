@@ -1,6 +1,6 @@
 # Namespace roles stay explicit lists, checked or derived, not namespace labels
 
-Several places need to know which namespaces hold user workloads or persistent data: the `apps` AppProject's destinations, the `require-probes` Kyverno policy, and the persistent-workload alerts. We did not give namespaces a role label (for example `homelab.niekvlam.nl/tier: app`) for these places to select on. The `apps` project keeps its destination list, `require-probes` keeps its namespace list and `validate.sh` fails unless it covers every `apps` namespace, and the alerts select pods that mount a PVC instead of naming namespaces.
+Several places need to know which namespaces hold user workloads or persistent data: the `apps` AppProject's destinations, the `require-probes` Kyverno policy, and the persistent-workload alerts. We did not give namespaces a role label (for example `homelab.niekvlam.nl/tier: app`) for these places to select on. The `apps` project keeps its destination list, `require-probes` keeps its namespace list and the app-of-apps contract in `validate.sh` fails unless it covers every `apps` namespace, and the alerts select pods that mount a PVC instead of naming namespaces.
 
 ## Considered Options
 

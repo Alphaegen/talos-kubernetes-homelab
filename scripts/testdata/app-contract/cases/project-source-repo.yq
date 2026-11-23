@@ -1,0 +1,2 @@
+# expect: project: homelab-tool reads https://charts.example.org, which AppProject platform does not list in sourceRepos
+.applications[1].spec.sources[0].repoURL = "https://charts.example.org"

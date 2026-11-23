@@ -1,0 +1,2 @@
+# expect: probes: apps namespace demo is missing from require-probes
+.probeNamespaces = ["auth"]

@@ -1,0 +1,2 @@
+# expect: root-retry: gitops/root-application.yaml's retry differs from infra.syncPolicy's; keep them the same
+.rootRetry.limit = 5

@@ -44,7 +44,11 @@ annotation, destination, `infra.syncPolicy`, `FailOnSharedResource`,
 `SkipDryRunOnMissingResource`, the Git `ref: values` source when a value file
 starts with `$values/`) and fails the render when the description breaks a
 rule. `ci/contract-tests/` holds one template per rule that must fail, and
-`scripts/validate.sh` checks each one. To confirm that a change to the chart
+`scripts/validate.sh` checks each one. Rules that need more than one
+Application or the rendered sources (project destinations and repositories,
+`ownsPVCs`, namespace and object owners, CI toggles, the root retry) are the
+app-of-apps contract in `scripts/app-contract.jq`, also run by `validate.sh`
+with one case per rule in `scripts/testdata/app-contract/`. To confirm that a change to the chart
 only changes what you meant, run `scripts/render-diff.sh [base-ref]`.
 
 ## Update Workflow
@@ -125,7 +129,8 @@ Resource ownership is intentionally singular:
   both their operator and their operator-specific custom resources.
 
 With those overlaps removed, the root and every child Application enable
-`FailOnSharedResource=true` so a future ownership collision fails visibly.
+`FailOnSharedResource=true` so a future ownership collision fails visibly. The
+app-of-apps contract catches collisions between local sources before merge.
 
 ## Application Deletion Policy
 
@@ -144,8 +149,11 @@ Renovate and the Gateway. `homelab-gateway`'s shared Gateway also carries
 from Git removes the only HTTPRoute ingress path.
 
 Applications whose source holds PersistentVolumeClaims set `ownsPVCs: true`
-(media, BookOrbit, DumbPad, Obsidian LiveSync, Pocket ID): Argo CD ignores the
-`volumeName` the provisioner fills in and prunes those PVCs last. The helper
+(media, BookOrbit, DumbPad, Obsidian LiveSync, Pocket ID, Home Automation, etcd
+backup, Grafana, the NFS provisioner): Argo CD ignores the `volumeName` the
+provisioner fills in and prunes those PVCs last. The app-of-apps contract
+checks this for local sources; set it by hand for an upstream chart that
+creates PVCs itself (Grafana, the NFS provisioner). The helper
 refuses `ownsPVCs` together with `cascadeDelete`. Absence of a finalizer is a
 deletion safety choice, not a replacement for reviewing prune behavior before
 a sync.

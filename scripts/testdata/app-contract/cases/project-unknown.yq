@@ -1,0 +1,2 @@
+# expect: project: homelab-addon uses AppProject missing, which does not exist
+.applications[2].spec.project = "missing"

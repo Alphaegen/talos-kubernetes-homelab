@@ -1,0 +1,76 @@
+# A small app-of-apps that keeps every rule in scripts/app-contract.jq. Each
+# file under cases/ breaks it with one yq expression and names the one
+# violation the check must print.
+applications:
+  - metadata:
+      name: homelab-demo
+    spec:
+      project: apps
+      destination:
+        namespace: demo
+      ignoreDifferences:
+        - kind: PersistentVolumeClaim
+          jqPathExpressions: [.spec.volumeName]
+      syncPolicy:
+        syncOptions: [FailOnSharedResource=true, CreateNamespace=false, PruneLast=true]
+        retry: {limit: 10, backoff: {duration: 30s, factor: 2, maxDuration: 10m}}
+      source:
+        repoURL: https://github.com/example/homelab.git
+        path: gitops/infra-custom/demo
+  - metadata:
+      name: homelab-tool
+    spec:
+      project: platform
+      destination:
+        namespace: tool
+      syncPolicy:
+        syncOptions: [FailOnSharedResource=true, CreateNamespace=true]
+        retry: {limit: 10, backoff: {duration: 30s, factor: 2, maxDuration: 10m}}
+      sources:
+        - repoURL: https://charts.example.com
+          chart: tool
+        - repoURL: https://github.com/example/homelab.git
+          path: gitops/infra-custom/tool
+        - repoURL: https://github.com/example/homelab.git
+          ref: values
+  - metadata:
+      name: homelab-addon
+    spec:
+      project: platform
+      destination:
+        namespace: kube-system
+      syncPolicy:
+        syncOptions: [FailOnSharedResource=true, CreateNamespace=false]
+        retry: {limit: 10, backoff: {duration: 30s, factor: 2, maxDuration: 10m}}
+      source:
+        repoURL: https://github.com/example/homelab.git
+        path: gitops/infra-custom/addon
+projects:
+  - metadata:
+      name: platform
+    spec:
+      sourceRepos: [https://github.com/example/homelab.git, https://charts.example.com]
+      destinations: [{namespace: kube-system}, {namespace: tool}]
+      clusterResourceWhitelist: [{group: "*", kind: "*"}]
+  - metadata:
+      name: apps
+    spec:
+      sourceRepos: [https://github.com/example/homelab.git]
+      destinations: [{namespace: demo}]
+      clusterResourceWhitelist: [{group: "", kind: Namespace}, {group: "", kind: PersistentVolume}]
+sources:
+  gitops/infra-custom/demo:
+    - {apiVersion: v1, kind: Namespace, metadata: {name: demo}}
+    - {apiVersion: v1, kind: PersistentVolume, metadata: {name: demo-books}}
+    - {apiVersion: v1, kind: PersistentVolumeClaim, metadata: {name: data, namespace: demo}}
+    - {apiVersion: apps/v1, kind: Deployment, metadata: {name: demo, namespace: demo}}
+  gitops/infra-custom/tool:
+    - {apiVersion: rbac.authorization.k8s.io/v1, kind: ClusterRole, metadata: {name: tool}}
+    - {apiVersion: v1, kind: ConfigMap, metadata: {name: tool-config, namespace: tool}}
+  gitops/infra-custom/addon:
+    - {apiVersion: scheduling.k8s.io/v1, kind: PriorityClass, metadata: {name: addon}}
+toggles:
+  - {path: demo, enabled: true}
+  - {path: monitoring.tool, enabled: true}
+rootRetry: {limit: 10, backoff: {duration: 30s, factor: 2, maxDuration: 10m}}
+probeNamespaces: [demo, auth]

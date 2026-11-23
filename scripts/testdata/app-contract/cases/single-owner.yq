@@ -1,0 +1,2 @@
+# expect: single-owner: ConfigMap tool/tool-config is rendered by homelab-addon and homelab-tool
+.sources["gitops/infra-custom/addon"] += [{"apiVersion": "v1", "kind": "ConfigMap", "metadata": {"name": "tool-config", "namespace": "tool"}}]

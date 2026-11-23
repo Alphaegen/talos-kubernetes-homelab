@@ -1,0 +1,2 @@
+# expect: namespace: nothing creates namespace tool: add a Namespace manifest to a source or set createNamespace
+del(.applications[1].spec.syncPolicy.syncOptions[] | select(. == "CreateNamespace=true"))

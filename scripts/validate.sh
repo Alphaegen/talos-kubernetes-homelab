@@ -34,6 +34,7 @@ plain_manifests=(gitops/root-application.yaml)
 go_modules=(gitops/infra-custom/pi5-fan-control)
 kyverno_dir=gitops/infra-custom/kyverno
 policy_check_cases=scripts/testdata/policy-check
+app_contract_cases=scripts/testdata/app-contract
 ha_dashboard_dir=gitops/infra-custom/home-assistant
 
 failures=()
@@ -183,6 +184,68 @@ check_kustomizations_list_their_files() {
 }
 run "Kustomizations list every Kubernetes object file beside them" check_kustomizations_list_their_files
 
+# The app-of-apps contract (scripts/app-contract.jq) over one input document
+# built from the renders above.
+app_contract_input() {
+  local all=$manifests/infra-helm-all-enabled.yaml path file
+  {
+    yq -o=json -I=0 'select(.kind == "Application")' "$all" | jq -cs '{applications: .}'
+    yq -o=json -I=0 'select(.kind == "AppProject")' "$all" | jq -cs '{projects: .}'
+    while IFS= read -r path; do
+      file=$(out_file "$path")
+      [[ -d ${file%.yaml} ]] && file=(${file%.yaml}/*) || file=("$file")
+      yq -o=json -I=0 'select(.kind != null)' "${file[@]}" | jq -cs --arg path "$path" '{sources: {($path): .}}'
+    done < <(yq -o=json -I=0 'select(.kind == "Application")' "$all" \
+      | jq -r '(.spec.source // empty), (.spec.sources // [] | .[]) | .path // empty' | sort -u)
+    yq ea -o=json -I=0 '. as $f ireduce ({}; . * $f)
+      | [.. | select(tag == "!!map" and has("enabled"))
+         | {"path": (path | join(".")), "enabled": .enabled}]' \
+      "$infra_helm/values.yaml" "$all_enabled_values" | jq -c '{toggles: .}'
+    yq -o=json -I=0 '{"rootRetry": .spec.syncPolicy.retry}' gitops/root-application.yaml
+    yq -o=json -I=0 '[.spec.matchConstraints.namespaceSelector.matchExpressions[]
+      | select(.key == "kubernetes.io/metadata.name" and .operator == "In") | .values[]]
+      | {"probeNamespaces": .}' "$kyverno_dir/policies/require-probes.yaml"
+  } | jq -s 'reduce .[] as $part ({sources: {}}; . * $part)'
+}
+
+# check_app_contract <input.json>: fails with the violations, if any.
+check_app_contract() {
+  jq -r -f scripts/app-contract.jq "$1" | { ! grep . ; }
+}
+
+# Each case under $app_contract_cases breaks the passing baseline.yaml with
+# the yq expression in its file and must fail with its "# expect:" line.
+check_app_contract_cases() {
+  local case expect input out status=0
+  input=$(mktemp "$work/app-contract.XXXXXX")
+  yq -o=json . "$app_contract_cases/baseline.yaml" >"$input"
+  check_app_contract "$input" \
+    || { printf '%s should pass\n' "$app_contract_cases/baseline.yaml"; status=1; }
+  for case in "$app_contract_cases"/cases/*.yq; do
+    expect=$(sed -n 's/^# expect: //p' "$case")
+    [[ -n $expect ]] || { printf '%s has no "# expect:" line\n' "$case"; status=1; continue; }
+    input=$(mktemp "$work/app-contract.XXXXXX")
+    yq -o=json "$(grep -v '^#' "$case")" "$app_contract_cases/baseline.yaml" >"$input"
+    if out=$(check_app_contract "$input"); then
+      printf '%s passed, but should fail with: %s\n' "$case" "$expect"
+      status=1
+    elif ! grep -qxF -- "$expect" <<<"$out"; then
+      printf '%s failed without "%s":\n%s\n' "$case" "$expect" "$out"
+      status=1
+    elif [[ $(wc -l <<<"$out") -ne 1 ]]; then
+      printf '%s breaks more than its rule:\n%s\n' "$case" "$out"
+      status=1
+    fi
+  done
+  return "$status"
+}
+
+if [[ -s $manifests/infra-helm-all-enabled.yaml ]]; then
+  app_contract_input >"$work/app-contract.json"
+  run "App-of-apps contract (scripts/app-contract.jq)" check_app_contract "$work/app-contract.json"
+fi
+run "App-of-apps contract cases ($app_contract_cases)" check_app_contract_cases
+
 while IFS= read -r chart; do
   dir=$(dirname "$chart")
   [[ $dir == "$infra_helm" || -n ${rendered[$dir]:-} ]] && continue
@@ -217,24 +280,6 @@ check_kyverno_wiring() {
   return "$status"
 }
 run "Kyverno policy and exception wiring" check_kyverno_wiring
-
-# require-probes names its namespaces, as Argo CD's apps project does; every
-# apps namespace must be in it (it may cover more, such as auth).
-check_probes_cover_apps() {
-  local apps probes ns status=0
-  apps=$(yq 'select(.kind == "AppProject" and .metadata.name == "apps") | .spec.destinations[].namespace' \
-    "$manifests/infra-helm-all-enabled.yaml")
-  probes=$(yq '.spec.matchConstraints.namespaceSelector.matchExpressions[]
-    | select(.key == "kubernetes.io/metadata.name" and .operator == "In") | .values[]' \
-    "$kyverno_dir/policies/require-probes.yaml")
-  [[ -n $apps ]] || { printf 'No apps AppProject destinations found\n'; return 1; }
-  while IFS= read -r ns; do
-    grep -qxF "$ns" <<<"$probes" \
-      || { printf 'apps namespace %s is missing from require-probes\n' "$ns"; status=1; }
-  done <<<"$apps"
-  return "$status"
-}
-run "require-probes covers every apps namespace" check_probes_cover_apps
 
 # kyverno test silently reports an expectation for a missing fixture against
 # another resource, so check the names both ways.

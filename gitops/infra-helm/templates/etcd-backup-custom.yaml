@@ -7,6 +7,7 @@ namespace: etcd-backup
 # (kubernetesTalosAPIAccess) is applied.
 wave: 2
 project: platform
+ownsPVCs: true
 sources:
   - path: gitops/infra-custom/etcd-backup
 {{ end }}

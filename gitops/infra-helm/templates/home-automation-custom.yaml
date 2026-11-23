@@ -5,6 +5,7 @@ namespace: home-automation
 # Stateful workload after storage and secret foundations.
 wave: 2
 project: apps
+ownsPVCs: true
 sources:
   - path: gitops/infra-custom/home-automation
 {{ end }}

@@ -24,6 +24,10 @@ _Avoid_: feature flag
 The Argo CD permission set a child Application belongs to: the **platform project** (controllers, storage, networking, monitoring, auth; cluster-scoped resources allowed) or the **apps project** (user workloads confined to their own namespaces).
 _Avoid_: project (unqualified)
 
+**App-of-apps contract**:
+The rules every child Application must keep together with its AppProject and the objects its local sources render: deploy only where its project allows, own what it renders alone, and say so when it owns PVCs.
+_Avoid_: app checks, lint
+
 **Sync wave**:
 The bootstrap ordering slot of a child Application: 0 for foundations, 1 for platform add-ons, 2 for workloads. Ordering only, never a readiness guarantee.
 _Avoid_: stage, phase

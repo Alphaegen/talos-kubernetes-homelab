@@ -1,0 +1,2 @@
+# expect: project: homelab-demo renders ClusterRole -/demo without a namespace; AppProject apps does not allow it cluster-wide (namespaced objects must name their namespace)
+.sources["gitops/infra-custom/demo"] += [{"apiVersion": "rbac.authorization.k8s.io/v1", "kind": "ClusterRole", "metadata": {"name": "demo"}}]

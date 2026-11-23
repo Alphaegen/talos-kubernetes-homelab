@@ -1,0 +1,2 @@
+# expect: namespace: homelab-tool sets createNamespace, but namespace tool has a Namespace manifest; leave createNamespace off
+.sources["gitops/infra-custom/tool"] += [{"apiVersion": "v1", "kind": "Namespace", "metadata": {"name": "tool"}}]

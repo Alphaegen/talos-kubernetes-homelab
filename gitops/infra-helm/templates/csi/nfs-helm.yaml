@@ -4,6 +4,8 @@ namespace: nfs-provisioner
 # Storage add-on after bootstrap foundations.
 wave: 1
 project: platform
+# Set by hand: CI does not render the upstream chart that holds the PVC.
+ownsPVCs: true
 createNamespace: true
 sources:
   - repoURL: https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner/

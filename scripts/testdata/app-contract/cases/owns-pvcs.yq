@@ -1,0 +1,2 @@
+# expect: owns-pvcs: homelab-demo renders PersistentVolumeClaim data but does not set ownsPVCs
+del(.applications[0].spec.ignoreDifferences)

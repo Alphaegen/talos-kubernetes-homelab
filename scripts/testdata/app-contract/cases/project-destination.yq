@@ -1,0 +1,2 @@
+# expect: project: homelab-tool deploys to namespace other, which AppProject platform does not list
+.sources["gitops/infra-custom/tool"][1].metadata.namespace = "other"

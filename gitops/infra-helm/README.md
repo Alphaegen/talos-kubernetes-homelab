@@ -15,6 +15,35 @@ namespaces, their sources, and no cluster-scoped resources beyond Namespace
 and PersistentVolume. Add a new namespace to the matching project's
 `destinations` before enabling an Application that deploys there.
 
+## Adding A Child Application
+
+Every child Application is rendered by the `infra.application` helper in
+`templates/_helpers.tpl`; its header lists the keys. A template file describes
+the Application as a YAML block and passes it to the helper:
+
+```yaml
+{{- define "app.dumbpad" }}
+name: dumbpad
+namespace: dumbpad
+wave: 2
+project: apps
+ownsPVCs: true
+sources:
+  - path: gitops/infra-custom/dumbpad
+{{ end }}
+{{- if .Values.dumbpad.enabled }}
+{{ include "infra.application" (dict "root" . "app" (include "app.dumbpad" . | fromYaml)) }}
+{{- end }}
+```
+
+The helper adds everything every Application shares (labels, the sync-wave
+annotation, destination, `infra.syncPolicy`, `FailOnSharedResource`,
+`SkipDryRunOnMissingResource`, the Git `ref: values` source when a value file
+starts with `$values/`) and fails the render when the description breaks a
+rule. `ci/contract-tests/` holds one template per rule that must fail, and
+`scripts/validate.sh` checks each one. To confirm that a change to the chart
+only changes what you meant, run `scripts/render-diff.sh [base-ref]`.
+
 ## Update Workflow
 
 Version selectors are pinned (no `>=0.0.0` or `HEAD` fallbacks for Helm sources) and `renovate.json` is configured to:
@@ -57,7 +86,7 @@ The root chart uses only three child-Application waves:
 - `1`: platform add-ons and services that consume those foundations
 - `2`: workloads and smoke validation
 
-These waves make a fresh bootstrap easier to understand, but independently
+The helper rejects any other wave (`docs/adr/0001-three-sync-waves.md`). These waves make a fresh bootstrap easier to understand, but independently
 auto-syncing child Applications are not a readiness scheduler. CRD-backed
 configuration that belongs to an operator is therefore kept in the same
 multi-source Application as that operator where practical. Cross-Application
@@ -87,19 +116,26 @@ With those overlaps removed, the root and every child Application enable
 
 ## Application Deletion Policy
 
-Applications that directly manage persistent or stateful services deliberately
-do **not** have the Argo CD resources finalizer. Deleting one of those
-Application objects must not cascade-delete its workloads, PVCs, storage
-controller, or data. This includes Longhorn, Prometheus, Grafana, Loki, Home
-Assistant, Home Automation, media, BookOrbit, Obsidian LiveSync, and Pocket ID.
-`homelab-gateway` has no finalizer either, and its
-shared Gateway also carries `Prune=false`, so neither deleting the Application
-nor removing the manifest from Git removes the only HTTPRoute ingress path.
+Cascade delete is opt-in (`docs/adr/0002-cascade-delete-is-opt-in.md`). Only
+an Application with `cascadeDelete: true` gets the Argo CD resources
+finalizer, so deleting it also deletes what it manages. That is right for
+stateless agents, controllers and validation workloads (Alloy, metrics-server,
+Kyverno, Trivy, Policy Reporter, oauth2-proxy, Argo Rollouts, the priority
+classes, the fan controller, the kubelet serving cert approver, the smoke
+test). Everything else leaves it off: storage and stateful services (Longhorn,
+Prometheus, Grafana, Loki, Home Assistant, Home Automation, etcd backup), CRD
+providers whose deletion would take every custom resource with them
+(cert-manager, External Secrets, MetalLB, Tailscale), the NFS provisioner,
+Renovate and the Gateway. `homelab-gateway`'s shared Gateway also carries
+`Prune=false`, so neither deleting the Application nor removing the manifest
+from Git removes the only HTTPRoute ingress path.
 
-Stateless agents, controllers, and validation workloads keep the resources
-finalizer where it already existed, so deleting their Application continues to
-clean up their managed resources. Absence of a finalizer is a deletion safety
-choice, not a replacement for reviewing prune behavior before a sync.
+Applications whose source holds PersistentVolumeClaims set `ownsPVCs: true`
+(media, BookOrbit, DumbPad, Obsidian LiveSync, Pocket ID): Argo CD ignores the
+`volumeName` the provisioner fills in and prunes those PVCs last. The helper
+refuses `ownsPVCs` together with `cascadeDelete`. Absence of a finalizer is a
+deletion safety choice, not a replacement for reviewing prune behavior before
+a sync.
 
 ## One-Time Migration For Renamed Argo Applications
 

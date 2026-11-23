@@ -7,8 +7,9 @@ Talos Linux + Argo CD homelab on four Raspberry Pi 5 nodes (one control plane, t
 ## Commands
 
 ```bash
-scripts/validate.sh                      # the full check; identical to the CI "Validate" job
+scripts/validate.sh                      # the full check; the gating steps of the CI "Validate" job
 RENDER_DIR=/tmp/rendered scripts/validate.sh   # keep rendered manifests (dir must not exist yet)
+scripts/render-diff.sh [base-ref]        # how the rendered Applications differ from a ref (default HEAD)
 ```
 
 `validate.sh` needs bash 4+ (`declare -A`; Homebrew bash on macOS), `helm`, `kustomize`, `kubeconform`, `yq` (mikefarah), `jq`, `go` and the `kyverno` CLI. It prints PASS/FAIL per step and only shows a step's output when it fails.
@@ -33,11 +34,11 @@ Talos: `generate.sh` renders client config and per-node machine configs into `ou
 **App-of-apps.** `gitops/root-application.yaml` (`app-of-apps`, `default` project, name must not change) renders the Helm chart `gitops/infra-helm`, whose templates are *only* Argo CD `Application`s and the two `AppProject`s. Each Application points at an upstream Helm chart, a local source under `gitops/infra-custom/<name>/`, or both (multi-source).
 
 - `gitops/infra-helm/values.yaml` holds the feature toggles (`<component>.enabled`) and pinned upstream chart versions, each with a `# renovate:` annotation. Upstream Helm *values* do not go here: they live in `gitops/infra-custom/<name>/` and are referenced through a Git source with `ref: values` and `$values/gitops/infra-custom/...` value files.
-- Templates live under `templates/<area>/`, named `*-helm.yaml` (upstream chart) or `*-custom.yaml` (local source), and wrap everything in `{{- if .Values.<toggle>.enabled }}`. Use `infra.appName`, `infra.platformProject` / `infra.appsProject` and `infra.syncPolicy` from `_helpers.tpl`. The root Application duplicates the retry policy; keep them in sync.
+- Templates live under `templates/<area>/`, named `*-helm.yaml` (upstream chart) or `*-custom.yaml` (local source). Each one describes its Application as a YAML block in `define "app.<name>"` (closed with `{{ end }}`, no dash) and renders it with `infra.application` from `_helpers.tpl` inside `{{- if .Values.<toggle>.enabled }}`; the helper's header lists the keys. Never hand-write an Application: the helper emits the shared skeleton (sync policy, `FailOnSharedResource`, `SkipDryRunOnMissingResource`, the `$values` ref source) and fails the render on a wave outside 0-2, an unknown project or key, or `ownsPVCs` with `cascadeDelete`. Its rules are tested by `ci/contract-tests/` (one bad template per rule, run by `validate.sh`). A refactor of the chart should show no output from `scripts/render-diff.sh`. The root Application duplicates the retry policy; keep them in sync.
 - AppProjects (`templates/projects.yaml`): `platform` for controllers/storage/networking/monitoring/auth (cluster-scoped allowed), `apps` for user workloads (own namespaces only, no cluster-scoped resources beyond Namespace and NFS PVs). A new namespace must be added to its project's `destinations` before its Application can sync.
-- Sync waves are only `0` (foundations, CRD providers), `1` (platform add-ons) and `2` (workloads, smoke test). Waves are not a readiness scheduler: cross-Application CRs use `SkipDryRunOnMissingResource=true` and rely on the retry backoff.
+- Sync waves are only `0` (foundations, CRD providers), `1` (platform add-ons) and `2` (workloads, smoke test), enforced by the helper. Waves are not a readiness scheduler: cross-Application dependencies rely on `SkipDryRunOnMissingResource=true` and the retry backoff (`docs/adr/0001`).
 - Every child Application sets `FailOnSharedResource=true`; each resource (including namespace metadata) has exactly one owning Application.
-- Applications for stateful services deliberately have **no** `resources-finalizer`, so deleting the Application never cascades to PVCs or data. Do not add one to them.
+- Cascade delete is opt-in (`cascadeDelete: true` adds the `resources-finalizer`); stateful services, CRD providers, the Gateway and storage leave it off so deleting their Application never cascades. Applications whose source holds PVCs set `ownsPVCs: true` instead, which the helper refuses to combine with `cascadeDelete` (`docs/adr/0002`).
 - A toggle that is off in `values.yaml` must be switched on in `gitops/infra-helm/ci/all-enabled-values.yaml` so CI still renders that template.
 
 `validate.sh` discovers the local sources by rendering the chart with all toggles on and reading each Application's `path`/`helm` fields, then renders them the way Argo CD would (kustomization, chart with its value files, or a plain directory of top-level YAML). Upstream charts are not rendered in CI.
@@ -52,7 +53,7 @@ Talos: `generate.sh` renders client config and per-node machine configs into `ou
 
 ## Docs
 
-`docs/bootstrap.md` (full bootstrap and reconfiguration), `docs/control-plane-recovery.md` (single etcd member, snapshots, A/B rollback; protected disks), `docs/auth.md` (SSO and break-glass), `docs/policy.md` (policies, exceptions, enforce procedure), `gitops/infra-helm/README.md` (ownership, waves, deletion policy).
+`GLOSSARY.md` (domain terms: child Application, sync wave, cascade delete, owns PVCs, ...), `docs/adr/` (architecture decisions), `docs/bootstrap.md` (full bootstrap and reconfiguration), `docs/control-plane-recovery.md` (single etcd member, snapshots, A/B rollback; protected disks), `docs/auth.md` (SSO and break-glass), `docs/policy.md` (policies, exceptions, enforce procedure), `gitops/infra-helm/README.md` (ownership, waves, deletion policy).
 
 ## Agent skills
 

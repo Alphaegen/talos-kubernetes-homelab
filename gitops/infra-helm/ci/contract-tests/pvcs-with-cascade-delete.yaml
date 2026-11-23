@@ -1,0 +1,12 @@
+# expect: an Application that owns PVCs must not cascade-delete them
+{{- define "app.contract-test" }}
+name: contract-test
+namespace: contract-test
+wave: 2
+project: apps
+ownsPVCs: true
+cascadeDelete: true
+sources:
+  - path: gitops/infra-custom/dumbpad
+{{- end }}
+{{ include "infra.application" (dict "root" . "app" (include "app.contract-test" . | fromYaml)) }}

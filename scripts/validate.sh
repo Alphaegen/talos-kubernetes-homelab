@@ -26,6 +26,7 @@ skip_kinds=(
 
 infra_helm=gitops/infra-helm
 all_enabled_values=$infra_helm/ci/all-enabled-values.yaml
+contract_tests=$infra_helm/ci/contract-tests
 # Standalone manifests applied by hand, outside any chart or kustomization.
 plain_manifests=(gitops/root-application.yaml)
 go_modules=(gitops/infra-custom/pi5-fan-control)
@@ -86,6 +87,28 @@ kustomize_build() {
 run "helm template $infra_helm" sh -c 'helm template infra-apps "$1" > "$2"' _ "$infra_helm" "$(out_file "$infra_helm")"
 run "helm template $infra_helm (all toggles on)" sh -c 'helm template infra-apps "$1" -f "$2" > "$3"' \
   _ "$infra_helm" "$all_enabled_values" "$manifests/infra-helm-all-enabled.yaml"
+
+# The infra.application helper's rules: each contract test breaks one rule and
+# must fail the render with the message on its "# expect:" line.
+check_application_contract() {
+  local test expect chart out status=0
+  for test in "$contract_tests"/*.yaml; do
+    expect=$(sed -n 's/^# expect: //p' "$test")
+    [[ -n $expect ]] || { printf '%s has no "# expect:" line\n' "$test"; status=1; continue; }
+    chart=$(mktemp -d "$work/contract.XXXXXX")
+    cp -R "$infra_helm/." "$chart"
+    cp "$test" "$chart/templates/zz-contract-test.yaml"
+    if out=$(helm template infra-apps "$chart" 2>&1); then
+      printf '%s rendered, but should fail with: %s\n' "$test" "$expect"
+      status=1
+    elif ! grep -qF -- "$expect" <<<"$out"; then
+      printf '%s failed without "%s":\n%s\n' "$test" "$expect" "$out"
+      status=1
+    fi
+  done
+  return "$status"
+}
+run "infra.application contract tests ($contract_tests)" check_application_contract
 
 for manifest in "${plain_manifests[@]}"; do
   cp "$manifest" "$(out_file "$manifest")"

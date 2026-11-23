@@ -1,0 +1,11 @@
+# expect: unknown key "targetRevision" in the source for gitops/infra-custom/dumbpad
+{{- define "app.contract-test" }}
+name: contract-test
+namespace: contract-test
+wave: 2
+project: apps
+sources:
+  - path: gitops/infra-custom/dumbpad
+    targetRevision: some-branch
+{{- end }}
+{{ include "infra.application" (dict "root" . "app" (include "app.contract-test" . | fromYaml)) }}

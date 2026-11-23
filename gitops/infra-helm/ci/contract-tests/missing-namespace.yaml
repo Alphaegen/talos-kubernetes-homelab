@@ -1,0 +1,9 @@
+# expect: namespace is required
+{{- define "app.contract-test" }}
+name: contract-test
+wave: 2
+project: apps
+sources:
+  - path: gitops/infra-custom/dumbpad
+{{- end }}
+{{ include "infra.application" (dict "root" . "app" (include "app.contract-test" . | fromYaml)) }}

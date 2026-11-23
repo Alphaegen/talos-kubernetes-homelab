@@ -1,0 +1,10 @@
+# expect: every source needs a path or a chart
+{{- define "app.contract-test" }}
+name: contract-test
+namespace: contract-test
+wave: 2
+project: apps
+sources:
+  - repoURL: https://charts.example.com
+{{- end }}
+{{ include "infra.application" (dict "root" . "app" (include "app.contract-test" . | fromYaml)) }}

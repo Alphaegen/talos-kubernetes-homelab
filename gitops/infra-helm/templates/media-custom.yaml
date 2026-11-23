@@ -1,41 +1,19 @@
-# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/refs/heads/main/argoproj.io/application_v1alpha1.json
+{{- define "app.media" }}
+name: media
+namespace: media
+# Stateful workload after the wave-1 NFS provisioner.
+wave: 2
+project: apps
+createNamespace: true
+namespaceLabels:
+  # Gluetun needs NET_ADMIN and /dev/net/tun.
+  pod-security.kubernetes.io/enforce: privileged
+  pod-security.kubernetes.io/warn: baseline
+  pod-security.kubernetes.io/audit: baseline
+ownsPVCs: true
+sources:
+  - path: gitops/infra-custom/media
+{{- end }}
 {{- if .Values.media.enabled }}
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: {{ include "infra.appName" (dict "root" . "name" "media") }}
-  namespace: {{ .Values.cluster.namespace | quote }}
-  labels:
-    cluster: {{ .Values.cluster.name | quote }}
-    app: media
-  annotations:
-    # Stage 2: stateful workload after the stage-1 NFS provisioner.
-    argocd.argoproj.io/sync-wave: "2"
-spec:
-  project: {{ include "infra.appsProject" . }}
-  destination:
-    server: {{ .Values.cluster.url | default "https://kubernetes.default.svc" | quote }}
-    namespace: media
-  ignoreDifferences:
-    - kind: PersistentVolumeClaim
-      jqPathExpressions:
-        - .spec.volumeName
-  syncPolicy:
-    {{- include "infra.syncPolicy" . | nindent 4 }}
-    syncOptions:
-      - FailOnSharedResource=true
-      - CreateNamespace=true
-      - PruneLast=true
-      - RespectIgnoreDifferences=true
-      - SkipDryRunOnMissingResource=true
-    managedNamespaceMetadata:
-      labels:
-        # Gluetun needs NET_ADMIN and /dev/net/tun.
-        pod-security.kubernetes.io/enforce: privileged
-        pod-security.kubernetes.io/warn: baseline
-        pod-security.kubernetes.io/audit: baseline
-  source:
-    repoURL: {{ .Values.cluster.repoURL | quote }}
-    targetRevision: {{ .Values.cluster.revision | default "main" | quote }}
-    path: gitops/infra-custom/media
+{{ include "infra.application" (dict "root" . "app" (include "app.media" . | fromYaml)) }}
 {{- end }}

@@ -1,0 +1,11 @@
+# expect: unknown key "stateful"
+{{- define "app.contract-test" }}
+name: contract-test
+namespace: contract-test
+wave: 2
+project: apps
+stateful: true
+sources:
+  - path: gitops/infra-custom/dumbpad
+{{- end }}
+{{ include "infra.application" (dict "root" . "app" (include "app.contract-test" . | fromYaml)) }}

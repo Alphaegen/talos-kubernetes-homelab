@@ -1,0 +1,10 @@
+# expect: wave must be 0, 1 or 2
+{{- define "app.contract-test" }}
+name: contract-test
+namespace: contract-test
+wave: 3
+project: apps
+sources:
+  - path: gitops/infra-custom/dumbpad
+{{- end }}
+{{ include "infra.application" (dict "root" . "app" (include "app.contract-test" . | fromYaml)) }}

@@ -1,0 +1,6 @@
+# expect: the Application description does not parse
+{{- define "app.contract-test" }}
+name: contract-test
+namespace: [contract-test
+{{- end }}
+{{ include "infra.application" (dict "root" . "app" (include "app.contract-test" . | fromYaml)) }}

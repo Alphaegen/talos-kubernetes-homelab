@@ -19,7 +19,8 @@ work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
 
 # render <chart-dir> <out-dir>: one file per object, keys sorted, comments
-# dropped, with the real values and with every toggle on.
+# dropped, and the lists whose order Argo CD ignores (syncOptions, finalizers)
+# sorted, with the real values and with every toggle on.
 render() {
   local dir=$1 out=$2 variant
   for variant in default all-enabled; do
@@ -30,7 +31,9 @@ render() {
       helm template infra-apps "$dir" -f "$dir/ci/all-enabled-values.yaml" >"$out/$variant.yaml"
     fi
     (cd "$out/$variant" && yq -s '.kind + "_" + .metadata.name + ".yaml"' -P \
-      'select(. != null) | ... comments="" | sort_keys(..)' "../$variant.yaml")
+      'select(. != null) | ... comments="" | sort_keys(..)
+       | (.spec.syncPolicy.syncOptions | select(. != null)) |= sort
+       | (.metadata.finalizers | select(. != null)) |= sort' "../$variant.yaml")
     rm "$out/$variant.yaml"
   done
 }

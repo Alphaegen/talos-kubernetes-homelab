@@ -166,6 +166,23 @@ while IFS= read -r kustomization; do
   [[ -n ${rendered[$dir]:-} ]] || kustomize_build "$dir"
 done < <(find gitops cilium -name kustomization.yaml -not -path '*/charts/*' | sort)
 
+# A plain directory deploys every file, a kustomization only what it names, so
+# a Kubernetes object file it does not mention is silently left out.
+check_kustomizations_list_their_files() {
+  local kustomization dir file named status=0
+  while IFS= read -r kustomization; do
+    dir=$(dirname "$kustomization")
+    named=$(yq '.. | select(tag == "!!str")' "$kustomization" | sed 's|^\./||')
+    while IFS= read -r file; do
+      [[ $(yq ea '[select(has("apiVersion") and has("kind"))] | length' "$file") == 0 ]] && continue
+      grep -qxF "$(basename "$file")" <<<"$named" \
+        || { printf '%s is not listed in %s\n' "$file" "$kustomization"; status=1; }
+    done < <(find "$dir" -maxdepth 1 -type f \( -name '*.yaml' -o -name '*.yml' \) ! -name kustomization.yaml | sort)
+  done < <(find gitops cilium -name kustomization.yaml -not -path '*/charts/*' | sort)
+  return "$status"
+}
+run "Kustomizations list every Kubernetes object file beside them" check_kustomizations_list_their_files
+
 while IFS= read -r chart; do
   dir=$(dirname "$chart")
   [[ $dir == "$infra_helm" || -n ${rendered[$dir]:-} ]] && continue

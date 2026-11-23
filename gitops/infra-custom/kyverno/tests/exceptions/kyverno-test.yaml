@@ -5,10 +5,8 @@ metadata:
   name: exceptions
 policies:
   - ../../policies/pss-baseline.yaml
-  - ../../policies/pss-restricted-run-as-non-root.yaml
 exceptions:
   - ../../exceptions/metallb-speaker.yaml
-  - ../../exceptions/linuxserver-root.yaml
   - ../../exceptions/longhorn.yaml
 resources:
   - resources.yaml
@@ -27,28 +25,6 @@ results:
     isValidatingPolicy: true
     kind: DaemonSet
     resources: [metallb-controller-host-network]
-    result: fail
-  - policy: pss-restricted-run-as-non-root
-    isValidatingPolicy: true
-    kind: Deployment
-    resources: [radarr]
-    result: skip
-  - policy: pss-restricted-run-as-non-root
-    isValidatingPolicy: true
-    kind: Pod
-    resources: [radarr-pod]
-    result: skip
-  # Exception matchConditions see the controller's own metadata but not its
-  # pod template, so a label on the template only is not enough.
-  - policy: pss-restricted-run-as-non-root
-    isValidatingPolicy: true
-    kind: Deployment
-    resources: [radarr-label-only-on-template]
-    result: fail
-  - policy: pss-restricted-run-as-non-root
-    isValidatingPolicy: true
-    kind: Deployment
-    resources: [seerr]
     result: fail
   - policy: pss-baseline
     isValidatingPolicy: true

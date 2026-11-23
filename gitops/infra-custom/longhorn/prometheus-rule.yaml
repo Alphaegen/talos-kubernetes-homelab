@@ -182,9 +182,16 @@ spec:
             summary: Argo CD application controller memory is high
             description: The application controller has used over 80% of its memory limit for 10 minutes. Avoid recursive syncs and inspect queued operations.
 
+        # The persistent workload alerts cover pods that mount a PVC, plus
+        # Longhorn's own pods, which serve the volumes without mounting one.
         - alert: PersistentWorkloadRestartLoop
           # Per container: one pod sandbox kill restarts every container at once.
-          expr: sum by (namespace, pod, container) (increase(kube_pod_container_status_restarts_total{namespace=~"bookorbit|dumbpad|home-assistant|home-automation|media|monitoring|obsidian-livesync|longhorn-system"}[15m])) > 3
+          expr: |-
+            sum by (namespace, pod, container) (increase(kube_pod_container_status_restarts_total[15m])) > 3
+              and on (namespace, pod) (
+                count by (namespace, pod) (kube_pod_spec_volumes_persistentvolumeclaims_info)
+                or count by (namespace, pod) (kube_pod_info{namespace="longhorn-system"})
+              )
           for: 5m
           labels:
             severity: critical
@@ -193,7 +200,12 @@ spec:
             description: The pod restarted more than three times in 15 minutes. Stop automated repair and inspect storage before retrying.
 
         - alert: PersistentWorkloadStuckTerminating
-          expr: time() - kube_pod_deletion_timestamp{namespace=~"bookorbit|dumbpad|home-assistant|home-automation|media|monitoring|obsidian-livesync|longhorn-system"} > 300
+          expr: |-
+            time() - kube_pod_deletion_timestamp > 300
+              and on (namespace, pod) (
+                count by (namespace, pod) (kube_pod_spec_volumes_persistentvolumeclaims_info)
+                or count by (namespace, pod) (kube_pod_info{namespace="longhorn-system"})
+              )
           for: 5m
           labels:
             severity: warning

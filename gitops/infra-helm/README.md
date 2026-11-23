@@ -13,7 +13,10 @@ monitoring, auth) and may create cluster-scoped resources, but only in its
 listed namespaces. `apps` holds the user-facing apps: only their own
 namespaces, their sources, and no cluster-scoped resources beyond Namespace
 and PersistentVolume. Add a new namespace to the matching project's
-`destinations` before enabling an Application that deploys there.
+`destinations` before enabling an Application that deploys there. A new `apps`
+namespace also goes into the namespace list of the `require-probes` Kyverno
+policy; `scripts/validate.sh` fails until it does
+(`docs/adr/0004-namespace-lists-not-namespace-labels.md`).
 
 ## Adding A Child Application
 

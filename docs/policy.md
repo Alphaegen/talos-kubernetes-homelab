@@ -58,7 +58,7 @@ same checks to Deployments, StatefulSets, DaemonSets, Jobs and CronJobs.
 | `pss-restricted-volume-types` | Only the volume types the restricted standard allows |
 | `disallow-mutable-tags` | A version tag or digest; no untagged, `latest`, `main` or similar tags |
 | `require-resources` | CPU and memory requests and a memory limit (no CPU limit required) |
-| `require-probes` | Liveness and readiness probes, for Deployments and StatefulSets in the app namespaces |
+| `require-probes` | Liveness and readiness probes, for Deployments and StatefulSets in the app namespaces (every `apps` project namespace, plus `auth`; `validate.sh` checks the list) |
 | `disallow-default-namespace` | No workloads in `default` |
 | `require-name-label` | The `app.kubernetes.io/name` label on the pod template |
 

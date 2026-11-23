@@ -86,7 +86,7 @@ are the only check that they still match.
 | `pi5-fan-control` | Fan controller | All PSS | yes |
 | `tailscale-subnet-router` | Tailscale connector | All PSS | no |
 | `qbittorrent-vpn` | qBittorrent with gluetun | Baseline, volume types, capabilities, non-root | yes |
-| `linuxserver-root` | Bazarr, Prowlarr, Radarr, Sonarr | Non-root, capabilities | yes |
+| `linuxserver-root` | Media Deployments labelled `homelab.niekvlam.nl/base: linuxserver` (Bazarr, Prowlarr, qBittorrent, Radarr, Sonarr) | Non-root, capabilities | yes |
 | `home-assistant` | Home Assistant | Non-root, capabilities, resources | no |
 | `nfs-provisioner` | NFS subdir provisioner | Restricted PSS, name label; expires 2026-12-31 | no |
 

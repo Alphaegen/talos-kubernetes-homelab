@@ -59,15 +59,15 @@ metadata:
   name: radarr
   namespace: media
   labels:
-    app: radarr
+    app.kubernetes.io/name: radarr
 spec:
   selector:
     matchLabels:
-      app: radarr
+      app.kubernetes.io/name: radarr
   template:
     metadata:
       labels:
-        app: radarr
+        app.kubernetes.io/name: radarr
     spec:
       containers:
         - name: radarr
@@ -79,7 +79,7 @@ metadata:
   name: radarr-pod
   namespace: media
   labels:
-    app: radarr
+    app.kubernetes.io/name: radarr
 spec:
   containers:
     - name: radarr
@@ -93,11 +93,11 @@ metadata:
 spec:
   selector:
     matchLabels:
-      app: radarr
+      app.kubernetes.io/name: radarr
   template:
     metadata:
       labels:
-        app: radarr
+        app.kubernetes.io/name: radarr
     spec:
       containers:
         - name: radarr
@@ -109,15 +109,15 @@ metadata:
   name: seerr
   namespace: media
   labels:
-    app: seerr
+    app.kubernetes.io/name: seerr
 spec:
   selector:
     matchLabels:
-      app: seerr
+      app.kubernetes.io/name: seerr
   template:
     metadata:
       labels:
-        app: seerr
+        app.kubernetes.io/name: seerr
     spec:
       containers:
         - name: seerr

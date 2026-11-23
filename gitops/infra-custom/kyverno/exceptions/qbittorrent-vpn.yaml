@@ -20,9 +20,9 @@ spec:
     - name: pss-restricted-run-as-non-root
       kind: ValidatingPolicy
   # Since Kyverno 1.20 a controller's object has the pod spec in place of
-  # its own, so the app label must be on the controller's metadata as well.
+  # its own, so the name label must be on the controller's metadata as well.
   matchConditions:
     - name: qbittorrent-vpn
       expression: >-
         object.metadata.namespace == 'media' &&
-        object.metadata.?labels[?'app'].orValue('') == 'qbittorrent'
+        object.metadata.?labels[?'app.kubernetes.io/name'].orValue('') == 'qbittorrent'

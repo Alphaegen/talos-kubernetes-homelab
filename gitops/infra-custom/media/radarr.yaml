@@ -4,7 +4,6 @@ metadata:
   name: radarr
   namespace: media
   labels:
-    app: radarr
     app.kubernetes.io/name: radarr
 spec:
   replicas: 1

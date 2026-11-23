@@ -4,7 +4,6 @@ metadata:
   name: prowlarr
   namespace: media
   labels:
-    app: prowlarr
     app.kubernetes.io/name: prowlarr
 spec:
   replicas: 1

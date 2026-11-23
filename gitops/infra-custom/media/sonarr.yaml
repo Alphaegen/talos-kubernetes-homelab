@@ -4,7 +4,6 @@ metadata:
   name: sonarr
   namespace: media
   labels:
-    app: sonarr
     app.kubernetes.io/name: sonarr
 spec:
   replicas: 1

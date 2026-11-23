@@ -7,11 +7,11 @@ metadata:
   labels:
     cluster: {{ .Values.cluster.name | quote }}
     app: kube-prometheus-stack
+    app.kubernetes.io/part-of: monitoring
   namespace: {{ .Values.cluster.namespace | quote }}
   annotations:
     # Stage 0: establish monitoring CRDs before add-ons publish monitors/rules.
     argocd.argoproj.io/sync-wave: "0"
-    app.kubernetes.io/part-of: monitoring
 spec:
   project: {{ include "infra.platformProject" . }}
   destination:

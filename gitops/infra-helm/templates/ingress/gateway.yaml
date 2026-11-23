@@ -7,13 +7,13 @@ metadata:
   labels:
     cluster: {{ .Values.cluster.name | quote }}
     app: cilium-gateway
+    app.kubernetes.io/part-of: cilium-gateway-api
   namespace: {{ .Values.cluster.namespace | quote }}
   # No resources finalizer: deleting this Application must not cascade-delete
   # the shared Gateway (and with it every HTTPRoute ingress path).
   annotations:
     # Stage 1: consumes Cilium Gateway API and wave-0 cert-manager.
     argocd.argoproj.io/sync-wave: "1"
-    app.kubernetes.io/part-of: cilium-gateway-api
 spec:
   project: {{ include "infra.platformProject" . }}
   destination:

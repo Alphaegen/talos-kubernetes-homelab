@@ -7,13 +7,13 @@ metadata:
   labels:
     cluster: {{ .Values.cluster.name | quote }}
     app: alloy
+    app.kubernetes.io/part-of: monitoring
   namespace: {{ .Values.cluster.namespace | quote }}
   finalizers:
     - resources-finalizer.argocd.argoproj.io
   annotations:
     # Stage 1: monitoring service after the monitoring namespace foundation.
     argocd.argoproj.io/sync-wave: "1"
-    app.kubernetes.io/part-of: monitoring
 spec:
   project: {{ include "infra.platformProject" . }}
   destination:

@@ -8,10 +8,10 @@ metadata:
   labels:
     cluster: {{ .Values.cluster.name | quote }}
     app: home-assistant
+    app.kubernetes.io/part-of: smarthome
   annotations:
     # Stage 2: workload; its PVC depends on the stage-0 Longhorn provider.
     argocd.argoproj.io/sync-wave: "2"
-    app.kubernetes.io/part-of: smarthome
 spec:
   project: {{ include "infra.appsProject" . }}
   destination:

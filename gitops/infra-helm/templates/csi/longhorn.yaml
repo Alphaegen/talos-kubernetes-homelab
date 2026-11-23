@@ -7,11 +7,11 @@ metadata:
   labels:
     cluster: {{ .Values.cluster.name | quote }}
     app: longhorn
+    app.kubernetes.io/part-of: longhorn
   namespace: {{ .Values.cluster.namespace | quote }}
   annotations:
     # Stage 0: storage provider and its CRD-backed configuration.
     argocd.argoproj.io/sync-wave: "0"
-    app.kubernetes.io/part-of: longhorn
 spec:
   project: {{ include "infra.platformProject" . }}
   destination:

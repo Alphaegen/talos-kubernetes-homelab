@@ -51,3 +51,9 @@ _Avoid_: finalizer (the mechanism, not the behaviour)
 **Owns PVCs**:
 A child Application whose resources include PersistentVolumeClaims holding data that must survive the Application being deleted or recreated.
 _Avoid_: stateful (too broad: stateless CRD providers are just as unsafe to cascade)
+
+## Policy
+
+**Policy exception**:
+A documented, named permission for specific workloads to break specific policies. A **rendered exception** covers workloads this repository renders, so CI proves it still matches and is still needed; an **upstream exception** covers workloads an upstream chart or operator creates, which only the cluster can check.
+_Avoid_: waiver, exemption (PSA's term for something else)

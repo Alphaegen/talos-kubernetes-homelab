@@ -9,8 +9,9 @@ Workload security is checked in three layers:
 2. **Kyverno** checks each workload against the `restricted` Pod Security
    Standard and a few best practices. Unlike namespace labels, it reports per
    workload and supports narrow, documented exceptions.
-3. **CI** runs the policy tests and reports how the rendered manifests fare
-   before they reach the cluster.
+3. **CI** runs the policy tests and checks the workloads rendered from this
+   repository against the policies and exceptions before they reach the
+   cluster.
 
 Results are visible in Policy Reporter at
 `https://policy-reporter.homelab.niekvlam.nl` (behind oauth2-proxy SSO), in
@@ -71,43 +72,64 @@ Exceptions are `PolicyException` resources in
 [`gitops/infra-custom/kyverno/exceptions`](../gitops/infra-custom/kyverno/exceptions).
 Kyverno only accepts them from the `kyverno` namespace, which only Argo CD
 writes to. Each one names the policies it covers and records its reason in
-`spec.properties.reason`.
+`spec.properties.reason`. Exceptions for workloads CI does not render (an
+upstream chart or an operator creates them) also set
+`spec.properties.rendered: "false"`; for those, the cluster's policy reports
+are the only check that they still match.
 
-| Exception | Workloads | Policies |
-|---|---|---|
-| `longhorn` | Everything in `longhorn-system` | All PSS, resources, name label, probes |
-| `metallb-speaker` | MetalLB speaker | Baseline, capabilities, non-root |
-| `node-exporter` | node-exporter | Baseline, volume types |
-| `alloy` | Alloy | Baseline, volume types, non-root |
-| `pi5-fan-control` | Fan controller | All PSS |
-| `tailscale-subnet-router` | Tailscale connector | All PSS |
-| `qbittorrent-vpn` | qBittorrent with gluetun | Baseline, volume types, capabilities, non-root |
-| `linuxserver-root` | Bazarr, Prowlarr, Radarr, Sonarr | Non-root, capabilities |
-| `home-assistant` | Home Assistant | Non-root, capabilities, resources |
-| `nfs-provisioner` | NFS subdir provisioner | Restricted PSS, name label; expires 2026-12-31 |
+| Exception | Workloads | Policies | Rendered in CI |
+|---|---|---|---|
+| `longhorn` | Everything in `longhorn-system` | All PSS, resources, name label, probes | no |
+| `metallb-speaker` | MetalLB speaker | Baseline, capabilities, non-root | no |
+| `node-exporter` | node-exporter | Baseline, volume types | no |
+| `alloy` | Alloy | Baseline, volume types, non-root | no |
+| `pi5-fan-control` | Fan controller | All PSS | yes |
+| `tailscale-subnet-router` | Tailscale connector | All PSS | no |
+| `qbittorrent-vpn` | qBittorrent with gluetun | Baseline, volume types, capabilities, non-root | yes |
+| `linuxserver-root` | Bazarr, Prowlarr, Radarr, Sonarr | Non-root, capabilities | yes |
+| `home-assistant` | Home Assistant | Non-root, capabilities, resources | no |
+| `nfs-provisioner` | NFS subdir provisioner | Restricted PSS, name label; expires 2026-12-31 | no |
 
 Exception conditions see the object being checked: for a Deployment that is
 its own metadata, not the pod template. Since Kyverno 1.20 its `spec` is
 already the pod spec, so `object.spec.template` is gone too. Match on labels
-that are set on both the controller and its pod template.
+that are set on both the controller and its pod template, preferably
+`app.kubernetes.io/name`, which `require-name-label` already requires on the
+template.
 
 Adding an exception:
 
 1. Add a file under `exceptions/` with a `reason`, the narrowest set of
-   `policyRefs`, and `matchConditions` on namespace plus labels.
+   `policyRefs`, and `matchConditions` on namespace plus labels. Add
+   `rendered: "false"` under `properties` if CI does not render the workload.
 2. List it in [`kustomization.yaml`](../gitops/infra-custom/kyverno/kustomization.yaml).
-3. Add or extend a case in `tests/exceptions/`, then run `scripts/validate.sh`.
-   It fails if a file is not deployed, if an exception names a policy that
-   does not exist, or if a test expectation names a fixture that does not
-   exist.
+3. For a workload CI does not render, add or extend a case in
+   `tests/exceptions/`. Then run `scripts/validate.sh`.
 
 ## Tests
 
 Each policy has a `kyverno test` suite with passing and failing fixtures in
 [`gitops/infra-custom/kyverno/tests`](../gitops/infra-custom/kyverno/tests).
-`scripts/validate.sh` and the `Validate` workflow run them. The workflow also
-runs `kyverno apply` over the workloads rendered from this repository and
-publishes the result in the job summary without failing the run.
+`scripts/validate.sh` and the `Validate` workflow run them.
+
+`validate.sh` also runs `kyverno apply` over every workload rendered from this
+repository, as a stand-in for admission, once with the exceptions and once
+without. It fails when:
+
+- a rendered workload fails a policy, whether that policy is in Audit or
+  Enforce: fix the workload or add an exception;
+- an exception skips no rendered workload for a policy it lists: its match is
+  stale, or it needs `rendered: "false"`;
+- an exception skips a workload that passes the policy without it: narrow or
+  remove the exception;
+- an exception marked `rendered: "false"` skips a rendered workload: remove
+  the marker.
+
+It also fails when a policy file is not deployed, an exception names a policy
+that does not exist, or a test expectation and its fixtures disagree. The
+check's own failure cases live in
+[`scripts/testdata/policy-check`](../scripts/testdata/policy-check). The
+workflow shows the report in its job summary.
 
 ## Switching a policy to Enforce
 

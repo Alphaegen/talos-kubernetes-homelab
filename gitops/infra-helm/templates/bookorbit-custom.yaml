@@ -26,6 +26,7 @@ spec:
       - FailOnSharedResource=true
       # The source contains and owns the Namespace manifest.
       - CreateNamespace=false
+      - PruneLast=true
       - RespectIgnoreDifferences=true
       - SkipDryRunOnMissingResource=true
   source:

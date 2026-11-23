@@ -1,0 +1,26 @@
+# Values for the upstream chart of the nfs-provisioner Application
+# (gitops/infra-helm/templates/csi/nfs-helm.yaml).
+
+replicaCount: 1
+strategyType: Recreate
+resources:
+  requests: {cpu: 10m, memory: 32Mi}
+  limits: {memory: 96Mi}
+leaderElection:
+  enabled: false
+nfs:
+  server: "nas.niekvlam.nl"
+  path: "/volume1/PlexMediaServer"
+  mountOptions:
+    - nfsvers=4.1
+    - rsize=1048576
+    - wsize=1048576
+    - hard
+    - timeo=600
+    - retrans=2
+storageClass:
+  name: "media-nfs"
+  defaultClass: false
+  reclaimPolicy: Retain
+  allowVolumeExpansion: true
+  onDelete: retain

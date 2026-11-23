@@ -11,14 +11,8 @@ sources:
     version: {{ .Values.metricsServer.version | quote }}
     helm:
       releaseName: metrics-server
-      # Chart defaults already verify kubelet TLS (certs signed by kubelet-serving-cert-approver).
-      values: |
-        resources:
-          requests:
-            cpu: 10m
-            memory: 80Mi
-          limits:
-            memory: 160Mi
+      valueFiles:
+        - $values/gitops/infra-custom/metrics-server/upstream-values.yaml
 {{ end }}
 {{- if .Values.metricsServer.enabled }}
 {{ include "infra.application" (dict "root" . "app" (include "app.metrics-server" . | fromYaml)) }}

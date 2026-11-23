@@ -1,0 +1,10 @@
+# Values for the upstream chart of the metrics-server Application
+# (gitops/infra-helm/templates/monitoring/metrics-server-helm.yaml).
+# Chart defaults already verify kubelet TLS (certs signed by kubelet-serving-cert-approver).
+
+resources:
+  requests:
+    cpu: 10m
+    memory: 80Mi
+  limits:
+    memory: 160Mi

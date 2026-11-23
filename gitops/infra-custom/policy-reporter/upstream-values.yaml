@@ -1,0 +1,67 @@
+# Values for the upstream chart of the policy-reporter Application
+# (gitops/infra-helm/templates/security/policy-reporter-helm.yaml).
+
+resources:
+  requests:
+    cpu: 10m
+    memory: 64Mi
+  limits:
+    memory: 192Mi
+
+metrics:
+  enabled: true
+
+monitoring:
+  enabled: true
+  serviceMonitor:
+    labels:
+      release: kube-prometheus-stack
+  grafana:
+    dashboards:
+      enabled: true
+
+ui:
+  enabled: true
+  # Published only through oauth2-proxy-policy-reporter (auth namespace).
+  resources:
+    requests:
+      cpu: 10m
+      memory: 48Mi
+    limits:
+      memory: 128Mi
+
+plugin:
+  # Policy details (descriptions, categories) for the Kyverno results in the UI.
+  kyverno:
+    enabled: true
+    resources:
+      requests:
+        cpu: 10m
+        memory: 48Mi
+      limits:
+        memory: 128Mi
+
+extraManifests:
+  # Strings: the chart renders each entry with tpl.
+  - |
+    apiVersion: cilium.io/v2
+    kind: CiliumNetworkPolicy
+    metadata:
+      name: policy-reporter-ui
+    spec:
+      # Only the matching oauth2-proxy may reach the UI;
+      # kubectl port-forward still works because it enters from the host.
+      endpointSelector:
+        matchLabels:
+          app.kubernetes.io/name: policy-reporter-ui
+          app.kubernetes.io/instance: policy-reporter
+      ingress:
+        - fromEndpoints:
+            - matchLabels:
+                k8s:io.kubernetes.pod.namespace: auth
+                app.kubernetes.io/name: oauth2-proxy
+                app.kubernetes.io/instance: oauth2-proxy-policy-reporter
+          toPorts:
+            - ports:
+                - port: "8080"
+                  protocol: TCP

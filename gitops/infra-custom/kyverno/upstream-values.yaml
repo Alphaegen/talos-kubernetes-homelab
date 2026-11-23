@@ -1,0 +1,72 @@
+# Values for the upstream chart of the kyverno Application
+# (gitops/infra-helm/templates/security/kyverno-helm.yaml).
+
+features:
+  # Policies run in Audit for now; a Kyverno outage must never block admission.
+  forceFailurePolicyIgnore:
+    enabled: true
+  # Exceptions live only in the kyverno namespace, which only Argo CD writes to.
+  policyExceptions:
+    enabled: true
+    namespace: kyverno
+
+grafana:
+  enabled: true
+
+# Label the policies.kyverno.io CRDs like the other Kyverno CRDs.
+kyverno-api:
+  labels:
+    app.kubernetes.io/part-of: kyverno
+
+admissionController:
+  replicas: 2
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 1
+  container:
+    resources:
+      requests:
+        cpu: 50m
+        memory: 192Mi
+      limits:
+        memory: 512Mi
+  serviceMonitor:
+    enabled: true
+    additionalLabels:
+      release: kube-prometheus-stack
+
+backgroundController:
+  resources:
+    requests:
+      cpu: 25m
+      memory: 96Mi
+    limits:
+      memory: 256Mi
+  serviceMonitor:
+    enabled: true
+    additionalLabels:
+      release: kube-prometheus-stack
+
+reportsController:
+  resources:
+    requests:
+      cpu: 25m
+      memory: 128Mi
+    limits:
+      memory: 384Mi
+  serviceMonitor:
+    enabled: true
+    additionalLabels:
+      release: kube-prometheus-stack
+
+cleanupController:
+  resources:
+    requests:
+      cpu: 10m
+      memory: 48Mi
+    limits:
+      memory: 128Mi
+  serviceMonitor:
+    enabled: true
+    additionalLabels:
+      release: kube-prometheus-stack

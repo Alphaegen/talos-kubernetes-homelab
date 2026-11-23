@@ -12,22 +12,8 @@ sources:
     version: {{ .Values.progressiveDelivery.argoRollouts.version | quote }}
     helm:
       releaseName: argo-rollouts
-      values: |
-        installCRDs: true
-
-        controller:
-          resources:
-            requests: {cpu: 10m, memory: 64Mi}
-            limits: {memory: 128Mi}
-          metrics:
-            enabled: true
-            serviceMonitor:
-              enabled: true
-              additionalLabels:
-                release: "kube-prometheus-stack"
-
-        dashboard:
-          enabled: false
+      valueFiles:
+        - $values/gitops/infra-custom/argo-rollouts/upstream-values.yaml
 {{ end }}
 {{- if and .Values.progressiveDelivery.enabled .Values.progressiveDelivery.argoRollouts.enabled }}
 {{ include "infra.application" (dict "root" . "app" (include "app.argo-rollouts" . | fromYaml)) }}

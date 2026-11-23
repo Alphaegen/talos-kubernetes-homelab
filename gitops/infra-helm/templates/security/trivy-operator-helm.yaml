@@ -12,86 +12,8 @@ sources:
     version: {{ .Values.security.trivy.version | quote }}
     helm:
       releaseName: trivy-operator
-      values: |
-        operator:
-          # Download the vulnerability DB once in trivy-server instead of in every scan job.
-          builtInTrivyServer: true
-          # Finished jobs count toward this limit, so leave scanJobTTL unset and let
-          # the operator delete each job as soon as it has read the result.
-          scanJobsConcurrentLimit: 1
-          vulnerabilityScannerScanOnlyCurrentRevisions: true
-          # One series per CVE is too much cardinality for this cluster.
-          metricsVulnIdEnabled: false
-          # SBOMs are produced in CI instead; keep large reports out of etcd.
-          sbomGenerationEnabled: false
-          # node-collector needs hostPath mounts; Talos hosts are read-only and not CIS-shaped.
-          infraAssessmentScannerEnabled: false
-
-        compliance:
-          specs:
-            - k8s-nsa-1.0
-            - k8s-pss-baseline-0.1
-            - k8s-pss-restricted-0.1
-
-        trivyOperator:
-          scanJobPodPriorityClassName: homelab-best-effort
-          # Scan jobs run `trivy image` against the registry and the Trivy server,
-          # so they need no root; the chart already drops capabilities.
-          scanJobPodTemplatePodSecurityContext:
-            runAsNonRoot: true
-            runAsUser: 65534
-            runAsGroup: 65534
-            seccompProfile:
-              type: RuntimeDefault
-
-        resources:
-          requests:
-            cpu: 50m
-            memory: 192Mi
-          limits:
-            memory: 512Mi
-        # The image already runs as uid 10000; its USER is a name, so runAsNonRoot
-        # needs the numeric uid spelled out.
-        podSecurityContext:
-          runAsNonRoot: true
-          runAsUser: 10000
-          runAsGroup: 10000
-          seccompProfile: {type: RuntimeDefault}
-
-        trivy:
-          ignoreUnfixed: true
-          severity: "HIGH,CRITICAL"
-          timeout: 5m
-          # The DB is a cache; re-downloaded on restart instead of living on Longhorn.
-          storageClassEnabled: false
-          priorityClassName: homelab-best-effort
-          # Scan job containers.
-          resources:
-            requests:
-              cpu: 100m
-              memory: 128Mi
-            limits:
-              cpu: null
-              memory: 1Gi
-          server:
-            resources:
-              requests:
-                cpu: 50m
-                memory: 256Mi
-              limits:
-                cpu: null
-                memory: 1Gi
-            # Merged with the chart defaults (uid 65534, read-only root filesystem).
-            podSecurityContext:
-              seccompProfile: {type: RuntimeDefault}
-            securityContext:
-              allowPrivilegeEscalation: false
-              capabilities: {drop: [ALL]}
-        serviceMonitor:
-          enabled: true
-          labels:
-            release: kube-prometheus-stack
-          interval: 30s
+      valueFiles:
+        - $values/gitops/infra-custom/trivy-operator/upstream-values.yaml
 {{ end }}
 {{- if and .Values.security.enabled .Values.security.trivy.enabled }}
 {{ include "infra.application" (dict "root" . "app" (include "app.trivy-operator" . | fromYaml)) }}

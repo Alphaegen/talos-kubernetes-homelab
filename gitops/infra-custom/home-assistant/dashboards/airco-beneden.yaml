@@ -1,5 +1,5 @@
 # All controls for one room, shown inline on Klimaat and in the Thuis pop-up.
-# airco-boven.yaml is the same file with beneden -> boven; keep them in step.
+# airco-boven.yaml is this file with beneden -> boven; validate.sh checks it.
 # Grouped as: the unit itself, its extra functions, the automation and its
 # settings (only while it is on), and the filter and power use.
 

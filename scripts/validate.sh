@@ -391,7 +391,7 @@ run "Rendered policy check cases ($policy_check_cases)" check_policy_check_cases
 # a missing !include when the dashboard is opened, so check that every file
 # parses, ships in the ConfigMap, and only includes files that ship too.
 check_ha_dashboard() {
-  local listed file target status=0
+  local listed file target twin status=0
   listed=$(yq '.configMapGenerator[] | select(.name == "home-assistant-dashboards") | .files[]' \
     "$ha_dashboard_dir/kustomization.yaml")
   for file in "$ha_dashboard_dir"/dashboards/*.yaml; do
@@ -402,6 +402,21 @@ check_ha_dashboard() {
       grep -qxF "dashboards/$target" <<<"$listed" \
         || { printf '%s includes %s, which is not in the ConfigMap\n' "$file" "$target"; status=1; }
     done < <(grep -vE '^[[:space:]]*#' "$file" | grep -oE '!include [^ #]+\.ya?ml' | awk '{print $2}')
+  done
+  # Room pairs: a *boven* file and its *beneden* twin differ only in the room
+  # name (comments and blank lines aside).
+  for file in "$ha_dashboard_dir"/dashboards/*boven*.yaml; do
+    [[ -e $file ]] || continue
+    twin=${file//boven/beneden}
+    if [[ ! -f $twin ]]; then
+      printf '%s has no %s twin\n' "$file" "$twin"
+      status=1
+    elif ! diff -u --label "$file (room name swapped)" --label "$twin" \
+      <(grep -vE '^[[:space:]]*(#|$)' "$file" | sed 's/boven/beneden/g; s/Boven/Beneden/g') \
+      <(grep -vE '^[[:space:]]*(#|$)' "$twin"); then
+      printf '%s and %s differ by more than the room name\n' "$file" "$twin"
+      status=1
+    fi
   done
   return "$status"
 }

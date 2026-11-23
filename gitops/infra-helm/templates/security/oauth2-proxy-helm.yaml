@@ -11,8 +11,9 @@ metadata:
     cluster: {{ $.Values.cluster.name | quote }}
     app: oauth2-proxy
   annotations:
-    # Stage 3: needs Pocket ID (stage 2) to answer OIDC discovery at startup.
-    argocd.argoproj.io/sync-wave: "3"
+    # Stage 2: needs Pocket ID (also stage 2) for OIDC discovery at startup;
+    # it restarts until Pocket ID answers (docs/adr/0001-three-sync-waves.md).
+    argocd.argoproj.io/sync-wave: "2"
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:

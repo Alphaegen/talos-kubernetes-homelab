@@ -1,8 +1,24 @@
+# Zigbee2MQTT bridges the SMLIGHT SLZB coordinator, reached over TCP on the
+# home network, to Mosquitto. Every container runs non-root with a read-only
+# root filesystem, so all writes go to the data volume or emptyDirs.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: zigbee2mqtt-data
+  namespace: home-automation
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: "longhorn"
+  resources:
+    requests:
+      storage: "5Gi"
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: zigbee2mqtt
-  namespace: {{ .Values.namespace }}
+  namespace: home-automation
 spec:
   replicas: 1
   revisionHistoryLimit: 2
@@ -17,9 +33,8 @@ spec:
         app: zigbee2mqtt
         app.kubernetes.io/name: zigbee2mqtt
     spec:
-      {{- with .Values.priorityClassName }}
-      priorityClassName: {{ . }}
-      {{- end }}
+      # Keep MQTT and Zigbee running under memory pressure.
+      priorityClassName: homelab-home-critical
       securityContext:
         runAsNonRoot: true
         runAsUser: 1000
@@ -34,7 +49,11 @@ spec:
         - name: wait-for-slzb
           image: busybox:1.38
           securityContext:
-{{ toYaml .Values.containerSecurityContext | indent 12 }}
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            readOnlyRootFilesystem: true
           resources:
             requests:
               cpu: 5m
@@ -48,14 +67,18 @@ spec:
           args:
             - |
               set -eu
-              until nc -z -w 2 {{ .Values.slzb.ip }} {{ .Values.slzb.port }}; do
-                echo "Waiting for SLZB coordinator at {{ .Values.slzb.ip }}:{{ .Values.slzb.port }}..."
+              until nc -z -w 2 192.168.30.232 6638; do
+                echo "Waiting for SLZB coordinator at 192.168.30.232:6638..."
                 sleep 5
               done
         - name: render-configuration
           image: busybox:1.38
           securityContext:
-{{ toYaml .Values.containerSecurityContext | indent 12 }}
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            readOnlyRootFilesystem: true
           resources:
             requests:
               cpu: 10m
@@ -147,9 +170,9 @@ spec:
 
               cat > /app/data/configuration.yaml <<EOF
               homeassistant:
-                enabled: {{ .Values.zigbee2mqtt.config.homeAssistantEnabled }}
+                enabled: true
               mqtt:
-                base_topic: {{ .Values.zigbee2mqtt.config.baseTopic | quote }}
+                base_topic: "zigbee2mqtt"
                 server: "${mqtt_server_escaped}"
                 user: "${mqtt_username_escaped}"
                 password: "${mqtt_password_escaped}"
@@ -158,47 +181,56 @@ spec:
                 adapter: "${serial_adapter_escaped}"
                 baudrate: ${SERIAL_BAUDRATE}
               frontend:
-                enabled: {{ .Values.zigbee2mqtt.config.frontendEnabled }}
-                port: {{ .Values.zigbee2mqtt.service.port }}
+                enabled: true
+                port: 8080
               advanced:
-                log_level: {{ .Values.zigbee2mqtt.config.logLevel | quote }}
-              permit_join: {{ .Values.zigbee2mqtt.config.permitJoin }}
+                log_level: "info"
+              permit_join: false
               EOF
           env:
             - name: MQTT_SERVER
-              value: {{ printf "mqtt://%s.%s.svc.cluster.local:%v" .Values.mqtt.service.name .Values.namespace .Values.mqtt.service.port | quote }}
+              value: "mqtt://mosquitto.home-automation.svc.cluster.local:1883"
             - name: SERIAL_PORT
-              value: {{ printf "tcp://%s:%v" .Values.slzb.ip .Values.slzb.port | quote }}
+              value: "tcp://192.168.30.232:6638"
             - name: SERIAL_ADAPTER
-              value: {{ .Values.slzb.adapter | quote }}
+              value: "zstack"
             - name: SERIAL_BAUDRATE
-              value: {{ printf "%v" .Values.slzb.baudrate | quote }}
+              value: "115200"
             - name: MQTT_USERNAME
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.mqtt.credentialsSecret.name }}
-                  key: {{ .Values.mqtt.credentialsSecret.usernameKey }}
+                  name: mqtt-credentials
+                  key: username
             - name: MQTT_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.mqtt.credentialsSecret.name }}
-                  key: {{ .Values.mqtt.credentialsSecret.passwordKey }}
+                  name: mqtt-credentials
+                  key: password
           volumeMounts:
             - name: zigbee2mqtt-data
               mountPath: /app/data
       containers:
         - name: zigbee2mqtt
-          image: {{ .Values.zigbee2mqtt.image | quote }}
+          image: "ghcr.io/koenkk/zigbee2mqtt:2.14.3"
           securityContext:
-{{ toYaml .Values.containerSecurityContext | indent 12 }}
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            readOnlyRootFilesystem: true
           resources:
-{{ toYaml .Values.zigbee2mqtt.resources | indent 12 }}
+            limits:
+              cpu: 500m
+              memory: 256Mi
+            requests:
+              cpu: 50m
+              memory: 112Mi
           env:
             - name: TZ
-              value: {{ .Values.zigbee2mqtt.timezone | quote }}
+              value: "Europe/Amsterdam"
           ports:
             - name: http
-              containerPort: {{ .Values.zigbee2mqtt.service.port }}
+              containerPort: 8080
               protocol: TCP
           startupProbe:
             httpGet:
@@ -232,3 +264,44 @@ spec:
         - name: zigbee2mqtt-data
           persistentVolumeClaim:
             claimName: zigbee2mqtt-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: zigbee2mqtt
+  namespace: home-automation
+spec:
+  type: ClusterIP
+  selector:
+    app: zigbee2mqtt
+  ports:
+    - name: http
+      protocol: TCP
+      port: 8080
+      targetPort: http
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: zigbee2mqtt
+  namespace: home-automation
+spec:
+  parentRefs:
+    # Shared Cilium Gateway HTTPS listener (wildcard cert); port 80 only redirects.
+    - name: cilium-gateway
+      namespace: kube-system
+      sectionName: https
+  hostnames:
+    - "zigbee2mqtt.homelab.niekvlam.nl"
+  rules:
+    # 0s disables Envoy's default 15s route timeout, which would cut the
+    # frontend's /api websocket.
+    - timeouts:
+        request: 0s
+      matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: zigbee2mqtt
+          port: 8080

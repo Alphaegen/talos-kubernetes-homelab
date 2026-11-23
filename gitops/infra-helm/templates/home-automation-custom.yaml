@@ -1,18 +1,12 @@
 {{- define "app.home-automation" }}
 name: home-automation
-# The chart contains and owns the Namespace manifest.
+# The source contains and owns the Namespace manifest.
 namespace: home-automation
 # Stateful workload after storage and secret foundations.
 wave: 2
 project: apps
 sources:
   - path: gitops/infra-custom/home-automation
-    helm:
-      # The service-local values file is authoritative. This one wiring flag
-      # keeps its ExternalSecret off when External Secrets is unavailable.
-      values: |
-        externalSecrets:
-          enabled: {{ .Values.security.eso.enabled | default false }}
 {{ end }}
 {{- if .Values.homeAutomation.enabled }}
 {{ include "infra.application" (dict "root" . "app" (include "app.home-automation" . | fromYaml)) }}

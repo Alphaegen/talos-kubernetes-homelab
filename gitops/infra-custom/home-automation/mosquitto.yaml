@@ -1,8 +1,37 @@
+# In-cluster MQTT broker for Zigbee2MQTT and Home Assistant (ClusterIP only).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mosquitto-config
+  namespace: home-automation
+data:
+  mosquitto.conf: |
+    persistence true
+    persistence_location /mosquitto/data/
+    log_dest stdout
+
+    listener 1883 0.0.0.0
+    allow_anonymous false
+    password_file /mosquitto/config/passwd
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mosquitto-data
+  namespace: home-automation
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: "longhorn"
+  resources:
+    requests:
+      storage: "2Gi"
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: mosquitto
-  namespace: {{ .Values.namespace }}
+  namespace: home-automation
 spec:
   replicas: 1
   revisionHistoryLimit: 2
@@ -17,9 +46,8 @@ spec:
         app: mosquitto
         app.kubernetes.io/name: mosquitto
     spec:
-      {{- with .Values.priorityClassName }}
-      priorityClassName: {{ . }}
-      {{- end }}
+      # Keep MQTT and Zigbee running under memory pressure.
+      priorityClassName: homelab-home-critical
       # The image's own mosquitto user; the data volume is already owned by it.
       securityContext:
         runAsNonRoot: true
@@ -31,9 +59,13 @@ spec:
           type: RuntimeDefault
       initContainers:
         - name: render-config
-          image: {{ .Values.mqtt.image | quote }}
+          image: "eclipse-mosquitto:2.0.23"
           securityContext:
-{{ toYaml .Values.containerSecurityContext | indent 12 }}
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            readOnlyRootFilesystem: true
           resources:
             requests:
               cpu: 10m
@@ -54,13 +86,13 @@ spec:
             - name: MQTT_USERNAME
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.mqtt.credentialsSecret.name }}
-                  key: {{ .Values.mqtt.credentialsSecret.usernameKey }}
+                  name: mqtt-credentials
+                  key: username
             - name: MQTT_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.mqtt.credentialsSecret.name }}
-                  key: {{ .Values.mqtt.credentialsSecret.passwordKey }}
+                  name: mqtt-credentials
+                  key: password
           volumeMounts:
             - name: mosquitto-config-src
               mountPath: /config-src
@@ -69,11 +101,20 @@ spec:
               mountPath: /mosquitto/config
       containers:
         - name: mosquitto
-          image: {{ .Values.mqtt.image | quote }}
+          image: "eclipse-mosquitto:2.0.23"
           securityContext:
-{{ toYaml .Values.containerSecurityContext | indent 12 }}
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            readOnlyRootFilesystem: true
           resources:
-{{ toYaml .Values.mqtt.resources | indent 12 }}
+            limits:
+              cpu: 200m
+              memory: 128Mi
+            requests:
+              cpu: 20m
+              memory: 32Mi
           command:
             - mosquitto
           args:
@@ -81,7 +122,7 @@ spec:
             - /mosquitto/config/mosquitto.conf
           ports:
             - name: mqtt
-              containerPort: {{ .Values.mqtt.service.port }}
+              containerPort: 1883
               protocol: TCP
           readinessProbe:
             tcpSocket:
@@ -107,3 +148,18 @@ spec:
         - name: mosquitto-data
           persistentVolumeClaim:
             claimName: mosquitto-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mosquitto
+  namespace: home-automation
+spec:
+  type: ClusterIP
+  selector:
+    app: mosquitto
+  ports:
+    - name: mqtt
+      protocol: TCP
+      port: 1883
+      targetPort: mqtt

@@ -1,48 +1,25 @@
 # Home Automation Support Stack (Mosquitto + Zigbee2MQTT)
 
-This chart deploys an in-cluster MQTT broker (Mosquitto) and Zigbee2MQTT for a remote SMLIGHT SLZB coordinator over Ethernet.
+Plain manifests (a kustomization) for an in-cluster MQTT broker (Mosquitto) and Zigbee2MQTT for a remote SMLIGHT SLZB coordinator over Ethernet.
 
 ## What This Deploys
 
-- Namespace: `home-automation` (dedicated support namespace)
-- MQTT broker: Mosquitto (`ClusterIP` only)
-- Zigbee bridge: Zigbee2MQTT with persistent `/app/data`
-- Secrets: `ExternalSecret` (1Password/ESO) by default, with optional fallback `Secret`
-- Frontend: Zigbee2MQTT UI via the shared Cilium Gateway (HTTPRoute)
+- `namespace.yaml`: the `home-automation` namespace
+- `externalsecret.yaml`: the MQTT credentials from 1Password (`mqtt-zigbee/username` and `mqtt-zigbee/password`)
+- `mosquitto.yaml`: the MQTT broker (`ClusterIP` only) with its config and data volume
+- `zigbee2mqtt.yaml`: the Zigbee bridge with persistent `/app/data`, and its UI through the shared Cilium Gateway (HTTPRoute)
+
+Both run at `homelab-home-critical` priority, non-root with read-only root filesystems.
 
 ## Zigbee2MQTT Configuration
 
-The rendered `configuration.yaml` is written into the writable PVC at startup and includes:
-
-- `mqtt.server`
-- `mqtt.user`
-- `mqtt.password`
-- `serial.port: tcp://<SLZB-IP>:6638`
-- `serial.adapter: zstack` (default for SLZB-06p10 / TI CC2674P10)
-- `homeassistant.enabled: true`
-- `frontend.enabled: true`
-
-The init container only seeds `configuration.yaml` when the file does not already exist, so Zigbee2MQTT-managed updates (for example generated network key) persist across restarts. It will patch an existing file when `serial.adapter` is missing to prevent startup failures after Zigbee2MQTT updates.
-
-Sample config file:
-
-- `./zigbee2mqtt-configuration.sample.yaml`
+The `render-configuration` init container in `zigbee2mqtt.yaml` writes `configuration.yaml` into the data volume from its environment (the MQTT server and credentials, and the coordinator `tcp://192.168.30.232:6638` with adapter `zstack`) only when the file does not exist yet, so Zigbee2MQTT-managed updates (for example the generated network key) persist across restarts. For an existing file it only adds missing `serial` settings, to prevent startup failures after Zigbee2MQTT updates. A `wait-for-slzb` init container holds the pod until the coordinator's TCP port answers.
 
 ## Prerequisites
 
-1. External Secrets Operator is available (already present in this repo when `security.eso.enabled=true`).
-1. The configured secret backend path (default: `mqtt-zigbee/username` and `mqtt-zigbee/password`) contains valid MQTT credentials.
-1. SLZB adapter has a stable DHCP reservation/IP (default in values: `192.168.30.232`) and TCP adapter port `6638` is reachable from cluster nodes.
-
-## Rollout
-
-1. Update values if needed in:
-   - `gitops/infra-helm/values.yaml` (`homeAutomation.*`)
-1. Commit and push the GitOps changes.
-1. Sync ArgoCD application:
-   - `homelab-home-automation` (or `<cluster.appNamePrefix>-home-automation`)
-1. Confirm resources:
-   - `kubectl -n home-automation get deploy,po,svc,pvc,httproute,secret,externalsecret`
+1. External Secrets Operator and the `onepassword` ClusterSecretStore are available.
+1. The 1Password item `mqtt-zigbee` contains valid MQTT credentials.
+1. The SLZB adapter has a stable DHCP reservation (`192.168.30.232`) and TCP port `6638` is reachable from the cluster nodes.
 
 ## Validation
 

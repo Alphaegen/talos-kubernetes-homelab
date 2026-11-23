@@ -218,6 +218,24 @@ check_kyverno_wiring() {
 }
 run "Kyverno policy and exception wiring" check_kyverno_wiring
 
+# require-probes names its namespaces, as Argo CD's apps project does; every
+# apps namespace must be in it (it may cover more, such as auth).
+check_probes_cover_apps() {
+  local apps probes ns status=0
+  apps=$(yq 'select(.kind == "AppProject" and .metadata.name == "apps") | .spec.destinations[].namespace' \
+    "$manifests/infra-helm-all-enabled.yaml")
+  probes=$(yq '.spec.matchConstraints.namespaceSelector.matchExpressions[]
+    | select(.key == "kubernetes.io/metadata.name" and .operator == "In") | .values[]' \
+    "$kyverno_dir/policies/require-probes.yaml")
+  [[ -n $apps ]] || { printf 'No apps AppProject destinations found\n'; return 1; }
+  while IFS= read -r ns; do
+    grep -qxF "$ns" <<<"$probes" \
+      || { printf 'apps namespace %s is missing from require-probes\n' "$ns"; status=1; }
+  done <<<"$apps"
+  return "$status"
+}
+run "require-probes covers every apps namespace" check_probes_cover_apps
+
 # kyverno test silently reports an expectation for a missing fixture against
 # another resource, so check the names both ways.
 check_kyverno_fixtures() {

@@ -25,6 +25,7 @@ spec:
       - FailOnSharedResource=true
       # kube-prometheus-stack is the sole owner/creator of monitoring namespace metadata.
       - CreateNamespace=false
+      - SkipDryRunOnMissingResource=true
   sources:
     - repoURL: https://grafana.github.io/helm-charts
       chart: alloy

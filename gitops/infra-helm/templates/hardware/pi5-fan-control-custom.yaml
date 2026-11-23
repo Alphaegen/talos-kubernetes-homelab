@@ -24,6 +24,7 @@ spec:
     syncOptions:
       - FailOnSharedResource=true
       - CreateNamespace=false
+      - SkipDryRunOnMissingResource=true
   source:
     repoURL: {{ .Values.cluster.repoURL | quote }}
     targetRevision: {{ .Values.cluster.revision | default "main" | quote }}

@@ -22,6 +22,7 @@ spec:
     syncOptions:
       - FailOnSharedResource=true
       - CreateNamespace=true
+      - SkipDryRunOnMissingResource=true
     managedNamespaceMetadata:
       labels:
         # The speaker DaemonSet uses the host network and NET_RAW to announce IPs.

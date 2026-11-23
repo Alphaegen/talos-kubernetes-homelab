@@ -23,6 +23,7 @@ spec:
     syncOptions:
       - FailOnSharedResource=true
       - CreateNamespace=false
+      - SkipDryRunOnMissingResource=true
   source:
     repoURL: https://kubernetes-sigs.github.io/metrics-server/
     chart: metrics-server

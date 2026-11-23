@@ -92,6 +92,10 @@ Keys (anything else fails the render):
   syncOptions, ignoreDifferences, annotations, finalizers
                       added to what the helper emits
 
+Chart values go in gitops/infra-custom/<name>/upstream-values.yaml, referenced
+as a $values/ value file. An inline helm.values block may only carry wiring:
+values computed from other toggles (docs: gitops/infra-helm/README.md).
+
 Always emitted: the cluster label, the sync-wave annotation, the in-cluster
 destination, infra.syncPolicy, FailOnSharedResource, SkipDryRunOnMissingResource,
 and RespectIgnoreDifferences whenever there are ignoreDifferences.

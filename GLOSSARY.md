@@ -38,6 +38,10 @@ _Avoid_: custom app, in-repo chart
 A third-party Helm chart at a pinned version that a child Application deploys.
 _Avoid_: remote chart, vendor chart
 
+**Wiring**:
+A value in a child Application's description that is computed from other toggles, such as an integration that is on only when the service it talks to is enabled. The only configuration the root Application carries besides toggles and chart versions.
+_Avoid_: glue, inline values
+
 **Upstream values**:
 The configuration for an upstream chart, kept beside the service in `gitops/infra-custom/<name>/` rather than in the root Application's values.
 _Avoid_: overrides

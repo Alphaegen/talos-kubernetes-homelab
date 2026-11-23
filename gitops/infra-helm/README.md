@@ -65,12 +65,22 @@ Recommended flow:
 
 ## Application Wiring And Service Values
 
-`infra-helm` is the Application wiring layer: it keeps enablement, exact chart
-versions, bootstrap stage, and shared repository/cluster metadata. Upstream
-Helm values belong beside the owning service under `gitops/infra-custom`.
-Applications consume those files through a Git `ref: values` source and a
-`$values/.../values.yaml` entry; an existing custom-resource source stays in
-the same Application when it is part of that controller's ownership boundary.
+`infra-helm` is the Application wiring layer: it keeps toggles, exact chart
+versions, bootstrap stage, and shared repository/cluster metadata, and nothing
+else. Upstream Helm values belong beside the owning service, in
+`gitops/infra-custom/<name>/upstream-values.yaml` (or `<chart>-values.yaml`
+for the monitoring charts). Applications consume those files through a
+`$values/gitops/infra-custom/...` value file, and the helper adds the Git
+`ref: values` source. An existing custom-resource source stays in the same
+Application when it is part of that controller's ownership boundary.
+
+Inline `helm.values` may only carry wiring: values computed from other
+toggles, such as the External Secrets integrations that follow the cert-manager
+and Tailscale toggles. Do not add a value to `values.yaml` for something the
+owning source hard-codes anyway (a namespace, a storage class, the
+`release: kube-prometheus-stack` label Prometheus selects on); write it as a
+literal. Dashboards that ship with a service are ConfigMaps labelled
+`grafana_dashboard: "1"` in that service's source.
 
 Use a multi-source Application for a controller and its CRs, or for an
 upstream chart with repository-hosted values. Keep separate Applications for

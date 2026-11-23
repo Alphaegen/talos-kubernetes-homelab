@@ -13,7 +13,7 @@ namespaceLabels:
 ownsPVCs: true
 sources:
   - path: gitops/infra-custom/media
-{{- end }}
+{{ end }}
 {{- if .Values.media.enabled }}
 {{ include "infra.application" (dict "root" . "app" (include "app.media" . | fromYaml)) }}
 {{- end }}

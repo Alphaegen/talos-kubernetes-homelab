@@ -1,36 +1,14 @@
-# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/refs/heads/main/argoproj.io/application_v1alpha1.json
+{{- define "app.obsidian-livesync" }}
+name: obsidian-livesync
+# The source contains and owns the Namespace manifest.
+namespace: obsidian-livesync
+# Stateful workload after bootstrap foundations.
+wave: 2
+project: apps
+ownsPVCs: true
+sources:
+  - path: gitops/infra-custom/obsidian-livesync
+{{ end }}
 {{- if .Values.obsidianLiveSync.enabled }}
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: {{ include "infra.appName" (dict "root" . "name" "obsidian-livesync") }}
-  namespace: {{ .Values.cluster.namespace | quote }}
-  labels:
-    cluster: {{ .Values.cluster.name | quote }}
-    app: obsidian-livesync
-  annotations:
-    # Stage 2: stateful workload after bootstrap foundations.
-    argocd.argoproj.io/sync-wave: "2"
-spec:
-  project: {{ include "infra.appsProject" . }}
-  destination:
-    server: {{ .Values.cluster.url | default "https://kubernetes.default.svc" | quote }}
-    namespace: obsidian-livesync
-  ignoreDifferences:
-    - kind: PersistentVolumeClaim
-      jqPathExpressions:
-        - .spec.volumeName
-  syncPolicy:
-    {{- include "infra.syncPolicy" . | nindent 4 }}
-    syncOptions:
-      - FailOnSharedResource=true
-      # The source contains and owns the Namespace manifest.
-      - CreateNamespace=false
-      - PruneLast=true
-      - RespectIgnoreDifferences=true
-      - SkipDryRunOnMissingResource=true
-  source:
-    repoURL: {{ .Values.cluster.repoURL | quote }}
-    targetRevision: {{ .Values.cluster.revision | default "main" | quote }}
-    path: gitops/infra-custom/obsidian-livesync
+{{ include "infra.application" (dict "root" . "app" (include "app.obsidian-livesync" . | fromYaml)) }}
 {{- end }}

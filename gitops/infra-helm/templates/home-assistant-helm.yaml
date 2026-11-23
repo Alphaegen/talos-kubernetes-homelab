@@ -1,57 +1,37 @@
-# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/refs/heads/main/argoproj.io/application_v1alpha1.json
+{{- define "app.home-assistant" }}
+name: home-assistant
+partOf: smarthome
+namespace: home-assistant
+# Workload; its PVC depends on the wave-0 Longhorn provider.
+wave: 2
+project: apps
+createNamespace: true
+namespaceLabels:
+  # No host access: Zigbee goes through the network coordinator, not USB.
+  pod-security.kubernetes.io/enforce: baseline
+  pod-security.kubernetes.io/warn: restricted
+  pod-security.kubernetes.io/audit: restricted
+syncOptions:
+  - ServerSideApply=true
+ignoreDifferences:
+  - group: apps
+    kind: StatefulSet
+    name: home-assistant
+    jqPathExpressions:
+      - .spec.volumeClaimTemplates[]?.apiVersion
+      - .spec.volumeClaimTemplates[]?.kind
+      - .spec.volumeClaimTemplates[]?.status
+      - .spec.volumeClaimTemplates[]?.spec.volumeMode
+sources:
+  - repoURL: http://pajikos.github.io/home-assistant-helm-chart/
+    chart: home-assistant
+    version: {{ .Values.homeassistant.version | quote }}
+    helm:
+      releaseName: home-assistant
+      valueFiles:
+        - $values/gitops/infra-custom/home-assistant/helm-values.yaml
+  - path: gitops/infra-custom/home-assistant
+{{ end }}
 {{- if .Values.homeassistant.enabled }}
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: {{ include "infra.appName" (dict "root" . "name" "home-assistant") }}
-  namespace: {{ .Values.cluster.namespace | quote }}
-  labels:
-    cluster: {{ .Values.cluster.name | quote }}
-    app: home-assistant
-    app.kubernetes.io/part-of: smarthome
-  annotations:
-    # Stage 2: workload; its PVC depends on the stage-0 Longhorn provider.
-    argocd.argoproj.io/sync-wave: "2"
-spec:
-  project: {{ include "infra.appsProject" . }}
-  destination:
-    server: {{ .Values.cluster.url | default "https://kubernetes.default.svc" | quote }}
-    namespace: home-assistant
-  ignoreDifferences:
-    - group: apps
-      kind: StatefulSet
-      name: home-assistant
-      jqPathExpressions:
-        - .spec.volumeClaimTemplates[]?.apiVersion
-        - .spec.volumeClaimTemplates[]?.kind
-        - .spec.volumeClaimTemplates[]?.status
-        - .spec.volumeClaimTemplates[]?.spec.volumeMode
-  syncPolicy:
-    {{- include "infra.syncPolicy" . | nindent 4 }}
-    syncOptions:
-      - FailOnSharedResource=true
-      - CreateNamespace=true
-      - ServerSideApply=true
-      - RespectIgnoreDifferences=true
-      - SkipDryRunOnMissingResource=true
-    managedNamespaceMetadata:
-      labels:
-        # No host access: Zigbee goes through the network coordinator, not USB.
-        pod-security.kubernetes.io/enforce: baseline
-        pod-security.kubernetes.io/warn: restricted
-        pod-security.kubernetes.io/audit: restricted
-  sources:
-    - repoURL: http://pajikos.github.io/home-assistant-helm-chart/
-      chart: home-assistant
-      targetRevision: {{ .Values.homeassistant.version | quote }}
-      helm:
-        releaseName: home-assistant
-        valueFiles:
-          - $values/gitops/infra-custom/home-assistant/helm-values.yaml
-    - repoURL: {{ .Values.cluster.repoURL | quote }}
-      targetRevision: {{ .Values.cluster.revision | default "main" | quote }}
-      path: gitops/infra-custom/home-assistant
-    - repoURL: {{ .Values.cluster.repoURL | quote }}
-      targetRevision: {{ .Values.cluster.revision | default "main" | quote }}
-      ref: values
+{{ include "infra.application" (dict "root" . "app" (include "app.home-assistant" . | fromYaml)) }}
 {{- end }}

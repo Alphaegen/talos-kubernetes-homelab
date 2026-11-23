@@ -1,31 +1,14 @@
-# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/refs/heads/main/argoproj.io/application_v1alpha1.json
-{{- if .Values.media.enabled }}
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: {{ include "infra.appName" (dict "root" . "name" "nfs-provisioner") }}
-  namespace: {{ .Values.cluster.namespace | quote }}
-  labels:
-    cluster: {{ .Values.cluster.name | quote }}
-    app: nfs-provisioner
-  annotations:
-    # Stage 1: storage add-on after bootstrap foundations.
-    argocd.argoproj.io/sync-wave: "1"
-spec:
-  project: {{ include "infra.platformProject" . }}
-  destination:
-    server: {{ .Values.cluster.url | default "https://kubernetes.default.svc" | quote }}
-    namespace: nfs-provisioner
-  syncPolicy:
-    {{- include "infra.syncPolicy" . | nindent 4 }}
-    syncOptions:
-      - FailOnSharedResource=true
-      - CreateNamespace=true
-      - SkipDryRunOnMissingResource=true
-  source:
-    repoURL: https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner/
+{{- define "app.nfs-provisioner" }}
+name: nfs-provisioner
+namespace: nfs-provisioner
+# Storage add-on after bootstrap foundations.
+wave: 1
+project: platform
+createNamespace: true
+sources:
+  - repoURL: https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner/
     chart: nfs-subdir-external-provisioner
-    targetRevision: {{ .Values.media.nfs.version | default "4.0.18" | quote }}
+    version: {{ .Values.media.nfs.version | default "4.0.18" | quote }}
     helm:
       releaseName: nfs-provisioner
       values: |
@@ -52,4 +35,7 @@ spec:
           reclaimPolicy: Retain
           allowVolumeExpansion: true
           onDelete: retain
+{{ end }}
+{{- if .Values.media.enabled }}
+{{ include "infra.application" (dict "root" . "app" (include "app.nfs-provisioner" . | fromYaml)) }}
 {{- end }}

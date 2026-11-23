@@ -1,50 +1,30 @@
-# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/refs/heads/main/argoproj.io/application_v1alpha1.json
+{{- define "app.longhorn" }}
+name: longhorn
+partOf: longhorn
+namespace: longhorn-system
+# Storage provider and its CRD-backed configuration.
+wave: 0
+project: platform
+# No cascadeDelete: deleting the Application must not cascade into the
+# storage control plane or its stateful resources.
+createNamespace: true
+namespaceLabels:
+  # Longhorn's manager, CSI and instance-manager pods need privileged host access.
+  pod-security.kubernetes.io/enforce: privileged
+  pod-security.kubernetes.io/warn: privileged
+  pod-security.kubernetes.io/audit: privileged
+# The bundled ServiceMonitor/PrometheusRule can be encountered while the
+# monitoring Application is still establishing its CRDs.
+sources:
+  - repoURL: https://charts.longhorn.io
+    chart: longhorn
+    version: {{ .Values.longhorn.version | quote }}
+    helm:
+      releaseName: longhorn
+      valueFiles:
+        - $values/gitops/infra-custom/longhorn/values.yaml
+  - path: gitops/infra-custom/longhorn
+{{ end }}
 {{- if .Values.longhorn.enabled }}
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: {{ include "infra.appName" (dict "root" . "name" "longhorn") }}
-  labels:
-    cluster: {{ .Values.cluster.name | quote }}
-    app: longhorn
-    app.kubernetes.io/part-of: longhorn
-  namespace: {{ .Values.cluster.namespace | quote }}
-  annotations:
-    # Stage 0: storage provider and its CRD-backed configuration.
-    argocd.argoproj.io/sync-wave: "0"
-spec:
-  project: {{ include "infra.platformProject" . }}
-  destination:
-    server: {{ .Values.cluster.url | default "https://kubernetes.default.svc" | quote }}
-    namespace: longhorn-system
-  syncPolicy:
-    {{- include "infra.syncPolicy" . | nindent 4 }}
-    syncOptions:
-      - FailOnSharedResource=true
-      - CreateNamespace=true
-      # The bundled ServiceMonitor/PrometheusRule can be encountered while the
-      # monitoring Application is still establishing its CRDs.
-      - SkipDryRunOnMissingResource=true
-    managedNamespaceMetadata:
-      labels:
-        # Longhorn's manager, CSI and instance-manager pods need privileged host access.
-        pod-security.kubernetes.io/enforce: privileged
-        pod-security.kubernetes.io/warn: privileged
-        pod-security.kubernetes.io/audit: privileged
-  # Deliberately no resources finalizer: deleting the Application must not
-  # cascade into the storage control plane or its stateful resources.
-  sources:
-    - repoURL: https://charts.longhorn.io
-      chart: longhorn
-      targetRevision: {{ .Values.longhorn.version | quote }}
-      helm:
-        releaseName: longhorn
-        valueFiles:
-          - $values/gitops/infra-custom/longhorn/values.yaml
-    - repoURL: {{ .Values.cluster.repoURL | quote }}
-      targetRevision: {{ .Values.cluster.revision | default "main" | quote }}
-      path: gitops/infra-custom/longhorn
-    - repoURL: {{ .Values.cluster.repoURL | quote }}
-      targetRevision: {{ .Values.cluster.revision | default "main" | quote }}
-      ref: values
+{{ include "infra.application" (dict "root" . "app" (include "app.longhorn" . | fromYaml)) }}
 {{- end }}

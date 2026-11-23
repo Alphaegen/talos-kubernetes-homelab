@@ -1,31 +1,13 @@
-# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/refs/heads/main/argoproj.io/application_v1alpha1.json
+{{- define "app.priority-classes" }}
+name: priority-classes
+namespace: kube-system
+# Cluster-scoped classes before the workloads that reference them.
+wave: 0
+project: platform
+cascadeDelete: true
+sources:
+  - path: gitops/infra-custom/priority-classes
+{{ end }}
 {{- if .Values.priorityClasses.enabled }}
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: {{ include "infra.appName" (dict "root" . "name" "priority-classes") }}
-  namespace: {{ .Values.cluster.namespace | quote }}
-  labels:
-    cluster: {{ .Values.cluster.name | quote }}
-    app: priority-classes
-  finalizers:
-    - resources-finalizer.argocd.argoproj.io
-  annotations:
-    # Stage 0: cluster-scoped classes before the workloads that reference them.
-    argocd.argoproj.io/sync-wave: "0"
-spec:
-  project: {{ include "infra.platformProject" . }}
-  destination:
-    server: {{ .Values.cluster.url | default "https://kubernetes.default.svc" | quote }}
-    namespace: kube-system
-  syncPolicy:
-    {{- include "infra.syncPolicy" . | nindent 4 }}
-    syncOptions:
-      - FailOnSharedResource=true
-      - CreateNamespace=false
-      - SkipDryRunOnMissingResource=true
-  source:
-    repoURL: {{ .Values.cluster.repoURL | quote }}
-    targetRevision: {{ .Values.cluster.revision | default "main" | quote }}
-    path: gitops/infra-custom/priority-classes
+{{ include "infra.application" (dict "root" . "app" (include "app.priority-classes" . | fromYaml)) }}
 {{- end }}

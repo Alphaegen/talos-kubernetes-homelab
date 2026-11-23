@@ -69,10 +69,13 @@ Usage, from a template file per Application:
   ownsPVCs: true
   sources:
     - path: gitops/infra-custom/dumbpad
-  {{- end }}
+  {{ end }}
   {{- if .Values.dumbpad.enabled }}
   {{ include "infra.application" (dict "root" . "app" (include "app.dumbpad" . | fromYaml)) }}
   {{- end }}
+
+Close the define with "{{ end }}", not "{{- end }}": the dash would also trim
+the final newline of a trailing "values: |" block.
 
 Keys (anything else fails the render):
   name, namespace, wave, project   required

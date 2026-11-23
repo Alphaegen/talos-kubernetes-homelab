@@ -1,49 +1,30 @@
-# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/refs/heads/main/argoproj.io/application_v1alpha1.json
+{{- define "app.kube-prometheus-stack" }}
+name: kube-prometheus-stack
+partOf: monitoring
+namespace: monitoring
+# Establish monitoring CRDs before add-ons publish monitors/rules. The
+# ExternalSecret CRD comes from the separate external-secrets app.
+wave: 0
+project: platform
+createNamespace: true
+namespaceLabels:
+  # node-exporter (host network, PID and filesystem) and Alloy (host log
+  # files through hostPath) run here.
+  pod-security.kubernetes.io/enforce: privileged
+  pod-security.kubernetes.io/warn: privileged
+  pod-security.kubernetes.io/audit: privileged
+syncOptions:
+  - ServerSideApply=true
+sources:
+  - repoURL: https://prometheus-community.github.io/helm-charts
+    chart: kube-prometheus-stack
+    version: {{ .Values.monitoring.prometheus.version | quote }}
+    helm:
+      releaseName: kube-prometheus-stack
+      valueFiles:
+        - $values/gitops/infra-custom/monitoring/kube-prometheus-stack-values.yaml
+  - path: gitops/infra-custom/monitoring/alertmanager
+{{ end }}
 {{- if .Values.monitoring.enabled }}
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: {{ include "infra.appName" (dict "root" . "name" "kube-prometheus-stack") }}
-  labels:
-    cluster: {{ .Values.cluster.name | quote }}
-    app: kube-prometheus-stack
-    app.kubernetes.io/part-of: monitoring
-  namespace: {{ .Values.cluster.namespace | quote }}
-  annotations:
-    # Stage 0: establish monitoring CRDs before add-ons publish monitors/rules.
-    argocd.argoproj.io/sync-wave: "0"
-spec:
-  project: {{ include "infra.platformProject" . }}
-  destination:
-    server: {{ .Values.cluster.url | default "https://kubernetes.default.svc" | quote }}
-    namespace: monitoring
-  syncPolicy:
-    {{- include "infra.syncPolicy" . | nindent 4 }}
-    syncOptions:
-      - FailOnSharedResource=true
-      - CreateNamespace=true
-      - ServerSideApply=true
-      # The ExternalSecret CRD comes from the separate external-secrets app.
-      - SkipDryRunOnMissingResource=true
-    managedNamespaceMetadata:
-      labels:
-        # node-exporter (host network, PID and filesystem) and Alloy (host log
-        # files through hostPath) run here.
-        pod-security.kubernetes.io/enforce: privileged
-        pod-security.kubernetes.io/warn: privileged
-        pod-security.kubernetes.io/audit: privileged
-  sources:
-    - repoURL: https://prometheus-community.github.io/helm-charts
-      chart: kube-prometheus-stack
-      targetRevision: {{ .Values.monitoring.prometheus.version | quote }}
-      helm:
-        releaseName: kube-prometheus-stack
-        valueFiles:
-          - $values/gitops/infra-custom/monitoring/kube-prometheus-stack-values.yaml
-    - repoURL: {{ .Values.cluster.repoURL | quote }}
-      targetRevision: {{ .Values.cluster.revision | default "main" | quote }}
-      path: gitops/infra-custom/monitoring/alertmanager
-    - repoURL: {{ .Values.cluster.repoURL | quote }}
-      targetRevision: {{ .Values.cluster.revision | default "main" | quote }}
-      ref: values
+{{ include "infra.application" (dict "root" . "app" (include "app.kube-prometheus-stack" . | fromYaml)) }}
 {{- end }}

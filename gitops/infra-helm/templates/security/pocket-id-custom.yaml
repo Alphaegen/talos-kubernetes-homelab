@@ -1,36 +1,14 @@
-# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/refs/heads/main/argoproj.io/application_v1alpha1.json
+{{- define "app.pocket-id" }}
+name: pocket-id
+# The source contains and owns the Namespace manifest.
+namespace: auth
+# Needs ESO, Longhorn and the Gateway from earlier waves.
+wave: 2
+project: platform
+ownsPVCs: true
+sources:
+  - path: gitops/infra-custom/pocket-id
+{{ end }}
 {{- if and .Values.security.enabled .Values.security.pocketId.enabled }}
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: {{ include "infra.appName" (dict "root" . "name" "pocket-id") }}
-  namespace: {{ .Values.cluster.namespace | quote }}
-  labels:
-    cluster: {{ .Values.cluster.name | quote }}
-    app: pocket-id
-  annotations:
-    # Stage 2: needs ESO, Longhorn and the Gateway from earlier waves.
-    argocd.argoproj.io/sync-wave: "2"
-spec:
-  project: {{ include "infra.platformProject" . }}
-  destination:
-    server: {{ .Values.cluster.url | default "https://kubernetes.default.svc" | quote }}
-    namespace: auth
-  ignoreDifferences:
-    - kind: PersistentVolumeClaim
-      jqPathExpressions:
-        - .spec.volumeName
-  syncPolicy:
-    {{- include "infra.syncPolicy" . | nindent 4 }}
-    syncOptions:
-      - FailOnSharedResource=true
-      # The source contains and owns the Namespace manifest.
-      - CreateNamespace=false
-      - PruneLast=true
-      - RespectIgnoreDifferences=true
-      - SkipDryRunOnMissingResource=true
-  source:
-    repoURL: {{ .Values.cluster.repoURL | quote }}
-    targetRevision: {{ .Values.cluster.revision | default "main" | quote }}
-    path: gitops/infra-custom/pocket-id
+{{ include "infra.application" (dict "root" . "app" (include "app.pocket-id" . | fromYaml)) }}
 {{- end }}

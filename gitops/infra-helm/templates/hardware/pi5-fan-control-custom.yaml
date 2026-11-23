@@ -1,32 +1,14 @@
-# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/refs/heads/main/argoproj.io/application_v1alpha1.json
+{{- define "app.pi5-fan-control" }}
+name: pi5-fan-control
+partOf: infrastructure
+namespace: {{ .Values.pi5FanControl.namespace | default "pi5-fan-control" | quote }}
+# Stateless platform add-on.
+wave: 1
+project: platform
+cascadeDelete: true
+sources:
+  - path: gitops/infra-custom/pi5-fan-control
+{{ end }}
 {{- if .Values.pi5FanControl.enabled }}
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: {{ include "infra.appName" (dict "root" . "name" "pi5-fan-control") }}
-  labels:
-    cluster: {{ .Values.cluster.name | quote }}
-    app: pi5-fan-control
-    app.kubernetes.io/part-of: infrastructure
-  namespace: {{ .Values.cluster.namespace | quote }}
-  finalizers:
-    - resources-finalizer.argocd.argoproj.io
-  annotations:
-    # Stage 1: stateless platform add-on.
-    argocd.argoproj.io/sync-wave: "1"
-spec:
-  project: {{ include "infra.platformProject" . }}
-  destination:
-    server: {{ .Values.cluster.url | default "https://kubernetes.default.svc" | quote }}
-    namespace: {{ .Values.pi5FanControl.namespace | default "pi5-fan-control" | quote }}
-  syncPolicy:
-    {{- include "infra.syncPolicy" . | nindent 4 }}
-    syncOptions:
-      - FailOnSharedResource=true
-      - CreateNamespace=false
-      - SkipDryRunOnMissingResource=true
-  source:
-    repoURL: {{ .Values.cluster.repoURL | quote }}
-    targetRevision: {{ .Values.cluster.revision | default "main" | quote }}
-    path: gitops/infra-custom/pi5-fan-control
+{{ include "infra.application" (dict "root" . "app" (include "app.pi5-fan-control" . | fromYaml)) }}
 {{- end }}

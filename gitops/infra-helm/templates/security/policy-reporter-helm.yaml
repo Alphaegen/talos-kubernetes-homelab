@@ -1,33 +1,15 @@
-# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/refs/heads/main/argoproj.io/application_v1alpha1.json
-{{- if and .Values.security.enabled .Values.security.policyReporter.enabled }}
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: {{ include "infra.appName" (dict "root" . "name" "policy-reporter") }}
-  labels:
-    cluster: {{ .Values.cluster.name | quote }}
-    app: policy-reporter
-  namespace: {{ .Values.cluster.namespace | quote }}
-  finalizers:
-    - resources-finalizer.argocd.argoproj.io
-  annotations:
-    # Stage 2: reads the PolicyReport CRDs that Kyverno (stage 1) installs.
-    argocd.argoproj.io/sync-wave: "2"
-spec:
-  project: {{ include "infra.platformProject" . }}
-  destination:
-    server: {{ .Values.cluster.url | default "https://kubernetes.default.svc" | quote }}
-    namespace: policy-reporter
-  syncPolicy:
-    {{- include "infra.syncPolicy" . | nindent 4 }}
-    syncOptions:
-      - FailOnSharedResource=true
-      - CreateNamespace=true
-      - SkipDryRunOnMissingResource=true
-  source:
-    repoURL: https://kyverno.github.io/policy-reporter
+{{- define "app.policy-reporter" }}
+name: policy-reporter
+namespace: policy-reporter
+# Reads the PolicyReport CRDs that Kyverno (wave 1) installs.
+wave: 2
+project: platform
+createNamespace: true
+cascadeDelete: true
+sources:
+  - repoURL: https://kyverno.github.io/policy-reporter
     chart: policy-reporter
-    targetRevision: {{ .Values.security.policyReporter.version | quote }}
+    version: {{ .Values.security.policyReporter.version | quote }}
     helm:
       releaseName: policy-reporter
       values: |
@@ -95,4 +77,7 @@ spec:
                     - ports:
                         - port: "8080"
                           protocol: TCP
+{{ end }}
+{{- if and .Values.security.enabled .Values.security.policyReporter.enabled }}
+{{ include "infra.application" (dict "root" . "app" (include "app.policy-reporter" . | fromYaml)) }}
 {{- end }}

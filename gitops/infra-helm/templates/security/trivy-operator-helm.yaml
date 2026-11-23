@@ -1,32 +1,15 @@
-{{- if and .Values.security.enabled .Values.security.trivy.enabled }}
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: {{ include "infra.appName" (dict "root" . "name" "trivy-operator") }}
-  labels:
-    cluster: {{ .Values.cluster.name | quote }}
-    app: trivy-operator
-  namespace: {{ .Values.cluster.namespace | quote }}
-  finalizers:
-    - resources-finalizer.argocd.argoproj.io
-  annotations:
-    # Stage 1: optional platform add-on after monitoring CRDs.
-    argocd.argoproj.io/sync-wave: "1"
-spec:
-  project: {{ include "infra.platformProject" . }}
-  destination:
-    server: {{ .Values.cluster.url | default "https://kubernetes.default.svc" | quote }}
-    namespace: trivy-system
-  syncPolicy:
-    {{- include "infra.syncPolicy" . | nindent 4 }}
-    syncOptions:
-      - FailOnSharedResource=true
-      - CreateNamespace=true
-      - SkipDryRunOnMissingResource=true
-  source:
-    repoURL: https://aquasecurity.github.io/helm-charts
+{{- define "app.trivy-operator" }}
+name: trivy-operator
+namespace: trivy-system
+# Optional platform add-on after monitoring CRDs.
+wave: 1
+project: platform
+createNamespace: true
+cascadeDelete: true
+sources:
+  - repoURL: https://aquasecurity.github.io/helm-charts
     chart: trivy-operator
-    targetRevision: {{ .Values.security.trivy.version | quote }}
+    version: {{ .Values.security.trivy.version | quote }}
     helm:
       releaseName: trivy-operator
       values: |
@@ -109,4 +92,7 @@ spec:
           labels:
             release: {{ .Values.security.trivy.serviceMonitorLabel }}
           interval: 30s
+{{ end }}
+{{- if and .Values.security.enabled .Values.security.trivy.enabled }}
+{{ include "infra.application" (dict "root" . "app" (include "app.trivy-operator" . | fromYaml)) }}
 {{- end }}

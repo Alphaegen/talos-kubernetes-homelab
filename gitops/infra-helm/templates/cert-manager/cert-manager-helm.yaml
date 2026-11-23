@@ -1,57 +1,37 @@
-# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/refs/heads/main/argoproj.io/application_v1alpha1.json
-{{ if .Values.certmanager.enabled }}
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: {{ include "infra.appName" (dict "root" . "name" "cert-manager-helm") }}
-  labels:
-    cluster: {{ .Values.cluster.name | quote }}
-    app: cert-manager
-    app.kubernetes.io/part-of: cert-manager
-  namespace: {{ .Values.cluster.namespace | quote }}
-  annotations:
-    # Stage 0: API providers and other bootstrap foundations.
-    argocd.argoproj.io/sync-wave: "0"
-spec:
-  project: {{ include "infra.platformProject" . }}
-  destination:
-    server: {{ .Values.cluster.url | default "https://kubernetes.default.svc" | quote }}
-    namespace: cert-manager
-  syncPolicy:
-    {{- include "infra.syncPolicy" . | nindent 4 }}
-    syncOptions:
-      - FailOnSharedResource=true
-      - CreateNamespace=true
-      # ServiceMonitor may be discovered before the monitoring CRDs finish
-      # their independently automated first sync. The shared sync retry policy
-      # re-attempts it.
-      - SkipDryRunOnMissingResource=true
-    managedNamespaceMetadata:
-      labels:
-        # Same as the Talos cluster default, stated so it survives a relabel.
-        pod-security.kubernetes.io/enforce: baseline
-        pod-security.kubernetes.io/warn: restricted
-        pod-security.kubernetes.io/audit: restricted
-  # Keep the controller/CRDs and the ClusterIssuer in one Application so Argo
-  # CD can order the CRD before the custom resource during a single sync.
-  sources:
-    - repoURL: https://charts.jetstack.io
-      chart: cert-manager
-      targetRevision: {{ .Values.certmanager.version | quote }}
-      helm:
-        version: v3
-        releaseName: cert-manager
-        valueFiles:
-          - $values/gitops/infra-custom/cert-manager/upstream-values.yaml
-    - repoURL: {{ .Values.cluster.repoURL | quote }}
-      path: gitops/infra-custom/cert-manager
-      targetRevision: {{ .Values.cluster.revision | default "main" | quote }}
-      helm:
-        version: v3
-        releaseName: cert-manager-custom
-        valueFiles:
-          - values.yaml
-    - repoURL: {{ .Values.cluster.repoURL | quote }}
-      targetRevision: {{ .Values.cluster.revision | default "main" | quote }}
-      ref: values
+{{- define "app.cert-manager-helm" }}
+name: cert-manager-helm
+appLabel: cert-manager
+partOf: cert-manager
+namespace: cert-manager
+# API providers and other bootstrap foundations.
+wave: 0
+project: platform
+createNamespace: true
+namespaceLabels:
+  # Same as the Talos cluster default, stated so it survives a relabel.
+  pod-security.kubernetes.io/enforce: baseline
+  pod-security.kubernetes.io/warn: restricted
+  pod-security.kubernetes.io/audit: restricted
+# Keep the controller/CRDs and the ClusterIssuer in one Application so Argo
+# CD can order the CRD before the custom resource during a single sync. The
+# ServiceMonitor may be discovered before the monitoring CRDs finish their
+# independently automated first sync; the shared retry policy re-attempts it.
+sources:
+  - repoURL: https://charts.jetstack.io
+    chart: cert-manager
+    version: {{ .Values.certmanager.version | quote }}
+    helm:
+      version: v3
+      releaseName: cert-manager
+      valueFiles:
+        - $values/gitops/infra-custom/cert-manager/upstream-values.yaml
+  - path: gitops/infra-custom/cert-manager
+    helm:
+      version: v3
+      releaseName: cert-manager-custom
+      valueFiles:
+        - values.yaml
+{{ end }}
+{{- if .Values.certmanager.enabled }}
+{{ include "infra.application" (dict "root" . "app" (include "app.cert-manager-helm" . | fromYaml)) }}
 {{- end }}

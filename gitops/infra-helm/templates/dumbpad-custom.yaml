@@ -7,7 +7,7 @@ project: apps
 ownsPVCs: true
 sources:
   - path: gitops/infra-custom/dumbpad
-{{- end }}
+{{ end }}
 {{- if .Values.dumbpad.enabled }}
 {{ include "infra.application" (dict "root" . "app" (include "app.dumbpad" . | fromYaml)) }}
 {{- end }}

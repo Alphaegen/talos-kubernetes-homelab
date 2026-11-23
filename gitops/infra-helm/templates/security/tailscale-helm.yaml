@@ -1,63 +1,47 @@
+{{- define "app.tailscale" }}
+name: tailscale
+namespace: {{ .Values.security.tailscale.namespace | default "tailscale" | quote }}
+# The credential ExternalSecret is owned by the wave-0 External Secrets
+# Application. The operator and Connector stay together here.
+wave: 1
+project: platform
+createNamespace: true
+namespaceLabels:
+  # Connector proxies need privileged init/container settings for forwarding.
+  pod-security.kubernetes.io/enforce: privileged
+  pod-security.kubernetes.io/warn: privileged
+  pod-security.kubernetes.io/audit: privileged
+sources:
+  - repoURL: {{ .Values.security.tailscale.repoURL | default "https://pkgs.tailscale.com/helmcharts" | quote }}
+    chart: {{ .Values.security.tailscale.chart | default "tailscale-operator" | quote }}
+    version: {{ .Values.security.tailscale.version | quote }}
+    helm:
+      releaseName: tailscale-operator
+      values: |
+        operatorConfig:
+          resources:
+            requests: {cpu: 10m, memory: 64Mi}
+            limits: {memory: 128Mi}
+          # State lives in the operator Secret; tsnet only keeps logs and a
+          # netmap cache under $HOME/.config, so point HOME at the writable /tmp.
+          podSecurityContext:
+            runAsNonRoot: true
+            runAsUser: 65534
+            runAsGroup: 65534
+            seccompProfile: {type: RuntimeDefault}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: {drop: [ALL]}
+          extraEnv:
+            - {name: HOME, value: /tmp}
+          podLabels:
+            app.kubernetes.io/name: tailscale-operator
+  - path: gitops/infra-custom/tailscale
+    helm:
+      releaseName: tailscale-custom
+      valueFiles:
+        - values.yaml
+{{ end }}
 {{- if and .Values.security.enabled .Values.security.tailscale.enabled }}
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: {{ include "infra.appName" (dict "root" . "name" "tailscale") }}
-  labels:
-    cluster: {{ .Values.cluster.name | quote }}
-    app: tailscale
-  namespace: {{ .Values.cluster.namespace | quote }}
-  annotations:
-    # Stage 1: the credential ExternalSecret is owned by the stage-0 External
-    # Secrets Application. The operator and Connector stay together here.
-    argocd.argoproj.io/sync-wave: "1"
-spec:
-  project: {{ include "infra.platformProject" . }}
-  destination:
-    server: {{ .Values.cluster.url | default "https://kubernetes.default.svc" | quote }}
-    namespace: {{ .Values.security.tailscale.namespace | default "tailscale" | quote }}
-  syncPolicy:
-    {{- include "infra.syncPolicy" . | nindent 4 }}
-    syncOptions:
-      - FailOnSharedResource=true
-      - CreateNamespace=true
-      - SkipDryRunOnMissingResource=true
-    managedNamespaceMetadata:
-      labels:
-        # Connector proxies need privileged init/container settings for forwarding.
-        pod-security.kubernetes.io/enforce: privileged
-        pod-security.kubernetes.io/warn: privileged
-        pod-security.kubernetes.io/audit: privileged
-  sources:
-    - repoURL: {{ .Values.security.tailscale.repoURL | default "https://pkgs.tailscale.com/helmcharts" | quote }}
-      chart: {{ .Values.security.tailscale.chart | default "tailscale-operator" | quote }}
-      targetRevision: {{ .Values.security.tailscale.version | quote }}
-      helm:
-        releaseName: tailscale-operator
-        values: |
-          operatorConfig:
-            resources:
-              requests: {cpu: 10m, memory: 64Mi}
-              limits: {memory: 128Mi}
-            # State lives in the operator Secret; tsnet only keeps logs and a
-            # netmap cache under $HOME/.config, so point HOME at the writable /tmp.
-            podSecurityContext:
-              runAsNonRoot: true
-              runAsUser: 65534
-              runAsGroup: 65534
-              seccompProfile: {type: RuntimeDefault}
-            securityContext:
-              allowPrivilegeEscalation: false
-              capabilities: {drop: [ALL]}
-            extraEnv:
-              - {name: HOME, value: /tmp}
-            podLabels:
-              app.kubernetes.io/name: tailscale-operator
-    - repoURL: {{ .Values.cluster.repoURL | quote }}
-      targetRevision: {{ .Values.cluster.revision | default "main" | quote }}
-      path: gitops/infra-custom/tailscale
-      helm:
-        releaseName: tailscale-custom
-        valueFiles:
-          - values.yaml
+{{ include "infra.application" (dict "root" . "app" (include "app.tailscale" . | fromYaml)) }}
 {{- end }}

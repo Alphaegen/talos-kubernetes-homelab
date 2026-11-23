@@ -1,51 +1,31 @@
-# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/refs/heads/main/argoproj.io/application_v1alpha1.json
+{{- define "app.metallb" }}
+name: metallb
+partOf: metallb
+namespace: metallb-system
+# Load-balancer controller and its CRD-backed configuration.
+wave: 0
+project: platform
+createNamespace: true
+namespaceLabels:
+  # The speaker DaemonSet uses the host network and NET_RAW to announce IPs.
+  pod-security.kubernetes.io/enforce: privileged
+  pod-security.kubernetes.io/audit: privileged
+  pod-security.kubernetes.io/warn: privileged
+sources:
+  - repoURL: https://metallb.github.io/metallb
+    chart: metallb
+    version: {{ .Values.metallb.version | quote }}
+    helm:
+      version: v3
+      releaseName: metallb
+      valueFiles:
+        - $values/gitops/infra-custom/metallb/upstream-values.yaml
+  - path: gitops/infra-custom/metallb
+    helm:
+      releaseName: metallb-config
+      valueFiles:
+        - values.yaml
+{{ end }}
 {{- if .Values.metallb.enabled }}
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: {{ include "infra.appName" (dict "root" . "name" "metallb") }}
-  labels:
-    cluster: {{ .Values.cluster.name | quote }}
-    app: metallb
-    app.kubernetes.io/part-of: metallb
-  namespace: {{ .Values.cluster.namespace | quote }}
-  annotations:
-    # Stage 0: load-balancer controller and its CRD-backed configuration.
-    argocd.argoproj.io/sync-wave: "0"
-spec:
-  project: {{ include "infra.platformProject" . }}
-  destination:
-    server: {{ .Values.cluster.url | default "https://kubernetes.default.svc" | quote }}
-    namespace: metallb-system
-  syncPolicy:
-    {{- include "infra.syncPolicy" . | nindent 4 }}
-    syncOptions:
-      - FailOnSharedResource=true
-      - CreateNamespace=true
-      - SkipDryRunOnMissingResource=true
-    managedNamespaceMetadata:
-      labels:
-        # The speaker DaemonSet uses the host network and NET_RAW to announce IPs.
-        pod-security.kubernetes.io/enforce: privileged
-        pod-security.kubernetes.io/audit: privileged
-        pod-security.kubernetes.io/warn: privileged
-  sources:
-    - repoURL: https://metallb.github.io/metallb
-      chart: metallb
-      targetRevision: {{ .Values.metallb.version | quote }}
-      helm:
-        version: v3
-        releaseName: metallb
-        valueFiles:
-          - $values/gitops/infra-custom/metallb/upstream-values.yaml
-    - repoURL: {{ .Values.cluster.repoURL | quote }}
-      path: gitops/infra-custom/metallb
-      targetRevision: {{ .Values.cluster.revision | default "main" | quote }}
-      helm:
-        releaseName: metallb-config
-        valueFiles:
-          - values.yaml
-    - repoURL: {{ .Values.cluster.repoURL | quote }}
-      targetRevision: {{ .Values.cluster.revision | default "main" | quote }}
-      ref: values
+{{ include "infra.application" (dict "root" . "app" (include "app.metallb" . | fromYaml)) }}
 {{- end }}

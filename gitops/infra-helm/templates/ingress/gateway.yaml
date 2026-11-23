@@ -1,32 +1,16 @@
-# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/refs/heads/main/argoproj.io/application_v1alpha1.json
+{{- define "app.gateway" }}
+name: gateway
+appLabel: cilium-gateway
+partOf: cilium-gateway-api
+namespace: kube-system
+# Consumes Cilium Gateway API and wave-0 cert-manager.
+wave: 1
+project: platform
+# No cascadeDelete: deleting this Application must not cascade-delete the
+# shared Gateway (and with it every HTTPRoute ingress path).
+sources:
+  - path: gitops/infra-custom/gateway
+{{ end }}
 {{- if .Values.gateway.enabled }}
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: {{ include "infra.appName" (dict "root" . "name" "gateway") }}
-  labels:
-    cluster: {{ .Values.cluster.name | quote }}
-    app: cilium-gateway
-    app.kubernetes.io/part-of: cilium-gateway-api
-  namespace: {{ .Values.cluster.namespace | quote }}
-  # No resources finalizer: deleting this Application must not cascade-delete
-  # the shared Gateway (and with it every HTTPRoute ingress path).
-  annotations:
-    # Stage 1: consumes Cilium Gateway API and wave-0 cert-manager.
-    argocd.argoproj.io/sync-wave: "1"
-spec:
-  project: {{ include "infra.platformProject" . }}
-  destination:
-    server: {{ .Values.cluster.url | default "https://kubernetes.default.svc" | quote }}
-    namespace: kube-system
-  syncPolicy:
-    {{- include "infra.syncPolicy" . | nindent 4 }}
-    syncOptions:
-      - FailOnSharedResource=true
-      - CreateNamespace=false
-      - SkipDryRunOnMissingResource=true
-  source:
-    repoURL: {{ .Values.cluster.repoURL | quote }}
-    targetRevision: {{ .Values.cluster.revision | default "main" | quote }}
-    path: gitops/infra-custom/gateway
+{{ include "infra.application" (dict "root" . "app" (include "app.gateway" . | fromYaml)) }}
 {{- end }}

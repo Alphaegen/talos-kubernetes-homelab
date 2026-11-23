@@ -1,65 +1,46 @@
-# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/refs/heads/main/argoproj.io/application_v1alpha1.json
-{{- if .Values.monitoring.enabled }}
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: {{ include "infra.appName" (dict "root" . "name" "grafana") }}
-  labels:
-    cluster: {{ .Values.cluster.name | quote }}
-    app: grafana
-    app.kubernetes.io/part-of: monitoring
-  namespace: {{ .Values.cluster.namespace | quote }}
-  annotations:
-    # Stage 1: monitoring service after the stage-0 CRD provider.
-    argocd.argoproj.io/sync-wave: "1"
-spec:
-  project: {{ include "infra.platformProject" . }}
-  destination:
-    server: {{ .Values.cluster.url | default "https://kubernetes.default.svc" | quote }}
+{{- define "app.grafana" }}
+name: grafana
+partOf: monitoring
+# kube-prometheus-stack is the sole owner/creator of monitoring namespace metadata.
+namespace: monitoring
+# Monitoring service after the wave-0 CRD provider.
+wave: 1
+project: platform
+# Helm generates a fresh initial admin password on each offline render.
+# Preserve the installed credential and its checksum to avoid restart loops.
+# Rotate credentials explicitly; do not use adminPassword for rotation while
+# these fields are ignored.
+ignoreDifferences:
+  - kind: Secret
+    name: grafana
     namespace: monitoring
-  # Helm generates a fresh initial admin password on each offline render.
-  # Preserve the installed credential and its checksum to avoid restart loops.
-  # Rotate credentials explicitly; do not use adminPassword for rotation while
-  # these fields are ignored.
-  ignoreDifferences:
-    - kind: Secret
-      name: grafana
-      namespace: monitoring
-      jsonPointers:
-        - /data/admin-password
-    - group: apps
-      kind: Deployment
-      name: grafana
-      namespace: monitoring
-      jsonPointers:
-        - /spec/template/metadata/annotations/checksum~1secret
-  syncPolicy:
-    {{- include "infra.syncPolicy" . | nindent 4 }}
-    syncOptions:
-      - FailOnSharedResource=true
-      # kube-prometheus-stack is the sole owner/creator of monitoring namespace metadata.
-      - CreateNamespace=false
-      - RespectIgnoreDifferences=true
-      - SkipDryRunOnMissingResource=true
-  sources:
-    - repoURL: https://grafana-community.github.io/helm-charts
-      chart: grafana
-      targetRevision: {{ .Values.monitoring.grafana.version | quote }}
-      helm:
-        releaseName: grafana
-        valueFiles:
-          - $values/gitops/infra-custom/monitoring/grafana-values.yaml
-        # Dashboard assembly stays centralized here; runtime values live beside Grafana.
-        values: |-
-          dashboards:
-          {{- $dashboards := deepCopy (.Values.monitoring.grafana.dashboards | default dict) }}
-          {{- $defaultDashboards := get $dashboards "default" | default dict }}
-          {{- range .Values.monitoring.grafana.dashboardFiles }}
-          {{- $_ := set $defaultDashboards .name (dict "json" ($.Files.Get .path)) }}
-          {{- end }}
-          {{- $_ := set $dashboards "default" $defaultDashboards }}
-{{ toYaml $dashboards | indent 12 }}
-    - repoURL: {{ .Values.cluster.repoURL | quote }}
-      targetRevision: {{ .Values.cluster.revision | default "main" | quote }}
-      ref: values
+    jsonPointers:
+      - /data/admin-password
+  - group: apps
+    kind: Deployment
+    name: grafana
+    namespace: monitoring
+    jsonPointers:
+      - /spec/template/metadata/annotations/checksum~1secret
+sources:
+  - repoURL: https://grafana-community.github.io/helm-charts
+    chart: grafana
+    version: {{ .Values.monitoring.grafana.version | quote }}
+    helm:
+      releaseName: grafana
+      valueFiles:
+        - $values/gitops/infra-custom/monitoring/grafana-values.yaml
+      # Dashboard assembly stays centralized here; runtime values live beside Grafana.
+      values: |-
+        dashboards:
+        {{- $dashboards := deepCopy (.Values.monitoring.grafana.dashboards | default dict) }}
+        {{- $defaultDashboards := get $dashboards "default" | default dict }}
+        {{- range .Values.monitoring.grafana.dashboardFiles }}
+        {{- $_ := set $defaultDashboards .name (dict "json" ($.Files.Get .path)) }}
+        {{- end }}
+        {{- $_ := set $dashboards "default" $defaultDashboards }}
+{{ toYaml $dashboards | indent 10 }}
+{{ end }}
+{{- if .Values.monitoring.enabled }}
+{{ include "infra.application" (dict "root" . "app" (include "app.grafana" . | fromYaml)) }}
 {{- end }}

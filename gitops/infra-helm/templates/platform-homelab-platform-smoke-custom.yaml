@@ -1,36 +1,19 @@
-# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/refs/heads/main/argoproj.io/application_v1alpha1.json
+{{- define "app.platform-smoke" }}
+name: platform-smoke
+appLabel: homelab-platform-smoke
+# The source contains and owns the Namespace manifest.
+namespace: {{ .Values.platformSmoke.namespace | default "homelab-platform" | quote }}
+# Validation workload after bootstrap foundations.
+wave: 2
+project: apps
+cascadeDelete: true
+sources:
+  {{- if .Values.platformSmoke.rollout.enabled }}
+  - path: gitops/infra-custom/platform/homelab-platform-smoke-rollout
+  {{- else }}
+  - path: gitops/infra-custom/platform/homelab-platform-smoke
+  {{- end }}
+{{ end }}
 {{- if .Values.platformSmoke.enabled }}
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: {{ include "infra.appName" (dict "root" . "name" "platform-smoke") }}
-  labels:
-    cluster: {{ .Values.cluster.name | quote }}
-    app: homelab-platform-smoke
-  namespace: {{ .Values.cluster.namespace | quote }}
-  finalizers:
-    - resources-finalizer.argocd.argoproj.io
-  annotations:
-    # Stage 2: validation workload after bootstrap foundations.
-    argocd.argoproj.io/sync-wave: "2"
-spec:
-  project: {{ include "infra.appsProject" . }}
-  destination:
-    server: {{ .Values.cluster.url | default "https://kubernetes.default.svc" | quote }}
-    namespace: {{ .Values.platformSmoke.namespace | default "homelab-platform" | quote }}
-  syncPolicy:
-    {{- include "infra.syncPolicy" . | nindent 4 }}
-    syncOptions:
-      - FailOnSharedResource=true
-      # The source contains and owns the Namespace manifest.
-      - CreateNamespace=false
-      - SkipDryRunOnMissingResource=true
-  source:
-    repoURL: {{ .Values.cluster.repoURL | quote }}
-    targetRevision: {{ .Values.cluster.revision | default "main" | quote }}
-    {{- if .Values.platformSmoke.rollout.enabled }}
-    path: gitops/infra-custom/platform/homelab-platform-smoke-rollout
-    {{- else }}
-    path: gitops/infra-custom/platform/homelab-platform-smoke
-    {{- end }}
+{{ include "infra.application" (dict "root" . "app" (include "app.platform-smoke" . | fromYaml)) }}
 {{- end }}

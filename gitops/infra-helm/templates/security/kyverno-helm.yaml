@@ -1,116 +1,102 @@
-# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/refs/heads/main/argoproj.io/application_v1alpha1.json
-{{- if and .Values.security.enabled .Values.security.kyverno.enabled }}
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: {{ include "infra.appName" (dict "root" . "name" "kyverno") }}
-  labels:
-    cluster: {{ .Values.cluster.name | quote }}
-    app: kyverno
-  namespace: {{ .Values.cluster.namespace | quote }}
-  finalizers:
-    - resources-finalizer.argocd.argoproj.io
-    # Argo CD adds these because the chart has PreDelete hooks, which remove
-    # Kyverno's webhooks on uninstall; declaring them keeps the root app in sync.
-    - pre-delete-finalizer.argocd.argoproj.io
-    - pre-delete-finalizer.argocd.argoproj.io/cleanup
-  annotations:
-    # Stage 1: optional platform add-on after monitoring CRDs.
-    argocd.argoproj.io/sync-wave: "1"
-    # Compare like the API server applies: the policies.kyverno.io CRDs render
-    # empty metadata maps that the server drops, which a client-side diff
-    # reports as drift on every refresh.
-    argocd.argoproj.io/compare-options: ServerSideDiff=true
-spec:
-  project: {{ include "infra.platformProject" . }}
-  destination:
-    server: {{ .Values.cluster.url | default "https://kubernetes.default.svc" | quote }}
-    namespace: kyverno
-  syncPolicy:
-    {{- include "infra.syncPolicy" . | nindent 4 }}
-    syncOptions:
-      - FailOnSharedResource=true
-      - CreateNamespace=true
-      # The CRDs are too large for client-side apply's last-applied annotation.
-      - ServerSideApply=true
-      - SkipDryRunOnMissingResource=true
-  sources:
-    - repoURL: {{ .Values.cluster.repoURL | quote }}
-      targetRevision: {{ .Values.cluster.revision | default "main" | quote }}
-      path: gitops/infra-custom/kyverno
-    - repoURL: https://kyverno.github.io/kyverno
-      chart: kyverno
-      targetRevision: {{ .Values.security.kyverno.version | quote }}
-      helm:
-        releaseName: kyverno
-        values: |
-          features:
-            # Policies run in Audit for now; a Kyverno outage must never block admission.
-            forceFailurePolicyIgnore:
-              enabled: true
-            # Exceptions live only in the kyverno namespace, which only Argo CD writes to.
-            policyExceptions:
-              enabled: true
-              namespace: kyverno
-
-          grafana:
+{{- define "app.kyverno" }}
+name: kyverno
+namespace: kyverno
+# Optional platform add-on after monitoring CRDs.
+wave: 1
+project: platform
+createNamespace: true
+cascadeDelete: true
+# Argo CD adds these because the chart has PreDelete hooks, which remove
+# Kyverno's webhooks on uninstall; declaring them keeps the root app in sync.
+finalizers:
+  - pre-delete-finalizer.argocd.argoproj.io
+  - pre-delete-finalizer.argocd.argoproj.io/cleanup
+annotations:
+  # Compare like the API server applies: the policies.kyverno.io CRDs render
+  # empty metadata maps that the server drops, which a client-side diff
+  # reports as drift on every refresh.
+  argocd.argoproj.io/compare-options: ServerSideDiff=true
+# The CRDs are too large for client-side apply's last-applied annotation.
+syncOptions:
+  - ServerSideApply=true
+sources:
+  - path: gitops/infra-custom/kyverno
+  - repoURL: https://kyverno.github.io/kyverno
+    chart: kyverno
+    version: {{ .Values.security.kyverno.version | quote }}
+    helm:
+      releaseName: kyverno
+      values: |
+        features:
+          # Policies run in Audit for now; a Kyverno outage must never block admission.
+          forceFailurePolicyIgnore:
             enabled: true
+          # Exceptions live only in the kyverno namespace, which only Argo CD writes to.
+          policyExceptions:
+            enabled: true
+            namespace: kyverno
 
-          # Label the policies.kyverno.io CRDs like the other Kyverno CRDs.
-          kyverno-api:
-            labels:
-              app.kubernetes.io/part-of: kyverno
+        grafana:
+          enabled: true
 
-          admissionController:
-            replicas: 2
-            podDisruptionBudget:
-              enabled: true
-              minAvailable: 1
-            container:
-              resources:
-                requests:
-                  cpu: 50m
-                  memory: 192Mi
-                limits:
-                  memory: 512Mi
-            serviceMonitor:
-              enabled: true
-              additionalLabels:
-                release: {{ .Values.security.kyverno.serviceMonitorLabel }}
+        # Label the policies.kyverno.io CRDs like the other Kyverno CRDs.
+        kyverno-api:
+          labels:
+            app.kubernetes.io/part-of: kyverno
 
-          backgroundController:
+        admissionController:
+          replicas: 2
+          podDisruptionBudget:
+            enabled: true
+            minAvailable: 1
+          container:
             resources:
               requests:
-                cpu: 25m
-                memory: 96Mi
+                cpu: 50m
+                memory: 192Mi
               limits:
-                memory: 256Mi
-            serviceMonitor:
-              enabled: true
-              additionalLabels:
-                release: {{ .Values.security.kyverno.serviceMonitorLabel }}
+                memory: 512Mi
+          serviceMonitor:
+            enabled: true
+            additionalLabels:
+              release: {{ .Values.security.kyverno.serviceMonitorLabel }}
 
-          reportsController:
-            resources:
-              requests:
-                cpu: 25m
-                memory: 128Mi
-              limits:
-                memory: 384Mi
-            serviceMonitor:
-              enabled: true
-              additionalLabels:
-                release: {{ .Values.security.kyverno.serviceMonitorLabel }}
+        backgroundController:
+          resources:
+            requests:
+              cpu: 25m
+              memory: 96Mi
+            limits:
+              memory: 256Mi
+          serviceMonitor:
+            enabled: true
+            additionalLabels:
+              release: {{ .Values.security.kyverno.serviceMonitorLabel }}
 
-          cleanupController:
-            resources:
-              requests:
-                cpu: 10m
-                memory: 48Mi
-              limits:
-                memory: 128Mi
-            serviceMonitor:
-              enabled: true
-              additionalLabels:
-                release: {{ .Values.security.kyverno.serviceMonitorLabel }}
+        reportsController:
+          resources:
+            requests:
+              cpu: 25m
+              memory: 128Mi
+            limits:
+              memory: 384Mi
+          serviceMonitor:
+            enabled: true
+            additionalLabels:
+              release: {{ .Values.security.kyverno.serviceMonitorLabel }}
+
+        cleanupController:
+          resources:
+            requests:
+              cpu: 10m
+              memory: 48Mi
+            limits:
+              memory: 128Mi
+          serviceMonitor:
+            enabled: true
+            additionalLabels:
+              release: {{ .Values.security.kyverno.serviceMonitorLabel }}
+{{ end }}
+{{- if and .Values.security.enabled .Values.security.kyverno.enabled }}
+{{ include "infra.application" (dict "root" . "app" (include "app.kyverno" . | fromYaml)) }}
 {{- end }}

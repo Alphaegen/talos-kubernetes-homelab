@@ -14,7 +14,7 @@ sources:
       releaseName: loki
       valueFiles:
         - $values/gitops/infra-custom/monitoring/loki-values.yaml
-{{- end }}
+{{ end }}
 {{- if .Values.monitoring.enabled }}
 {{ include "infra.application" (dict "root" . "app" (include "app.loki" . | fromYaml)) }}
 {{- end }}

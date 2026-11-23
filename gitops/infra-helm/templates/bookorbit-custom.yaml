@@ -1,36 +1,14 @@
-# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/refs/heads/main/argoproj.io/application_v1alpha1.json
+{{- define "app.bookorbit" }}
+name: bookorbit
+# The source contains and owns the Namespace manifest.
+namespace: bookorbit
+# Stateful workload after bootstrap foundations.
+wave: 2
+project: apps
+ownsPVCs: true
+sources:
+  - path: gitops/infra-custom/bookorbit
+{{ end }}
 {{- if .Values.bookorbit.enabled }}
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: {{ include "infra.appName" (dict "root" . "name" "bookorbit") }}
-  namespace: {{ .Values.cluster.namespace | quote }}
-  labels:
-    cluster: {{ .Values.cluster.name | quote }}
-    app: bookorbit
-  annotations:
-    # Stage 2: stateful workload after bootstrap foundations.
-    argocd.argoproj.io/sync-wave: "2"
-spec:
-  project: {{ include "infra.appsProject" . }}
-  destination:
-    server: {{ .Values.cluster.url | default "https://kubernetes.default.svc" | quote }}
-    namespace: bookorbit
-  ignoreDifferences:
-    - kind: PersistentVolumeClaim
-      jqPathExpressions:
-        - .spec.volumeName
-  syncPolicy:
-    {{- include "infra.syncPolicy" . | nindent 4 }}
-    syncOptions:
-      - FailOnSharedResource=true
-      # The source contains and owns the Namespace manifest.
-      - CreateNamespace=false
-      - PruneLast=true
-      - RespectIgnoreDifferences=true
-      - SkipDryRunOnMissingResource=true
-  source:
-    repoURL: {{ .Values.cluster.repoURL | quote }}
-    targetRevision: {{ .Values.cluster.revision | default "main" | quote }}
-    path: gitops/infra-custom/bookorbit
+{{ include "infra.application" (dict "root" . "app" (include "app.bookorbit" . | fromYaml)) }}
 {{- end }}

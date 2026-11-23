@@ -12,6 +12,7 @@ configMapGenerator:
       - PUID=1000
       - PGID=1000
       - UMASK=002
+      - TZ=Europe/Amsterdam
 
 patches:
   - target:

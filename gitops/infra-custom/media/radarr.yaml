@@ -60,8 +60,6 @@ spec:
               cpu: "1"
               memory: 640Mi
           ports: [{ name: http, containerPort: 7878 }]
-          env:
-            - { name: TZ, value: "Europe/Amsterdam" }
           startupProbe:
             httpGet: { path: /ping, port: http }
             periodSeconds: 5

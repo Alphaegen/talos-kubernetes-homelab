@@ -1,0 +1,32 @@
+# Images built on s6-overlay (linuxserver.io and qBittorrent) start as root,
+# fix file ownership, then drop to PUID/PGID. Applies to Deployments labelled
+# homelab.niekvlam.nl/base: linuxserver, whose first container is the app.
+# Kyverno exception: gitops/infra-custom/kyverno/exceptions/linuxserver-root.yaml.
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+configMapGenerator:
+  - name: linuxserver-env
+    namespace: media
+    literals:
+      - PUID=1000
+      - PGID=1000
+      - UMASK=002
+
+patches:
+  - target:
+      kind: Deployment
+      labelSelector: homelab.niekvlam.nl/base=linuxserver
+    patch: |-
+      - op: add
+        path: /spec/template/spec/containers/0/envFrom
+        value:
+          - configMapRef:
+              name: linuxserver-env
+      - op: add
+        path: /spec/template/spec/containers/0/securityContext
+        value:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: ["ALL"]
+            add: ["CHOWN", "DAC_OVERRIDE", "FOWNER", "SETGID", "SETUID"]

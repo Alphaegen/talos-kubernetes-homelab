@@ -1,0 +1,43 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - pvc-shared.yaml
+  - pvc-configs.yaml
+  - indexer-backoff-reset.yaml
+  - qbittorrent-protonvpn-secret.yaml
+  - bazarr.yaml
+  - profilarr.yaml
+  - prowlarr.yaml
+  - qbittorrent.yaml
+  - radarr.yaml
+  - seerr.yaml
+  - sonarr.yaml
+  - trawl.yaml
+
+# Deployments labelled homelab.niekvlam.nl/base: linuxserver.
+components:
+  - components/linuxserver
+
+patches:
+  # Every media Deployment: one replica on RWO volumes, replaced rather than
+  # rolled, at best-effort priority, under the restricted seccomp profile.
+  - target:
+      kind: Deployment
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: media-defaults
+      spec:
+        replicas: 1
+        revisionHistoryLimit: 2
+        strategy:
+          type: Recreate
+        template:
+          spec:
+            priorityClassName: homelab-best-effort
+            securityContext:
+              fsGroupChangePolicy: OnRootMismatch
+              seccompProfile:
+                type: RuntimeDefault

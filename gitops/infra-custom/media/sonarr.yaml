@@ -5,22 +5,15 @@ metadata:
   namespace: media
   labels:
     app.kubernetes.io/name: sonarr
+    homelab.niekvlam.nl/base: linuxserver
 spec:
-  replicas: 1
-  revisionHistoryLimit: 2
-  strategy:
-    type: Recreate
   selector: { matchLabels: { app: sonarr } }
   template:
     metadata:
       labels: { app: sonarr, app.kubernetes.io/name: sonarr }
     spec:
-      priorityClassName: homelab-best-effort
       securityContext:
         fsGroup: 1000
-        fsGroupChangePolicy: OnRootMismatch
-        seccompProfile:
-          type: RuntimeDefault
       initContainers:
         # Native sidecar: clears indexer backoff once the indexer works again
         # (see indexer-backoff-reset.yaml).
@@ -51,12 +44,6 @@ spec:
           # Develop (beta) branch, v5. Its database migration is one-way: going
           # back to v4 means restoring the config volume from a backup.
           image: lscr.io/linuxserver/sonarr:develop-5.0.0.2997-ls210
-          # s6-overlay starts as root, fixes ownership, then drops to PUID/PGID.
-          securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop: ["ALL"]
-              add: ["CHOWN", "DAC_OVERRIDE", "FOWNER", "SETGID", "SETUID"]
           resources:
             requests:
               cpu: 50m
@@ -66,9 +53,6 @@ spec:
               memory: 800Mi
           ports: [{ name: http, containerPort: 8989 }]
           env:
-            - { name: PUID, value: "1000" }
-            - { name: PGID, value: "1000" }
-            - { name: UMASK, value: "002" }
             - { name: TZ, value: "Europe/Amsterdam" }
           startupProbe:
             httpGet: { path: /ping, port: http }

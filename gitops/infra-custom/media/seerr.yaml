@@ -4,20 +4,12 @@ metadata:
   name: seerr
   namespace: media
 spec:
-  replicas: 1
-  revisionHistoryLimit: 2
-  strategy:
-    type: Recreate
   selector: { matchLabels: { app: seerr } }
   template:
     metadata: { labels: { app: seerr, app.kubernetes.io/name: seerr } }
     spec:
-      priorityClassName: homelab-best-effort
       securityContext:
         fsGroup: 1000
-        fsGroupChangePolicy: OnRootMismatch
-        seccompProfile:
-          type: RuntimeDefault
       containers:
         - name: seerr
           image: ghcr.io/seerr-team/seerr:v3.5.2

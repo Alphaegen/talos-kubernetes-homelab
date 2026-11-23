@@ -5,22 +5,15 @@ metadata:
   namespace: media
   labels:
     app.kubernetes.io/name: radarr
+    homelab.niekvlam.nl/base: linuxserver
 spec:
-  replicas: 1
-  revisionHistoryLimit: 2
-  strategy:
-    type: Recreate
   selector: { matchLabels: { app: radarr } }
   template:
     metadata:
       labels: { app: radarr, app.kubernetes.io/name: radarr }
     spec:
-      priorityClassName: homelab-best-effort
       securityContext:
         fsGroup: 1000
-        fsGroupChangePolicy: OnRootMismatch
-        seccompProfile:
-          type: RuntimeDefault
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
@@ -59,12 +52,6 @@ spec:
       containers:
         - name: radarr
           image: lscr.io/linuxserver/radarr:7.0.3.10918-ls328
-          # s6-overlay starts as root, fixes ownership, then drops to PUID/PGID.
-          securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop: ["ALL"]
-              add: ["CHOWN", "DAC_OVERRIDE", "FOWNER", "SETGID", "SETUID"]
           resources:
             requests:
               cpu: 50m
@@ -74,9 +61,6 @@ spec:
               memory: 640Mi
           ports: [{ name: http, containerPort: 7878 }]
           env:
-            - { name: PUID, value: "1000" }
-            - { name: PGID, value: "1000" }
-            - { name: UMASK, value: "002" }
             - { name: TZ, value: "Europe/Amsterdam" }
           startupProbe:
             httpGet: { path: /ping, port: http }

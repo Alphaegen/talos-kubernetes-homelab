@@ -4,10 +4,6 @@ metadata:
   name: profilarr
   namespace: media
 spec:
-  replicas: 1
-  revisionHistoryLimit: 2
-  strategy:
-    type: Recreate
   selector:
     matchLabels:
       app: profilarr
@@ -17,15 +13,11 @@ spec:
         app: profilarr
         app.kubernetes.io/name: profilarr
     spec:
-      priorityClassName: homelab-best-effort
       securityContext:
         runAsNonRoot: true
         runAsUser: 1000
         runAsGroup: 1000
         fsGroup: 1000
-        fsGroupChangePolicy: OnRootMismatch
-        seccompProfile:
-          type: RuntimeDefault
       containers:
         - name: profilarr
           image: ghcr.io/dictionarry-hub/profilarr:2.3.1

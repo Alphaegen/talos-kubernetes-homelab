@@ -5,31 +5,18 @@ metadata:
   namespace: media
   labels:
     app.kubernetes.io/name: bazarr
+    homelab.niekvlam.nl/base: linuxserver
 spec:
-  replicas: 1
-  revisionHistoryLimit: 2
-  strategy:
-    type: Recreate
   selector: { matchLabels: { app: bazarr } }
   template:
     metadata:
       labels: { app: bazarr, app.kubernetes.io/name: bazarr }
     spec:
-      priorityClassName: homelab-best-effort
       securityContext:
         fsGroup: 1000
-        fsGroupChangePolicy: OnRootMismatch
-        seccompProfile:
-          type: RuntimeDefault
       containers:
         - name: bazarr
           image: lscr.io/linuxserver/bazarr:v1.6.2-ls373
-          # s6-overlay starts as root, fixes ownership, then drops to PUID/PGID.
-          securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop: ["ALL"]
-              add: ["CHOWN", "DAC_OVERRIDE", "FOWNER", "SETGID", "SETUID"]
           resources:
             requests:
               cpu: 50m
@@ -39,9 +26,6 @@ spec:
               memory: 512Mi
           ports: [{ name: http, containerPort: 6767 }]
           env:
-            - { name: PUID, value: "1000" }
-            - { name: PGID, value: "1000" }
-            - { name: UMASK, value: "002" }
             - { name: TZ, value: "Europe/Amsterdam" }
           startupProbe:
             httpGet: { path: /, port: http }

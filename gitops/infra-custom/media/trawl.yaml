@@ -6,10 +6,6 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "0"
 spec:
-  replicas: 1
-  revisionHistoryLimit: 2
-  strategy:
-    type: Recreate
   selector:
     matchLabels:
       app: trawl-redis
@@ -19,15 +15,11 @@ spec:
         app: trawl-redis
         app.kubernetes.io/name: trawl-redis
     spec:
-      priorityClassName: homelab-best-effort
       securityContext:
         runAsNonRoot: true
         runAsUser: 999
         runAsGroup: 999
         fsGroup: 999
-        fsGroupChangePolicy: OnRootMismatch
-        seccompProfile:
-          type: RuntimeDefault
       containers:
         - name: redis
           image: redis:8.10.3-alpine
@@ -79,10 +71,6 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "1"
 spec:
-  replicas: 1
-  revisionHistoryLimit: 2
-  strategy:
-    type: Recreate
   selector:
     matchLabels:
       app: trawl
@@ -92,15 +80,11 @@ spec:
         app: trawl
         app.kubernetes.io/name: trawl
     spec:
-      priorityClassName: homelab-best-effort
       securityContext:
         runAsNonRoot: true
         runAsUser: 1000
         runAsGroup: 1000
         fsGroup: 1000
-        fsGroupChangePolicy: OnRootMismatch
-        seccompProfile:
-          type: RuntimeDefault
       containers:
         - name: trawl
           image: ghcr.io/germondai/trawl:1.11.1

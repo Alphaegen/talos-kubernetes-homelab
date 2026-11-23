@@ -5,20 +5,16 @@ metadata:
   namespace: media
   labels:
     app.kubernetes.io/name: qbittorrent
+    homelab.niekvlam.nl/base: linuxserver
   annotations:
     # Wait for External Secrets to materialize the Proton WireGuard key.
     argocd.argoproj.io/sync-wave: "1"
 spec:
-  replicas: 1
-  revisionHistoryLimit: 2
-  strategy:
-    type: Recreate
   selector: { matchLabels: { app: qbittorrent } }
   template:
     metadata:
       labels: { app: qbittorrent, app.kubernetes.io/name: qbittorrent }
     spec:
-      priorityClassName: homelab-best-effort
       terminationGracePeriodSeconds: 180
       # Use Gluetun's encrypted DNS resolver from every container in this Pod.
       dnsPolicy: None
@@ -26,9 +22,6 @@ spec:
         nameservers: ["127.0.0.1"]
       securityContext:
         fsGroup: 1000
-        fsGroupChangePolicy: OnRootMismatch
-        seccompProfile:
-          type: RuntimeDefault
       initContainers:
         # Native sidecar: establishes the VPN and its firewall before qBittorrent starts.
         - name: gluetun
@@ -174,16 +167,7 @@ spec:
           ports:
             - { name: http, containerPort: 8080 }
           env:
-            - { name: PUID, value: "1000" }
-            - { name: PGID, value: "1000" }
             - { name: WEBUI_PORT, value: "8080" }
-            - { name: UMASK, value: "002" }
-          # s6-overlay starts as root, fixes ownership, then drops to PUID/PGID.
-          securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop: ["ALL"]
-              add: ["CHOWN", "DAC_OVERRIDE", "FOWNER", "SETGID", "SETUID"]
           volumeMounts:
             - { name: data, mountPath: /data }
             - { name: config, mountPath: /config }

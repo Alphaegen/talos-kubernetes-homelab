@@ -8,8 +8,8 @@ spec:
   properties:
     reason: >-
       The gluetun VPN sidecar creates a WireGuard tunnel, which needs root,
-      NET_ADMIN and the /dev/net/tun device from the host. The qBittorrent
-      image starts as root under s6-overlay like the linuxserver.io images.
+      NET_ADMIN and the /dev/net/tun device from the host, whatever image
+      qBittorrent itself uses (its s6-overlay start is linuxserver-root's).
   policyRefs:
     - name: pss-baseline
       kind: ValidatingPolicy

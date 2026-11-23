@@ -7,8 +7,8 @@ metadata:
 spec:
   properties:
     reason: >-
-      linuxserver.io images start as root under s6-overlay, fix file
-      ownership, then drop to PUID/PGID. They cannot start with
+      Images built on s6-overlay (linuxserver.io and qBittorrent) start as
+      root, fix file ownership, then drop to PUID/PGID. They cannot start with
       runAsNonRoot, and keep CHOWN, DAC_OVERRIDE, FOWNER, SETGID and SETUID
       after dropping all other capabilities.
   policyRefs:
@@ -16,10 +16,11 @@ spec:
       kind: ValidatingPolicy
     - name: pss-restricted-capabilities
       kind: ValidatingPolicy
-  # Since Kyverno 1.20 a controller's object has the pod spec in place of
-  # its own, so the name label must be on the controller's metadata as well.
+  # Follows the media linuxserver base (gitops/infra-custom/media/components/
+  # linuxserver), which labels the Deployment's own metadata: since Kyverno
+  # 1.20 exception conditions see that, not the pod template.
   matchConditions:
     - name: linuxserver-root
       expression: >-
         object.metadata.namespace == 'media' &&
-        object.metadata.?labels[?'app.kubernetes.io/name'].orValue('') in ['bazarr', 'prowlarr', 'radarr', 'sonarr']
+        object.metadata.?labels[?'homelab.niekvlam.nl/base'].orValue('') == 'linuxserver'

@@ -1,0 +1,16 @@
+apiVersion: policies.kyverno.io/v1
+kind: PolicyException
+metadata:
+  name: upstream
+  namespace: kyverno
+spec:
+  properties:
+    reason: A test case for scripts/validate.sh.
+    rendered: "false"
+  policyRefs:
+    - name: pss-restricted-run-as-non-root
+      kind: ValidatingPolicy
+  matchConditions:
+    - name: upstream
+      expression: >-
+        object.metadata.?labels[?'app.kubernetes.io/name'].orValue('') == 'example'

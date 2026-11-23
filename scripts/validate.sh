@@ -5,6 +5,8 @@
 # Needs: helm, kustomize, kubeconform, yq (mikefarah), jq, go, kyverno.
 # Env:   RENDER_DIR=<dir> writes the rendered manifests there and keeps them
 #        (the directory must not exist yet), e.g. for kube-linter.
+#        KYVERNO_REPORT=<file> keeps the Kyverno policy report for the rendered
+#        workloads, e.g. for the job summary.
 
 set -euo pipefail
 
@@ -31,6 +33,7 @@ contract_tests=$infra_helm/ci/contract-tests
 plain_manifests=(gitops/root-application.yaml)
 go_modules=(gitops/infra-custom/pi5-fan-control)
 kyverno_dir=gitops/infra-custom/kyverno
+policy_check_cases=scripts/testdata/policy-check
 ha_dashboard_dir=gitops/infra-custom/home-assistant
 
 failures=()
@@ -218,6 +221,91 @@ check_kyverno_fixtures() {
 }
 run "Kyverno test fixtures match their expectations" check_kyverno_fixtures
 run "kyverno test $kyverno_dir/tests" kyverno test --remove-color "$kyverno_dir/tests"
+
+# check_rendered_policies <policies dir> <exceptions dir> <workloads file>:
+# kyverno apply stands in for admission. Fails on any failed result, and on
+# any exception that does not earn its place: one that skips no workload for
+# a policy it lists, skips a workload that passes that policy without it, or
+# is marked rendered: "false" (its workloads come from an upstream chart or an
+# operator, which CI does not render) yet skips a rendered workload. Writes
+# the policy report to $KYVERNO_REPORT when that is set.
+check_rendered_policies() {
+  local policies=$1 exceptions=$2 workloads=$3 file with without excepted
+  local args=()
+  for file in "$exceptions"/*.yaml; do
+    [[ -f $file ]] && args+=(--exception "$file")
+  done
+  with=$(mktemp "$work/kyverno-with.XXXXXX")
+  without=$(mktemp "$work/kyverno-without.XXXXXX")
+  excepted=$(mktemp "$work/kyverno-exceptions.XXXXXX")
+  # kyverno apply exits non-zero on failed results; the report says why.
+  kyverno apply "$policies" "${args[@]}" --resource "$workloads" --policy-report --remove-color 2>&1 \
+    | sed -n '/^apiVersion/,$p' >"$with" || true
+  kyverno apply "$policies" --resource "$workloads" --policy-report --remove-color 2>&1 \
+    | sed -n '/^apiVersion/,$p' >"$without" || true
+  [[ -s $with && -s $without ]] || { printf 'kyverno apply produced no policy report\n'; return 1; }
+  [[ -z ${KYVERNO_REPORT:-} ]] || cp "$with" "$KYVERNO_REPORT"
+  if ((${#args[@]})); then
+    yq -o=json -I=0 '{"name": .metadata.name, "rendered": (.spec.properties.rendered // "true"),
+      "policies": [.spec.policyRefs[].name]}' "$exceptions"/*.yaml | jq -s . >"$excepted"
+  else
+    printf '[]\n' >"$excepted"
+  fi
+  jq -nr --slurpfile with <(yq -o=json . "$with") --slurpfile without <(yq -o=json . "$without") \
+    --slurpfile exceptions "$excepted" '
+    def id: .resources[0] | "\(.kind) \(.namespace)/\(.name)";
+    ($with[0].results // []) as $results
+    | ([$without[0].results // [] | .[] | select(.result == "pass") | "\(.policy) \(id)"]) as $passes
+    | [$results[] | select(.result == "skip")
+        | {policy, id: id, exception: (.properties.exceptions // "" | split(",")[])}] as $skips
+    | ($results[] | select(.result == "fail" or .result == "error")
+        | "\(.policy) \(.result)s for \(id): \(.message)"),
+      ($results[] | select(.result == "skip" and (.properties.exceptions // "") == "")
+        | "\(.policy) skips \(id) without an exception: \(.message)"),
+      ($exceptions[0][] | .name as $name | .policies[] as $policy
+        | [$skips[] | select(.exception == $name and .policy == $policy)] as $mine
+        | if $mine == [] then
+            (if .rendered == "false" then empty
+             else "exception \($name) skips no rendered workload for \($policy); fix its match or mark it rendered: \"false\"" end)
+          elif .rendered == "false" then
+            "exception \($name) is marked rendered: \"false\" but skips \($mine[0].id) for \($policy)"
+          else
+            ($mine[] | select(("\($policy) \(.id)") as $key | $passes | index($key))
+              | "exception \($name) is not needed for \($policy): \(.id) passes without it")
+          end)' \
+    | { ! grep . ; }
+}
+
+# Workloads only: the CLI's fake client rejects duplicate objects, such as a
+# Namespace that two sources both render. kube-system is excluded by every
+# policy.
+workloads=$work/workloads.yaml
+find "$manifests" -name '*.yaml' -print0 | xargs -0 yq ea '
+  select((.kind == "Pod" or .kind == "Deployment" or .kind == "StatefulSet" or
+          .kind == "DaemonSet" or .kind == "Job" or .kind == "CronJob") and
+         .metadata.namespace != "kube-system")' >"$workloads"
+run "Rendered workloads against the Kyverno policies and exceptions" \
+  check_rendered_policies "$kyverno_dir/policies" "$kyverno_dir/exceptions" "$workloads"
+
+# The check above must reject each case in $policy_check_cases with the
+# message on the "# expect:" line of the case's workloads.yaml.
+check_policy_check_cases() {
+  local case expect out status=0
+  for case in "$policy_check_cases"/*/; do
+    case=${case%/}
+    expect=$(sed -n 's/^# expect: //p' "$case/workloads.yaml")
+    [[ -n $expect ]] || { printf '%s has no "# expect:" line\n' "$case"; status=1; continue; }
+    if out=$(KYVERNO_REPORT='' check_rendered_policies "$kyverno_dir/policies" "$case/exceptions" "$case/workloads.yaml"); then
+      printf '%s passed, but should fail with: %s\n' "$case" "$expect"
+      status=1
+    elif ! grep -qF -- "$expect" <<<"$out"; then
+      printf '%s failed without "%s":\n%s\n' "$case" "$expect" "$out"
+      status=1
+    fi
+  done
+  return "$status"
+}
+run "Rendered policy check cases ($policy_check_cases)" check_policy_check_cases
 
 # 6. Home Assistant YAML dashboard: Home Assistant only reports a broken file or
 # a missing !include when the dashboard is opened, so check that every file

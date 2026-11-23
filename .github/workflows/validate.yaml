@@ -78,6 +78,7 @@ jobs:
       - name: Validate
         env:
           RENDER_DIR: ${{ runner.temp }}/rendered
+          KYVERNO_REPORT: ${{ runner.temp }}/kyverno-report.yaml
         run: scripts/validate.sh
 
       # Informational only: findings go to the job summary and never fail the run.
@@ -109,33 +110,19 @@ jobs:
             "</details>"
           ' "$report" >>"$GITHUB_STEP_SUMMARY"
 
-      # Informational only: how the workloads rendered from this repository fare
-      # against the Kyverno policies before they reach the cluster.
-      - name: Check rendered workloads against Kyverno policies (informational)
+      # The Validate step gates on this report; this step only shows it.
+      - name: Summarise Kyverno results for the rendered workloads
         if: ${{ !cancelled() }}
         continue-on-error: true
         env:
-          RENDER_DIR: ${{ runner.temp }}/rendered
+          KYVERNO_REPORT: ${{ runner.temp }}/kyverno-report.yaml
         run: |
-          kyverno_dir=gitops/infra-custom/kyverno
-          workloads=$RUNNER_TEMP/workloads.yaml
-          report=$RUNNER_TEMP/kyverno-report.yaml
-          # Workloads only: the CLI's fake client rejects duplicate objects, such
-          # as a Namespace that two sources both render. kube-system is excluded
-          # by every policy.
-          find "$RENDER_DIR" -name '*.yaml' -print0 | xargs -0 yq ea '
-            select((.kind == "Pod" or .kind == "Deployment" or .kind == "StatefulSet" or
-                    .kind == "DaemonSet" or .kind == "Job" or .kind == "CronJob") and
-                   .metadata.namespace != "kube-system")' >"$workloads"
-          exceptions=()
-          for file in "$kyverno_dir"/exceptions/*.yaml; do exceptions+=(--exception "$file"); done
-          kyverno apply "$kyverno_dir/policies" "${exceptions[@]}" --resource "$workloads" \
-            --policy-report --remove-color >"$report" || true
-          sed -n '/^apiVersion/,$p' "$report" | yq -o=json . | jq -r '
+          [[ -s $KYVERNO_REPORT ]] || exit 0
+          yq -o=json . "$KYVERNO_REPORT" | jq -r '
             [.results // [] | .[] | select(.result == "fail")] as $fails
-            | "### Kyverno policies (informational)",
+            | "### Kyverno policies",
               "",
-              "\(.summary.fail) failing, \(.summary.pass) passing and \(.summary.skip) excepted results for the workloads rendered from this repository. These do not fail the run.",
+              "\(.summary.fail) failing, \(.summary.pass) passing and \(.summary.skip) excepted results for the workloads rendered from this repository.",
               "",
               "| Failures | Policy |",
               "|---:|---|",

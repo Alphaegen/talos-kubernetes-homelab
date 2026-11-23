@@ -9,6 +9,8 @@ spec:
     reason: >-
       Alloy tails pod and node logs from the host through hostPath, and
       those files are only readable by root.
+    # Upstream chart or operator workloads: CI does not render them.
+    rendered: "false"
   policyRefs:
     - name: pss-baseline
       kind: ValidatingPolicy

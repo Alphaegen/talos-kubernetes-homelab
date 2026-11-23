@@ -10,6 +10,8 @@ spec:
       The Tailscale connector is a kernel-mode subnet router and exit
       node: it needs NET_ADMIN, IP forwarding sysctls and root. The
       operator creates this StatefulSet.
+    # Upstream chart or operator workloads: CI does not render them.
+    rendered: "false"
   policyRefs:
     - name: pss-baseline
       kind: ValidatingPolicy

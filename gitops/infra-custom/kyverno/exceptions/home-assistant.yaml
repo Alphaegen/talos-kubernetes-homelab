@@ -11,6 +11,8 @@ spec:
       default capabilities for network integrations such as ping and
       discovery. The chart has no resources value for its setup-config init
       container.
+    # Upstream chart or operator workloads: CI does not render them.
+    rendered: "false"
   policyRefs:
     - name: pss-restricted-run-as-non-root
       kind: ValidatingPolicy

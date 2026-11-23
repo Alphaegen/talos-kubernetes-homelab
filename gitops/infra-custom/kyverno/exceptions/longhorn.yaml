@@ -10,6 +10,8 @@ spec:
       Longhorn is the storage driver: its manager, CSI and
       instance-manager pods need privileged host access, and the operator
       creates pods the chart cannot configure (no resources or labels).
+    # Upstream chart or operator workloads: CI does not render them.
+    rendered: "false"
   policyRefs:
     - name: pss-baseline
       kind: ValidatingPolicy

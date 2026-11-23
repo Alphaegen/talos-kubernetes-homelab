@@ -9,6 +9,8 @@ spec:
     reason: >-
       node-exporter reports host metrics, so it shares the host network
       and PID namespaces and reads /proc, /sys and / through hostPath.
+    # Upstream chart or operator workloads: CI does not render them.
+    rendered: "false"
   policyRefs:
     - name: pss-baseline
       kind: ValidatingPolicy

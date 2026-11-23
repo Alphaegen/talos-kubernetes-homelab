@@ -90,7 +90,7 @@ sources:
         serviceMonitor:
           enabled: true
           labels:
-            release: {{ .Values.security.trivy.serviceMonitorLabel }}
+            release: kube-prometheus-stack
           interval: 30s
 {{ end }}
 {{- if and .Values.security.enabled .Values.security.trivy.enabled }}

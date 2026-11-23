@@ -2,7 +2,7 @@
 name: platform-smoke
 appLabel: homelab-platform-smoke
 # The source contains and owns the Namespace manifest.
-namespace: {{ .Values.platformSmoke.namespace | default "homelab-platform" | quote }}
+namespace: homelab-platform
 # Validation workload after bootstrap foundations.
 wave: 2
 project: apps

@@ -8,7 +8,7 @@ createNamespace: true
 sources:
   - repoURL: https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner/
     chart: nfs-subdir-external-provisioner
-    version: {{ .Values.media.nfs.version | default "4.0.18" | quote }}
+    version: {{ .Values.media.nfs.version | quote }}
     helm:
       releaseName: nfs-provisioner
       values: |
@@ -20,8 +20,8 @@ sources:
         leaderElection:
           enabled: false
         nfs:
-          server: {{ .Values.media.nfs.server | default "nas.niekvlam.nl" | quote }}
-          path: {{ .Values.media.nfs.path | default "/volume1/PlexMediaServer" | quote }}
+          server: "nas.niekvlam.nl"
+          path: "/volume1/PlexMediaServer"
           mountOptions:
             - nfsvers=4.1
             - rsize=1048576
@@ -30,7 +30,7 @@ sources:
             - timeo=600
             - retrans=2
         storageClass:
-          name: {{ .Values.media.nfs.storageClass | default "media-nfs" | quote }}
+          name: "media-nfs"
           defaultClass: false
           reclaimPolicy: Retain
           allowVolumeExpansion: true

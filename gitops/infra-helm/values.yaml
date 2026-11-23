@@ -16,7 +16,6 @@ sync: true
 
 renovate:
   enabled: true
-  namespace: renovate
 
 bookorbit:
   enabled: true
@@ -98,7 +97,6 @@ monitoring:
 
 pi5FanControl:
   enabled: true
-  namespace: pi5-fan-control
 
 # Approves the kubelet serving CSRs from Talos (rotate-server-certificates) for metrics-server.
 kubeletServingCertApprover:
@@ -119,7 +117,6 @@ homeAutomation:
 
 platformSmoke:
   enabled: true
-  namespace: homelab-platform
   rollout:
     enabled: true
 
@@ -127,19 +124,14 @@ progressiveDelivery:
   enabled: true
   argoRollouts:
     enabled: true
-    namespace: argo-rollouts
     # renovate: datasource=helm depName=argo-rollouts registryUrl=https://argoproj.github.io/argo-helm versioning=helm
     version: "2.43.12"
-    serviceMonitorLabel: kube-prometheus-stack
 
 media:
   enabled: true
   nfs:
     # renovate: datasource=helm depName=nfs-subdir-external-provisioner registryUrl=https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner/ versioning=helm
     version: "4.0.18"
-    server: nas.niekvlam.nl
-    path: /volume1/PlexMediaServer
-    storageClass: media-nfs
 
 # Security
 security:
@@ -164,31 +156,24 @@ security:
     enabled: true
     # renovate: datasource=helm depName=external-secrets registryUrl=https://charts.external-secrets.io versioning=helm
     version: "2.15.0"
-    serviceMonitorLabel: kube-prometheus-stack
     bootstrap: true
 
   kyverno:
     enabled: true
     # renovate: datasource=helm depName=kyverno registryUrl=https://kyverno.github.io/kyverno/ versioning=helm
     version: "3.10.0"
-    serviceMonitorLabel: kube-prometheus-stack
 
   policyReporter:
     enabled: true
     # renovate: datasource=helm depName=policy-reporter registryUrl=https://kyverno.github.io/policy-reporter/ versioning=helm
     version: "3.11.2"
-    serviceMonitorLabel: kube-prometheus-stack
 
   trivy:
     enabled: true
     # renovate: datasource=helm depName=trivy-operator registryUrl=https://aquasecurity.github.io/helm-charts/ versioning=helm
     version: "0.38.1"
-    serviceMonitorLabel: kube-prometheus-stack
 
   tailscale:
     enabled: true
     # renovate: datasource=helm depName=tailscale-operator registryUrl=https://pkgs.tailscale.com/helmcharts versioning=helm
     version: "1.104.7"
-    namespace: tailscale
-    repoURL: https://pkgs.tailscale.com/helmcharts
-    chart: tailscale-operator

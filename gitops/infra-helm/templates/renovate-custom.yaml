@@ -1,7 +1,7 @@
 {{- define "app.renovate" }}
 name: renovate
 # The Kustomization owns the Namespace manifest.
-namespace: {{ .Values.renovate.namespace | default "renovate" | quote }}
+namespace: renovate
 # External Secrets and its ClusterSecretStore are installed in wave 0.
 wave: 1
 project: platform

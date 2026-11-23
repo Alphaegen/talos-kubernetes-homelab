@@ -59,7 +59,7 @@ sources:
           serviceMonitor:
             enabled: true
             additionalLabels:
-              release: {{ .Values.security.kyverno.serviceMonitorLabel }}
+              release: kube-prometheus-stack
 
         backgroundController:
           resources:
@@ -71,7 +71,7 @@ sources:
           serviceMonitor:
             enabled: true
             additionalLabels:
-              release: {{ .Values.security.kyverno.serviceMonitorLabel }}
+              release: kube-prometheus-stack
 
         reportsController:
           resources:
@@ -83,7 +83,7 @@ sources:
           serviceMonitor:
             enabled: true
             additionalLabels:
-              release: {{ .Values.security.kyverno.serviceMonitorLabel }}
+              release: kube-prometheus-stack
 
         cleanupController:
           resources:
@@ -95,7 +95,7 @@ sources:
           serviceMonitor:
             enabled: true
             additionalLabels:
-              release: {{ .Values.security.kyverno.serviceMonitorLabel }}
+              release: kube-prometheus-stack
 {{ end }}
 {{- if and .Values.security.enabled .Values.security.kyverno.enabled }}
 {{ include "infra.application" (dict "root" . "app" (include "app.kyverno" . | fromYaml)) }}

@@ -27,7 +27,7 @@ sources:
           enabled: true
           serviceMonitor:
             labels:
-              release: {{ .Values.security.policyReporter.serviceMonitorLabel }}
+              release: kube-prometheus-stack
           grafana:
             dashboards:
               enabled: true

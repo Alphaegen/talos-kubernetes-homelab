@@ -1,6 +1,6 @@
 {{- define "app.tailscale" }}
 name: tailscale
-namespace: {{ .Values.security.tailscale.namespace | default "tailscale" | quote }}
+namespace: tailscale
 # The credential ExternalSecret is owned by the wave-0 External Secrets
 # Application. The operator and Connector stay together here.
 wave: 1
@@ -12,8 +12,8 @@ namespaceLabels:
   pod-security.kubernetes.io/warn: privileged
   pod-security.kubernetes.io/audit: privileged
 sources:
-  - repoURL: {{ .Values.security.tailscale.repoURL | default "https://pkgs.tailscale.com/helmcharts" | quote }}
-    chart: {{ .Values.security.tailscale.chart | default "tailscale-operator" | quote }}
+  - repoURL: https://pkgs.tailscale.com/helmcharts
+    chart: tailscale-operator
     version: {{ .Values.security.tailscale.version | quote }}
     helm:
       releaseName: tailscale-operator

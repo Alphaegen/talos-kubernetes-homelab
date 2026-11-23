@@ -1,6 +1,6 @@
 {{- define "app.argo-rollouts" }}
 name: argo-rollouts
-namespace: {{ .Values.progressiveDelivery.argoRollouts.namespace | default "argo-rollouts" | quote }}
+namespace: argo-rollouts
 # CRD/API provider for rollout workloads.
 wave: 0
 project: platform
@@ -24,7 +24,7 @@ sources:
             serviceMonitor:
               enabled: true
               additionalLabels:
-                release: {{ .Values.progressiveDelivery.argoRollouts.serviceMonitorLabel | quote }}
+                release: "kube-prometheus-stack"
 
         dashboard:
           enabled: false

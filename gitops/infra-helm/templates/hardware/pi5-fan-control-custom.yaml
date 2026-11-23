@@ -1,7 +1,7 @@
 {{- define "app.pi5-fan-control" }}
 name: pi5-fan-control
 partOf: infrastructure
-namespace: {{ .Values.pi5FanControl.namespace | default "pi5-fan-control" | quote }}
+namespace: pi5-fan-control
 # Stateless platform add-on.
 wave: 1
 project: platform

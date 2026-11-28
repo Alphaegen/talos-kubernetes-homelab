@@ -1,0 +1,44 @@
+# Ingress only: selecting a Pod turns on default-deny for its ingress, egress
+# stays open. Traffic proxied by the shared Cilium Gateway (Envoy) carries the
+# reserved "ingress" identity. Kubelet probes come from the node and Cilium
+# always allows those.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: bookorbit
+  namespace: bookorbit
+  labels:
+    app.kubernetes.io/name: bookorbit
+    app.kubernetes.io/part-of: bookorbit
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: bookorbit
+  ingress:
+    - fromEntities:
+        - ingress
+      toPorts:
+        - ports:
+            - port: "3000"
+              protocol: TCP
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: bookorbit-postgres
+  namespace: bookorbit
+  labels:
+    app.kubernetes.io/name: bookorbit-postgres
+    app.kubernetes.io/part-of: bookorbit
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: bookorbit-postgres
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            app.kubernetes.io/name: bookorbit
+      toPorts:
+        - ports:
+            - port: "5432"
+              protocol: TCP

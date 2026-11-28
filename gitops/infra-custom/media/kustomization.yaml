@@ -13,6 +13,7 @@ resources:
   - seerr.yaml
   - sonarr.yaml
   - trawl.yaml
+  - ciliumnetworkpolicy.yaml
 
 # Each applies to the Deployments that carry its homelab.niekvlam.nl/ label.
 components:

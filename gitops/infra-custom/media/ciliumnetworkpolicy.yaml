@@ -1,0 +1,231 @@
+# Ingress only: selecting a Pod turns on default-deny for its ingress, egress
+# stays open. Traffic proxied by the shared Cilium Gateway (Envoy) carries the
+# reserved "ingress" identity, which a namespace-based NetworkPolicy cannot
+# match. Kubelet probes come from the node and Cilium always allows those, and
+# in-Pod traffic over loopback (qBittorrent's Gluetun DNS, the Profilarr
+# parser, the indexer backoff sidecars) never reaches policy.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: bazarr
+  namespace: media
+  labels:
+    app.kubernetes.io/name: bazarr
+    app.kubernetes.io/part-of: media
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: bazarr
+  ingress:
+    - fromEntities:
+        - ingress
+      toPorts:
+        - ports:
+            - port: "6767"
+              protocol: TCP
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: profilarr
+  namespace: media
+  labels:
+    app.kubernetes.io/name: profilarr
+    app.kubernetes.io/part-of: media
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: profilarr
+  ingress:
+    - fromEntities:
+        - ingress
+      toPorts:
+        - ports:
+            - port: "6868"
+              protocol: TCP
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: seerr
+  namespace: media
+  labels:
+    app.kubernetes.io/name: seerr
+    app.kubernetes.io/part-of: media
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: seerr
+  ingress:
+    - fromEntities:
+        - ingress
+      toPorts:
+        - ports:
+            - port: "5055"
+              protocol: TCP
+---
+# Prowlarr serves the indexer (Torznab/Newznab) feeds Sonarr and Radarr search.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: prowlarr
+  namespace: media
+  labels:
+    app.kubernetes.io/name: prowlarr
+    app.kubernetes.io/part-of: media
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: prowlarr
+  ingress:
+    - fromEntities:
+        - ingress
+      toPorts:
+        - ports:
+            - port: "9696"
+              protocol: TCP
+    - fromEndpoints:
+        - matchExpressions:
+            - key: app.kubernetes.io/name
+              operator: In
+              values: [radarr, sonarr]
+      toPorts:
+        - ports:
+            - port: "9696"
+              protocol: TCP
+---
+# Prowlarr syncs indexers into them; Seerr sends requests; Bazarr and Profilarr
+# read and manage them.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: sonarr
+  namespace: media
+  labels:
+    app.kubernetes.io/name: sonarr
+    app.kubernetes.io/part-of: media
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: sonarr
+  ingress:
+    - fromEntities:
+        - ingress
+      toPorts:
+        - ports:
+            - port: "8989"
+              protocol: TCP
+    - fromEndpoints:
+        - matchExpressions:
+            - key: app.kubernetes.io/name
+              operator: In
+              values: [bazarr, profilarr, prowlarr, seerr]
+      toPorts:
+        - ports:
+            - port: "8989"
+              protocol: TCP
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: radarr
+  namespace: media
+  labels:
+    app.kubernetes.io/name: radarr
+    app.kubernetes.io/part-of: media
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: radarr
+  ingress:
+    - fromEntities:
+        - ingress
+      toPorts:
+        - ports:
+            - port: "7878"
+              protocol: TCP
+    - fromEndpoints:
+        - matchExpressions:
+            - key: app.kubernetes.io/name
+              operator: In
+              values: [bazarr, profilarr, prowlarr, seerr]
+      toPorts:
+        - ports:
+            - port: "7878"
+              protocol: TCP
+---
+# Only the Web UI/API. Peers reach qBittorrent through the WireGuard tunnel,
+# whose packets are replies to Gluetun's own egress, and Gluetun's firewall
+# drops anything else outside the tunnel.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: qbittorrent
+  namespace: media
+  labels:
+    app.kubernetes.io/name: qbittorrent
+    app.kubernetes.io/part-of: media
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: qbittorrent
+  ingress:
+    - fromEntities:
+        - ingress
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP
+    - fromEndpoints:
+        - matchExpressions:
+            - key: app.kubernetes.io/name
+              operator: In
+              values: [radarr, sonarr]
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP
+---
+# The FlareSolverr-compatible endpoint (Services trawl and flaresolverr) for
+# Prowlarr's Cloudflare-protected indexers. No UI.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: trawl
+  namespace: media
+  labels:
+    app.kubernetes.io/name: trawl
+    app.kubernetes.io/part-of: media
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: trawl
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            app.kubernetes.io/name: prowlarr
+      toPorts:
+        - ports:
+            - port: "8191"
+              protocol: TCP
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: trawl-redis
+  namespace: media
+  labels:
+    app.kubernetes.io/name: trawl-redis
+    app.kubernetes.io/part-of: media
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: trawl-redis
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            app.kubernetes.io/name: trawl
+      toPorts:
+        - ports:
+            - port: "6379"
+              protocol: TCP

@@ -1,0 +1,60 @@
+# Ingress only: selecting a Pod turns on default-deny for its ingress, egress
+# (the SLZB coordinator, DNS) stays open. Traffic proxied by the shared Cilium
+# Gateway (Envoy) carries the reserved "ingress" identity. Kubelet probes come
+# from the node and Cilium always allows those.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: mosquitto
+  namespace: home-automation
+  labels:
+    app.kubernetes.io/name: mosquitto
+    app.kubernetes.io/part-of: home-automation
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: mosquitto
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            app.kubernetes.io/name: zigbee2mqtt
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: home-assistant
+            app.kubernetes.io/name: home-assistant
+        # The platform smoke test's TCP check.
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: homelab-platform
+            app.kubernetes.io/name: homelab-platform-smoke
+      toPorts:
+        - ports:
+            - port: "1883"
+              protocol: TCP
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: zigbee2mqtt
+  namespace: home-automation
+  labels:
+    app.kubernetes.io/name: zigbee2mqtt
+    app.kubernetes.io/part-of: home-automation
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: zigbee2mqtt
+  ingress:
+    - fromEntities:
+        - ingress
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP
+    # The platform smoke test's HTTP check.
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: homelab-platform
+            app.kubernetes.io/name: homelab-platform-smoke
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP

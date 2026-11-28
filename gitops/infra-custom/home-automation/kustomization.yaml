@@ -6,3 +6,4 @@ resources:
   - externalsecret.yaml
   - mosquitto.yaml
   - zigbee2mqtt.yaml
+  - ciliumnetworkpolicy.yaml

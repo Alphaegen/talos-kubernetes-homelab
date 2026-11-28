@@ -1,0 +1,33 @@
+# Ingress only: selecting the Pod turns on default-deny for its ingress, while
+# egress (Mosquitto, LAN devices, cloud integrations) stays open. Traffic
+# proxied by the shared Cilium Gateway (Envoy) carries the reserved "ingress"
+# identity; tailnet clients come through the Gateway too. Kubelet probes come
+# from the node and Cilium always allows those. Policy applies after the
+# Service's port 8080 is translated to the container's 8123.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: home-assistant
+  labels:
+    app.kubernetes.io/name: home-assistant
+    app.kubernetes.io/part-of: home-assistant
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: home-assistant
+  ingress:
+    - fromEntities:
+        - ingress
+      toPorts:
+        - ports:
+            - port: "8123"
+              protocol: TCP
+    # The platform smoke test's HTTP check.
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: homelab-platform
+            app.kubernetes.io/name: homelab-platform-smoke
+      toPorts:
+        - ports:
+            - port: "8123"
+              protocol: TCP

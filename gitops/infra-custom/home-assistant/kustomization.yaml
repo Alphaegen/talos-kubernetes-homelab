@@ -3,6 +3,7 @@ kind: Kustomization
 namespace: home-assistant
 resources:
   - httproute.yaml
+  - ciliumnetworkpolicy.yaml
 configMapGenerator:
   - name: home-assistant-packages
     files:
